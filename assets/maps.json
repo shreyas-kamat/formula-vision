@@ -1,0 +1,258 @@
+{
+  "2": {
+    "name": "Silverstone",
+    "country": "Great Britain",
+    "years": [2022, 2021, 2020, 2019],
+    "circuitKey": 2,
+    "countryKey": 2,
+    "iocCountryCode": "GBR"
+  },
+  "4": {
+    "name": "Hungaroring",
+    "country": "Hungary",
+    "years": [2021, 2020, 2019, 2018],
+    "circuitKey": 4,
+    "countryKey": 14,
+    "iocCountryCode": "HUN"
+  },
+  "6": {
+    "name": "Imola",
+    "country": "Italy",
+    "years": [2022, 2021, 2020],
+    "circuitKey": 6,
+    "countryKey": 13,
+    "iocCountryCode": "ITA"
+  },
+  "7": {
+    "name": "Spa-Francorchamps",
+    "country": "Belgium",
+    "years": [2021, 2020, 2019, 2018],
+    "circuitKey": 7,
+    "countryKey": 16,
+    "iocCountryCode": "BEL"
+  },
+  "9": {
+    "name": "Austin",
+    "country": "United States",
+    "years": [2021, 2019, 2018],
+    "circuitKey": 9,
+    "countryKey": 19,
+    "iocCountryCode": "USA"
+  },
+  "10": {
+    "name": "Melbourne",
+    "country": "Australia",
+    "years": [2022, 2019],
+    "circuitKey": 10,
+    "countryKey": 5,
+    "iocCountryCode": "AUS"
+  },
+  "14": {
+    "name": "Interlagos",
+    "country": "Brazil",
+    "years": [2023, 2021, 2019, 2018],
+    "circuitKey": 14,
+    "countryKey": 10,
+    "iocCountryCode": "BRA"
+  },
+  "15": {
+    "name": "Catalunya",
+    "country": "Spain",
+    "years": [2023, 2022, 2021, 2020, 2019],
+    "circuitKey": 15,
+    "countryKey": 1,
+    "iocCountryCode": "ESP"
+  },
+  "19": {
+    "name": "Spielberg",
+    "country": "Austria",
+    "years": [2022, 2021, 2020, 2019],
+    "circuitKey": 19,
+    "countryKey": 17,
+    "iocCountryCode": "AUT"
+  },
+  "22": {
+    "name": "Monte Carlo",
+    "country": "Monaco",
+    "years": [2022, 2021, 2019],
+    "circuitKey": 22,
+    "countryKey": 114,
+    "iocCountryCode": "MON"
+  },
+  "23": {
+    "name": "Montreal",
+    "country": "Canada",
+    "years": [2022, 2019],
+    "circuitKey": 23,
+    "countryKey": 46,
+    "iocCountryCode": "CAN"
+  },
+  "28": {
+    "name": "Paul Ricard",
+    "country": "France",
+    "years": [2022, 2021, 2019],
+    "circuitKey": 28,
+    "countryKey": 7,
+    "iocCountryCode": "FRA"
+  },
+  "34": {
+    "name": "Hockenheim",
+    "country": "Germany",
+    "years": [2019],
+    "circuitKey": 34,
+    "countryKey": 3,
+    "iocCountryCode": "GER"
+  },
+  "39": {
+    "name": "Monza",
+    "country": "Italy",
+    "years": [2021, 2020, 2019, 2018],
+    "circuitKey": 39,
+    "countryKey": 13,
+    "iocCountryCode": "ITA"
+  },
+  "46": {
+    "name": "Suzuka",
+    "country": "Japan",
+    "years": [2025, 2019, 2018],
+    "circuitKey": 46,
+    "countryKey": 4,
+    "iocCountryCode": "JPN"
+  },
+  "49": {
+    "name": "Shanghai",
+    "country": "China",
+    "years": [2019, 2018],
+    "circuitKey": 49,
+    "countryKey": 53,
+    "iocCountryCode": "CHN"
+  },
+  "55": {
+    "name": "Zandvoort",
+    "country": "Netherlands",
+    "years": [2021],
+    "circuitKey": 55,
+    "countryKey": 133,
+    "iocCountryCode": "NED"
+  },
+  "59": {
+    "name": "Istanbul",
+    "country": "Turkey",
+    "years": [2021, 2020],
+    "circuitKey": 59,
+    "countryKey": 175,
+    "iocCountryCode": "TUR"
+  },
+  "61": {
+    "name": "Singapore",
+    "country": "Singapore",
+    "years": [2023, 2019, 2018],
+    "circuitKey": 61,
+    "countryKey": 157,
+    "iocCountryCode": "SGP"
+  },
+  "63": {
+    "name": "Sakhir",
+    "country": "Bahrain",
+    "years": [2022, 2021, 2020, 2019],
+    "circuitKey": 63,
+    "countryKey": 36,
+    "iocCountryCode": "BRN"
+  },
+  "65": {
+    "name": "Mexico City",
+    "country": "Mexico",
+    "years": [2021, 2019, 2018],
+    "circuitKey": 65,
+    "countryKey": 8,
+    "iocCountryCode": "MEX"
+  },
+  "70": {
+    "name": "Yas Marina Circuit",
+    "country": "United Arab Emirates",
+    "years": [2021, 2020, 2019, 2018],
+    "circuitKey": 70,
+    "countryKey": 21,
+    "iocCountryCode": "UAE"
+  },
+  "72": {
+    "name": "Nürburgring",
+    "country": "Germany",
+    "years": [2020],
+    "circuitKey": 72,
+    "countryKey": 3,
+    "iocCountryCode": "GER"
+  },
+  "79": {
+    "name": "Sochi",
+    "country": "Russia",
+    "years": [2021, 2020, 2019, 2018],
+    "circuitKey": 79,
+    "countryKey": 12,
+    "iocCountryCode": "RUS"
+  },
+  "144": {
+    "name": "Baku",
+    "country": "Azerbaijan",
+    "years": [2022, 2021, 2019],
+    "circuitKey": 144,
+    "countryKey": 30,
+    "iocCountryCode": "AZE"
+  },
+  "146": {
+    "name": "Mugello",
+    "country": "Italy",
+    "years": [2020],
+    "circuitKey": 146,
+    "countryKey": 13,
+    "iocCountryCode": "ITA"
+  },
+  "147": {
+    "name": "Algarve International Circuit",
+    "country": "Portugal",
+    "years": [2021, 2020],
+    "circuitKey": 147,
+    "countryKey": 146,
+    "iocCountryCode": "POR"
+  },
+  "148": {
+    "name": "Sakhir Outer Track",
+    "country": "Bahrain",
+    "years": [2020],
+    "circuitKey": 148,
+    "countryKey": 36,
+    "iocCountryCode": "BRN"
+  },
+  "149": {
+    "name": "Jeddah",
+    "country": "Saudi Arabia",
+    "years": [2022, 2021],
+    "circuitKey": 149,
+    "countryKey": 153,
+    "iocCountryCode": "KSA"
+  },
+  "150": {
+    "name": "Losail",
+    "country": "Qatar",
+    "years": [2023, 2021],
+    "circuitKey": 150,
+    "countryKey": 149,
+    "iocCountryCode": "QAT"
+  },
+  "151": {
+    "name": "Miami",
+    "country": "United States",
+    "years": [2022],
+    "circuitKey": 151,
+    "countryKey": 19,
+    "iocCountryCode": "USA"
+  },
+  "152": {
+    "name": "Las Vegas",
+    "country": "United States",
+    "years": [2023],
+    "circuitKey": 152,
+    "countryKey": 19,
+    "iocCountryCode": "USA"
+  }
+}
