@@ -34,12 +34,20 @@ dependencies:
 # Dependencies
   cupertino_icons: ^1.0.8
   flashy_tab_bar2: ^0.0.10
+  modal_bottom_sheet: ^3.0.0
   google_fonts: ^6.2.1
+  flutter_svg: ^2.0.17
   icalendar_parser: ^2.1.0
   intl: ^0.20.2
-  flutter_svg: 
   cached_network_image:
   flutter_launcher_icons: ^0.14.3
+  signalr_netcore: ^1.3.3
+  web_socket_channel: ^2.4.0
+  http: ^1.3.0  
+  cookie_jar: ^4.0.3
+  dio: ^5.0.0
+  dio_cookie_manager: ^3.0.0
+  provider: ^6.0.5
 
   
 
@@ -61,6 +69,8 @@ flutter:
   uses-material-design: true
   
   assets:
+
+  # Maps to the assets directory
     - assets/Formula_1.json
     - assets/maps.json
     - assets/TrackMaps/Algarve.json
@@ -95,6 +105,14 @@ flutter:
     - assets/TrackMaps/Suzuka.json
     - assets/TrackMaps/Yas-Marina.json
     - assets/TrackMaps/Zandvoort.json
+
+    # Images
+    - assets/tyres/Soft.svg
+    - assets/tyres/Medium.svg
+    - assets/tyres/Hard.svg
+    - assets/tyres/Intermediate.svg
+    - assets/tyres/unknown.svg
+    
 
   
 

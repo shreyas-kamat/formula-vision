@@ -1,7 +1,9 @@
 import 'package:flashy_tab_bar2/flashy_tab_bar2.dart';
 import 'package:flutter/material.dart';
+import 'package:formulavision/pages/dashboard_page.dart';
 import 'package:formulavision/pages/home_page.dart';
 import 'package:formulavision/pages/schedule_page.dart';
+import 'package:formulavision/pages/speedometer_page.dart';
 import 'package:formulavision/pages/test_page.dart';
 
 class NavPage extends StatefulWidget {
@@ -16,7 +18,7 @@ class _NavPageState extends State<NavPage> {
 
   List<Widget> tabItems = [
     HomePage(),
-    Center(child: Text("1")),
+    DashboardPage(),
     SchedulePage(),
     TestPage(),
   ];

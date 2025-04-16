@@ -1,18 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:formulavision/pages/home_page.dart';
 import 'package:formulavision/pages/nav_page.dart';
+import 'package:provider/provider.dart';
+import 'data/models/live_data.model.dart';
+import 'pages/test_page.dart';
 
 void main() {
-  runApp(const FormulaVisionApp());
+  runApp(const MyApp());
 }
 
-class FormulaVisionApp extends StatelessWidget {
-  const FormulaVisionApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: const NavPage(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<F1DataModel>(
+          create: (_) => F1DataModel(),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'Formula Vision',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+        ),
+        home: const NavPage(),
+      ),
     );
   }
 }
