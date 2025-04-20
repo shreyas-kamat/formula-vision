@@ -2,160 +2,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:formulavision/data/models/live_data.model.dart';
 
-Future<List<SessionInfo>> fetchSessionInfo(dynamic response) async {
-  List<SessionInfo> fetchedData = [];
-
-  // Handle different types of response data
-  if (response is Map<String, dynamic>) {
-    // If it's a map and contains a data field that is iterable
-    if (response.containsKey('data') && response['data'] is Iterable) {
-      for (var dataPacket in response['data']) {
-        final data = SessionInfo(
-          meeting: dataPacket['Meeting'] is Map
-              ? Meeting.fromJson(dataPacket['Meeting'])
-              : Meeting(
-                  key: 0,
-                  name: '',
-                  officialName: '',
-                  location: '',
-                  country: Country(key: 0, code: '', name: ''),
-                  circuit: Circuit(key: 0, shortName: '')),
-          archiveStatus: dataPacket['ArchiveStatus'] is Map
-              ? ArchiveStatus.fromJson(dataPacket['ArchiveStatus'])
-              : ArchiveStatus(status: ''),
-          key: dataPacket['Key'] ?? 0,
-          type: dataPacket['Type'] ?? '',
-          name: dataPacket['Name'] ?? '',
-          startDate: dataPacket['StartDate'] ?? '',
-          endDate: dataPacket['EndDate'] ?? '',
-          gmtOffset: dataPacket['GmtOffset'] ?? '',
-          path: dataPacket['Path'] ?? '',
-          kf: dataPacket['_kf'],
-        );
-        fetchedData.add(data);
-      }
-    } else {
-      // If it's a single session info object
-      final data = SessionInfo(
-        meeting: response['Meeting'] is Map
-            ? Meeting.fromJson(response['Meeting'])
-            : Meeting(
-                key: 0,
-                name: '',
-                officialName: '',
-                location: '',
-                country: Country(key: 0, code: '', name: ''),
-                circuit: Circuit(key: 0, shortName: '')),
-        archiveStatus: response['ArchiveStatus'] is Map
-            ? ArchiveStatus.fromJson(response['ArchiveStatus'])
-            : ArchiveStatus(status: ''),
-        key: response['Key'] ?? 0,
-        type: response['Type'] ?? '',
-        name: response['Name'] ?? '',
-        startDate: response['StartDate'] ?? '',
-        endDate: response['EndDate'] ?? '',
-        gmtOffset: response['GmtOffset'] ?? '',
-        path: response['Path'] ?? '',
-        kf: response['_kf'],
-      );
-      fetchedData.add(data);
-    }
-  } else if (response is Iterable) {
-    // Original behavior for lists
-    for (var dataPacket in response) {
-      final data = SessionInfo(
-        meeting: dataPacket['Meeting'] is Map
-            ? Meeting.fromJson(dataPacket['Meeting'])
-            : Meeting(
-                key: 0,
-                name: '',
-                officialName: '',
-                location: '',
-                country: Country(key: 0, code: '', name: ''),
-                circuit: Circuit(key: 0, shortName: '')),
-        archiveStatus: dataPacket['ArchiveStatus'] is Map
-            ? ArchiveStatus.fromJson(dataPacket['ArchiveStatus'])
-            : ArchiveStatus(
-                status: dataPacket['ArchiveStatus']['Status'] ?? ''),
-        key: dataPacket['Key'] ?? 0,
-        type: dataPacket['Type'] ?? '',
-        name: dataPacket['Name'] ?? '',
-        startDate: dataPacket['StartDate'] ?? '',
-        endDate: dataPacket['EndDate'] ?? '',
-        gmtOffset: dataPacket['GmtOffset'] ?? '',
-        path: dataPacket['Path'] ?? '',
-        kf: dataPacket['_kf'],
-      );
-      fetchedData.add(data);
-    }
-  }
-
-  return fetchedData;
-}
-
-Future<List<WeatherData>> fetchWeatherData(dynamic response) async {
-  List<WeatherData> fetchedData = [];
-
-  // Handle different types of response data
-  if (response is Map<String, dynamic>) {
-    final data = WeatherData(
-      airTemp: response['airTemp']?.toString() ??
-          response['AirTemp']?.toString() ??
-          '',
-      humidity: response['humidity']?.toString() ??
-          response['Humidity']?.toString() ??
-          '',
-      pressure: response['pressure']?.toString() ??
-          response['Pressure']?.toString() ??
-          '',
-      rainfall: response['rainfall']?.toString() ??
-          response['Rainfall']?.toString() ??
-          '',
-      trackTemp: response['trackTemp']?.toString() ??
-          response['TrackTemp']?.toString() ??
-          '',
-      windDirection: response['windDirection']?.toString() ??
-          response['WindDirection']?.toString() ??
-          '',
-      windSpeed: response['windSpeed']?.toString() ??
-          response['WindSpeed']?.toString() ??
-          '',
-    );
-    fetchedData.add(data);
-  } else if (response is Iterable) {
-    // Handle array of weather data
-    for (var item in response) {
-      if (item is Map<String, dynamic>) {
-        final data = WeatherData(
-          airTemp:
-              item['airTemp']?.toString() ?? item['AirTemp']?.toString() ?? '',
-          humidity: item['humidity']?.toString() ??
-              item['Humidity']?.toString() ??
-              '',
-          pressure: item['pressure']?.toString() ??
-              item['Pressure']?.toString() ??
-              '',
-          rainfall: item['rainfall']?.toString() ??
-              item['Rainfall']?.toString() ??
-              '',
-          trackTemp: item['trackTemp']?.toString() ??
-              item['TrackTemp']?.toString() ??
-              '',
-          windDirection: item['windDirection']?.toString() ??
-              item['WindDirection']?.toString() ??
-              '',
-          windSpeed: item['windSpeed']?.toString() ??
-              item['WindSpeed']?.toString() ??
-              '',
-        );
-        fetchedData.add(data);
-      }
-    }
-  }
-
-  return fetchedData;
-}
-
 Future<List<LiveData>> fetchLiveData(dynamic response) async {
   List<LiveData> fetchedData = [];
 
@@ -247,6 +93,28 @@ Future<List<LiveData>> fetchLiveData(dynamic response) async {
                     )
                   : {},
               withheld: response['TimingData']['Withheld'])
+          : null,
+      timingAppData: response['TimingAppData'] is Map
+          ? TimingAppData(
+              lines: response['TimingAppData']['Lines'] is Map
+                  ? Map<String, TimingAppDataDriver>.fromEntries(
+                      (response['TimingAppData']['Lines'] as Map).entries.map(
+                            (entry) => MapEntry(
+                              entry.key,
+                              TimingAppDataDriver.fromJson(entry.value),
+                            ),
+                          ),
+                    )
+                  : {},
+            )
+          : null,
+      extrapolatedClock: response['ExtrapolatedClock'] is Map
+          ? ExtrapolatedClock(
+              utc: response['ExtrapolatedClock']['Utc'] ?? 0,
+              remaining: response['ExtrapolatedClock']['Remaining'] ?? 0,
+              extrapolating:
+                  response['ExtrapolatedClock']['Extrapolating'] ?? 0,
+            )
           : null,
     );
     fetchedData.add(data);

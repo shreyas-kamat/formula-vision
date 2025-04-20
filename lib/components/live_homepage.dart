@@ -84,8 +84,8 @@ class _LiveHomePageState extends State<LiveHomePage> {
                         begin: Alignment.topRight,
                         end: Alignment.bottomLeft,
                         colors: [
-                          Colors.white.withValues(alpha: 0.3),
-                          Colors.white.withValues(alpha: 0.5),
+                          Colors.white.withValues(alpha: 0.4),
+                          Colors.white.withValues(alpha: 0.8),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(20),
@@ -111,21 +111,29 @@ class _LiveHomePageState extends State<LiveHomePage> {
                               ),
                               Spacer(),
                               Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 5),
                                 decoration: BoxDecoration(
                                   color: Colors.red,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 5),
-                                  child: Text('LIVE',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontFamily: 'formula-bold',
-                                        color: Colors.white,
-                                      )),
+                                  shape: BoxShape.circle,
                                 ),
                               ),
+                              // Container(
+                              //   decoration: BoxDecoration(
+                              //     color: Colors.red,
+                              //     borderRadius: BorderRadius.circular(20),
+                              //   ),
+                              //   child: Padding(
+                              //     padding: const EdgeInsets.symmetric(
+                              //         horizontal: 10, vertical: 5),
+                              //     child: Text('LIVE',
+                              //         style: TextStyle(
+                              //           fontSize: 10,
+                              //           fontFamily: 'formula-bold',
+                              //           color: Colors.white,
+                              //         )),
+                              //   ),
+                              // ),
                             ],
                           ),
                           Row(
@@ -139,156 +147,35 @@ class _LiveHomePageState extends State<LiveHomePage> {
                                   color: Colors.white,
                                 ),
                               ),
-                              Text('  |  ',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontFamily: 'formula',
-                                    color: Colors.white,
-                                  )),
-                              Text(
-                                'Buddh International Circuit',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  // fontFamily: 'formula',
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
+                              // Text('  |  ',
+                              //     style: TextStyle(
+                              //       fontSize: 15,
+                              //       fontFamily: 'formula',
+                              //       color: Colors.white,
+                              //     )),
+                              // Text(
+                              //   'Buddh International Circuit',
+                              //   style: TextStyle(
+                              //     fontSize: 15,
+                              //     fontFamily: 'formula',
+                              //     fontWeight: FontWeight.bold,
+                              //     color: Colors.white,
+                              //   ),
+                              // ),
                             ],
                           ),
                           SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Container(
-                                height: 200,
-                                width:
-                                    (MediaQuery.of(context).size.width) * 0.4,
-                                decoration: BoxDecoration(
-                                  // color: Colors.red,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Stack(
-                                  children: [
-                                    Container(
-                                      height: 200,
-                                      width:
-                                          (MediaQuery.of(context).size.width) *
-                                              0.4,
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withOpacity(0.4),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            '44',
-                                            style: TextStyle(
-                                              // color: Colors.white
-                                              //     .withValues(alpha: 0.5),
-                                              fontSize: 100,
-                                              // fontWeight: FontWeight.bold,
-                                              foreground: Paint()
-                                                ..style = PaintingStyle.stroke
-                                                ..strokeWidth = 2
-                                                ..color = Color(0xFFE80020)
-                                                    .withValues(alpha: 1),
-                                              shadows: [
-                                                Shadow(
-                                                  offset: Offset(2, 2),
-                                                  blurRadius: 5,
-                                                  color: Color(0xFFE80020)
-                                                      .withValues(alpha: 0.5),
-                                                ),
-                                              ],
-                                              // fontFamily: GoogleFonts.roboto()
-                                              //     .fontFamily,
-                                              // fontWeight: FontWeight.bold,
-                                              fontFamily: 'formula-bold',
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                            color: Colors.white
-                                                .withValues(alpha: .4),
-                                            width: 2),
-                                      ),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Image.network(
-                                          'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LEWHAM01_Lewis_Hamilton/lewham01.png.transform/1col/image.png', // Replace with your image URL
-                                          fit: BoxFit.cover,
-                                          height: 200,
-                                          width: (MediaQuery.of(context)
-                                                  .size
-                                                  .width) *
-                                              0.4,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                          Container(
+                            height: 200,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              image: DecorationImage(
+                                image: NetworkImage(
+                                    'https://media.formula1.com/image/upload/f_auto,c_limit,w_1440,q_auto/f_auto/q_auto/content/dam/fom-website/2018-redesign-assets/Track%20icons%204x3/Bahrain%20carbon'),
+                                fit: BoxFit.cover,
                               ),
-                              SizedBox(width: 10),
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Lap',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontFamily: 'formula',
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        '23',
-                                        style: TextStyle(
-                                          fontSize: 60,
-                                          fontFamily: 'formula-bold',
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      Text('/50',
-                                          style: TextStyle(
-                                            fontSize: 20,
-                                            fontFamily: 'formula-bold',
-                                            color: Colors.white,
-                                          )),
-                                    ],
-                                  ),
-                                  SizedBox(height: 10),
-                                  Text(
-                                    'Race Leader',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontFamily: 'formula',
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Text(
-                                    'HAM',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontFamily: 'formula-bold',
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              )
-                            ],
+                              borderRadius: BorderRadius.circular(20),
+                            ),
                           ),
                           SizedBox(
                             height: 25,

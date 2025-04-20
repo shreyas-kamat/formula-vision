@@ -165,16 +165,16 @@ class ExtrapolatedClock {
 
   factory ExtrapolatedClock.fromJson(Map<String, dynamic> json) {
     return ExtrapolatedClock(
-      utc: json['utc'] ?? '',
-      remaining: json['remaining'] ?? '',
-      extrapolating: json['extrapolating'] ?? false,
+      utc: json['Utc'] ?? '',
+      remaining: json['Remaining'] ?? '',
+      extrapolating: json['Extrapolating'] ?? false,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'utc': utc,
-        'remaining': remaining,
-        'extrapolating': extrapolating,
+        'Utc': utc,
+        'Remaining': remaining,
+        'Extrapolating': extrapolating,
       };
 }
 
@@ -361,7 +361,7 @@ class TimingStatsDriver {
       racingNumber: json['racingNumber'] ?? '',
       personalBestLapTime: json['personalBestLapTime'] != null
           ? PersonalBestLapTime.fromJson(json['personalBestLapTime'])
-          : PersonalBestLapTime(value: '', position: 0),
+          : PersonalBestLapTime(value: '', lap: 0),
       bestSectors: sectors,
       bestSpeeds: speeds,
     );
@@ -385,23 +385,23 @@ class TimingStatsDriver {
 
 class PersonalBestLapTime {
   final String value;
-  final int position;
+  final int lap;
 
   PersonalBestLapTime({
     required this.value,
-    required this.position,
+    required this.lap,
   });
 
   factory PersonalBestLapTime.fromJson(Map<String, dynamic> json) {
     return PersonalBestLapTime(
-      value: json['value'] ?? '',
-      position: json['position'] ?? 0,
+      value: json['Value'] ?? '',
+      lap: json['Lap'] ?? 0,
     );
   }
 
   Map<String, dynamic> toJson() => {
         'value': value,
-        'position': position,
+        'lap': lap,
       };
 }
 
@@ -452,9 +452,9 @@ class TimingAppDataDriver {
 
   factory TimingAppDataDriver.fromJson(Map<String, dynamic> json) {
     List<Stint> stintsList = [];
-    if (json['stints'] != null) {
+    if (json['Stints'] != null) {
       stintsList = List<Stint>.from(
-        json['stints'].map((x) => Stint.fromJson(x)),
+        json['Stints'].map((x) => Stint.fromJson(x)),
       );
     }
 
@@ -462,7 +462,7 @@ class TimingAppDataDriver {
       racingNumber: json['racingNumber'] ?? '',
       stints: stintsList,
       line: json['line'] ?? 0,
-      gridPos: json['gridPos'] ?? '',
+      gridPos: json['GridPos'] ?? '',
     );
   }
 
@@ -488,7 +488,7 @@ class Stint {
   factory Stint.fromJson(Map<String, dynamic> json) {
     return Stint(
       totalLaps: json['totalLaps'],
-      compound: json['compound'],
+      compound: json['Compound'],
       isNew: json['new'],
     );
   }
@@ -1093,13 +1093,13 @@ class TimingDataDriver {
   final List<TimeDiff>? stats;
   final String? timeDiffToFastest;
   final String? timeDiffToPositionAhead;
-  final String gapToLeader;
-  final IntervalToPositionAhead? intervalToPositionAhead;
-  final int line;
-  final String position;
+  late final String gapToLeader;
+  late final IntervalToPositionAhead? intervalToPositionAhead;
+  late final int line;
+  late final String position;
   final bool showPosition;
   final String racingNumber;
-  final bool retired;
+  late final bool retired;
   final bool inPit;
   final bool pitOut;
   final bool stopped;
@@ -1109,6 +1109,7 @@ class TimingDataDriver {
   final PersonalBestLapTime bestLapTime;
   final I1 lastLapTime;
   final int numberOfLaps;
+  final int numberOfPitStops;
   final bool? knockedOut;
   final bool? cutoff;
 
@@ -1132,6 +1133,7 @@ class TimingDataDriver {
     required this.bestLapTime,
     required this.lastLapTime,
     required this.numberOfLaps,
+    required this.numberOfPitStops,
     this.knockedOut,
     this.cutoff,
   });
@@ -1193,17 +1195,18 @@ class TimingDataDriver {
                   overallFastest: false,
                   personalFastest: false),
             ),
-      bestLapTime: json['bestLapTime'] != null
-          ? PersonalBestLapTime.fromJson(json['bestLapTime'])
-          : PersonalBestLapTime(value: '', position: 0),
-      lastLapTime: json['lastLapTime'] != null
-          ? I1.fromJson(json['lastLapTime'])
+      bestLapTime: json['BestLapTime'] != null
+          ? PersonalBestLapTime.fromJson(json['BestLapTime'])
+          : PersonalBestLapTime(value: '', lap: 0),
+      lastLapTime: json['LastLapTime'] != null
+          ? I1.fromJson(json['LastLapTime'])
           : I1(
               value: '',
               status: 0,
               overallFastest: false,
               personalFastest: false),
       numberOfLaps: json['numberOfLaps'] ?? 0,
+      numberOfPitStops: json['NumberOfPitStops'] ?? 0,
       knockedOut: json['knockedOut'],
       cutoff: json['cutoff'],
     );
@@ -1226,6 +1229,7 @@ class TimingDataDriver {
       'bestLapTime': bestLapTime.toJson(),
       'lastLapTime': lastLapTime.toJson(),
       'numberOfLaps': numberOfLaps,
+      'numberOfPitStops': numberOfPitStops,
     };
     if (stats != null) result['stats'] = stats!.map((x) => x.toJson()).toList();
     if (timeDiffToFastest != null)
@@ -1305,19 +1309,19 @@ class Sector {
 
   factory Sector.fromJson(Map<String, dynamic> json) {
     List<Segment> segmentsList = [];
-    if (json['segments'] != null) {
+    if (json['Segments'] != null) {
       segmentsList = List<Segment>.from(
-        json['segments'].map((x) => Segment.fromJson(x)),
+        json['Segments'].map((x) => Segment.fromJson(x)),
       );
     }
 
     return Sector(
-      stopped: json['stopped'] ?? false,
-      value: json['value'] ?? '',
-      previousValue: json['previousValue'],
-      status: json['status'] ?? 0,
-      overallFastest: json['overallFastest'] ?? false,
-      personalFastest: json['personalFastest'] ?? false,
+      stopped: json['Stopped'] ?? false,
+      value: json['Value'] ?? '',
+      previousValue: json['PreviousValue'],
+      status: json['Status'] ?? 0,
+      overallFastest: json['OverallFastest'] ?? false,
+      personalFastest: json['PersonalFastest'] ?? false,
       segments: segmentsList,
     );
   }
@@ -1345,7 +1349,7 @@ class Segment {
 
   factory Segment.fromJson(Map<String, dynamic> json) {
     return Segment(
-      status: json['status'] ?? 0,
+      status: json['Status'] ?? 0,
     );
   }
 
@@ -1369,29 +1373,29 @@ class Speeds {
 
   factory Speeds.fromJson(Map<String, dynamic> json) {
     return Speeds(
-      i1: json['i1'] != null
-          ? I1.fromJson(json['i1'])
+      i1: json['I1'] != null
+          ? I1.fromJson(json['I1'])
           : I1(
               value: '',
               status: 0,
               overallFastest: false,
               personalFastest: false),
-      i2: json['i2'] != null
-          ? I1.fromJson(json['i2'])
+      i2: json['I2'] != null
+          ? I1.fromJson(json['I2'])
           : I1(
               value: '',
               status: 0,
               overallFastest: false,
               personalFastest: false),
-      fl: json['fl'] != null
-          ? I1.fromJson(json['fl'])
+      fl: json['FL'] != null
+          ? I1.fromJson(json['FL'])
           : I1(
               value: '',
               status: 0,
               overallFastest: false,
               personalFastest: false),
-      st: json['st'] != null
-          ? I1.fromJson(json['st'])
+      st: json['ST'] != null
+          ? I1.fromJson(json['ST'])
           : I1(
               value: '',
               status: 0,
@@ -1423,10 +1427,10 @@ class I1 {
 
   factory I1.fromJson(Map<String, dynamic> json) {
     return I1(
-      value: json['value'] ?? '',
-      status: json['status'] ?? 0,
-      overallFastest: json['overallFastest'] ?? false,
-      personalFastest: json['personalFastest'] ?? false,
+      value: json['Value'] ?? '',
+      status: json['Status'] ?? 0,
+      overallFastest: json['OverallFastest'] ?? false,
+      personalFastest: json['PersonalFastest'] ?? false,
     );
   }
 
