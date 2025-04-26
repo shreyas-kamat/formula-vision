@@ -4,6 +4,7 @@ import 'package:formulavision/pages/dashboard_page.dart';
 import 'package:formulavision/pages/home_page.dart';
 import 'package:formulavision/pages/schedule_page.dart';
 import 'package:formulavision/pages/speedometer_page.dart';
+import 'package:formulavision/pages/standings_page.dart';
 import 'package:formulavision/pages/test_page.dart';
 
 class NavPage extends StatefulWidget {
@@ -20,7 +21,7 @@ class _NavPageState extends State<NavPage> {
     HomePage(),
     DashboardPage(),
     SchedulePage(),
-    TestPage(),
+    StandingsPage(),
   ];
 
   @override
@@ -65,7 +66,7 @@ class _NavPageState extends State<NavPage> {
                 inactiveColor: Colors.white),
             FlashyTabBarItem(
                 icon: Icon(Icons.leaderboard),
-                title: Text('Testing'),
+                title: Text('Standings'),
                 activeColor: Colors.redAccent,
                 inactiveColor: Colors.white),
           ],

@@ -6,8 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:formulavision/data/functions/race.function.dart';
 import 'package:formulavision/data/functions/racedriver.function.dart';
-import 'package:formulavision/data/models/meeting.model.dart';
-import 'package:formulavision/data/models/racedriver.model.dart';
+import 'package:formulavision/data/models/openf1/meeting.model.dart';
+import 'package:formulavision/data/models/openf1/racedriver.model.dart';
 import 'package:formulavision/live/live_timing_service.dart';
 import 'package:http/http.dart' as http;
 

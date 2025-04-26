@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'package:formulavision/data/models/driver.model.dart';
-import 'package:formulavision/data/models/meeting.model.dart';
-import 'package:formulavision/data/models/position.model.dart';
-import 'package:formulavision/data/models/session.model.dart';
-import 'package:formulavision/data/models/stint.model.dart';
+import 'package:formulavision/data/models/openf1/driver.model.dart';
+import 'package:formulavision/data/models/openf1/meeting.model.dart';
+import 'package:formulavision/data/models/openf1/position.model.dart';
+import 'package:formulavision/data/models/openf1/session.model.dart';
+import 'package:formulavision/data/models/openf1/stint.model.dart';
 import 'package:http/http.dart' as http;
 
 Future<List<Meeting>> fetchLatestMeetings() async {

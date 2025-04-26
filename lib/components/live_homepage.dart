@@ -284,75 +284,75 @@ class _LiveHomePageState extends State<LiveHomePage> {
 
                   SizedBox(height: 20),
 
-                  Column(
-                    children: [
-                      Container(
-                          height: 80,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withValues(alpha: 0.3),
-                                blurRadius: 20,
-                                spreadRadius: 5,
-                              ),
-                            ],
-                            gradient: LinearGradient(
-                              begin: Alignment.topRight,
-                              end: Alignment.bottomLeft,
-                              colors: [
-                                Colors.white.withValues(alpha: 0.3),
-                                Colors.white.withValues(alpha: 0.5),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: Center(
-                              child: Text('Driver Standings',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 25,
-                                    fontFamily: 'formula-bold',
-                                  )),
-                            ),
-                          )),
-                      SizedBox(height: 20),
-                      Container(
-                          height: 80,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withValues(alpha: 0.3),
-                                blurRadius: 20,
-                                spreadRadius: 5,
-                              ),
-                            ],
-                            gradient: LinearGradient(
-                              begin: Alignment.topRight,
-                              end: Alignment.bottomLeft,
-                              colors: [
-                                Colors.white.withValues(alpha: 0.3),
-                                Colors.white.withValues(alpha: 0.5),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: Center(
-                              child: Text('Constructor Standings',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 25,
-                                    fontFamily: 'formula-bold',
-                                  )),
-                            ),
-                          )),
-                    ],
-                  )
+                  // Column(
+                  //   children: [
+                  //     Container(
+                  //         height: 80,
+                  //         width: double.infinity,
+                  //         decoration: BoxDecoration(
+                  //           boxShadow: [
+                  //             BoxShadow(
+                  //               color: Colors.grey.withValues(alpha: 0.3),
+                  //               blurRadius: 20,
+                  //               spreadRadius: 5,
+                  //             ),
+                  //           ],
+                  //           gradient: LinearGradient(
+                  //             begin: Alignment.topRight,
+                  //             end: Alignment.bottomLeft,
+                  //             colors: [
+                  //               Colors.white.withValues(alpha: 0.3),
+                  //               Colors.white.withValues(alpha: 0.5),
+                  //             ],
+                  //           ),
+                  //           borderRadius: BorderRadius.circular(20),
+                  //         ),
+                  //         child: Padding(
+                  //           padding: const EdgeInsets.all(10.0),
+                  //           child: Center(
+                  //             child: Text('Driver Standings',
+                  //                 style: TextStyle(
+                  //                   color: Colors.white,
+                  //                   fontSize: 25,
+                  //                   fontFamily: 'formula-bold',
+                  //                 )),
+                  //           ),
+                  //         )),
+                  //     SizedBox(height: 20),
+                  //     Container(
+                  //         height: 80,
+                  //         width: double.infinity,
+                  //         decoration: BoxDecoration(
+                  //           boxShadow: [
+                  //             BoxShadow(
+                  //               color: Colors.grey.withValues(alpha: 0.3),
+                  //               blurRadius: 20,
+                  //               spreadRadius: 5,
+                  //             ),
+                  //           ],
+                  //           gradient: LinearGradient(
+                  //             begin: Alignment.topRight,
+                  //             end: Alignment.bottomLeft,
+                  //             colors: [
+                  //               Colors.white.withValues(alpha: 0.3),
+                  //               Colors.white.withValues(alpha: 0.5),
+                  //             ],
+                  //           ),
+                  //           borderRadius: BorderRadius.circular(20),
+                  //         ),
+                  //         child: Padding(
+                  //           padding: const EdgeInsets.all(10.0),
+                  //           child: Center(
+                  //             child: Text('Constructor Standings',
+                  //                 style: TextStyle(
+                  //                   color: Colors.white,
+                  //                   fontSize: 25,
+                  //                   fontFamily: 'formula-bold',
+                  //                 )),
+                  //           ),
+                  //         )),
+                  //   ],
+                  // )
                 ],
               ),
             ),

@@ -127,6 +127,15 @@ class F1Event {
   }
 }
 
+String truncate(
+  String text,
+  int maxLength, {
+  String suffix = '...',
+}) {
+  if (text.length <= maxLength) return text;
+  return '${text.substring(0, maxLength)}$suffix';
+}
+
 class RaceWeekend {
   final String name;
   final String location;
@@ -285,7 +294,7 @@ class _SchedulePageState extends State<SchedulePage> {
                         fontSize: 30,
                         fontFamily: 'formula-bold'),
                   ),
-                  SizedBox(height: 20),
+                  SizedBox(height: 15),
                   Container(
                     height: MediaQuery.of(context).size.height * 0.8,
                     width: double.infinity,
@@ -332,21 +341,21 @@ class _SchedulePageState extends State<SchedulePage> {
 
   Widget _buildRaceWeekendPanel(RaceWeekend raceWeekend) {
     return Container(
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
       child: Theme(
         data: Theme.of(context).copyWith(
           dividerColor: Colors.transparent, // Removes the divider line
         ),
         child: ExpansionTile(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(12),
           ),
           clipBehavior:
               Clip.antiAlias, // Ensures content respects border radius
           backgroundColor: Colors.white.withValues(alpha: 0.2),
           collapsedBackgroundColor: Colors.white.withValues(alpha: 0.5),
           collapsedShape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(12),
           ),
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,20 +373,24 @@ class _SchedulePageState extends State<SchedulePage> {
               SizedBox(height: 4),
               Row(
                 children: [
-                  Icon(Icons.location_on, color: Colors.white70, size: 14),
                   SizedBox(width: 4),
                   Text(
-                    raceWeekend.location,
+                    raceWeekend.dateRange,
                     style: TextStyle(
                       color: Colors.white70,
                       fontSize: 14,
                     ),
                   ),
-                  SizedBox(width: 10),
-                  Icon(Icons.calendar_today, color: Colors.white70, size: 14),
-                  SizedBox(width: 4),
+                  SizedBox(width: 5),
+                  Text('|',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      )),
+                  SizedBox(width: 5),
                   Text(
-                    raceWeekend.dateRange,
+                    truncate(raceWeekend.location, 13),
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Colors.white70,
                       fontSize: 14,

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:formulavision/data/models/driver.model.dart';
-import 'package:formulavision/data/models/interval.model.dart'
+import 'package:formulavision/data/models/openf1/driver.model.dart';
+import 'package:formulavision/data/models/openf1/interval.model.dart'
     as custom_interval;
-import 'package:formulavision/data/models/lap.model.dart';
-import 'package:formulavision/data/models/pit.model.dart';
-import 'package:formulavision/data/models/position.model.dart';
-import 'package:formulavision/data/models/stint.model.dart';
+import 'package:formulavision/data/models/openf1/lap.model.dart';
+import 'package:formulavision/data/models/openf1/pit.model.dart';
+import 'package:formulavision/data/models/openf1/position.model.dart';
+import 'package:formulavision/data/models/openf1/stint.model.dart';
 
 class RaceDriverInfo {
   final Driver driver;

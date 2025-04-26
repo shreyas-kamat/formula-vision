@@ -1018,7 +1018,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
               style: const TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
             ),
             Text(
-              'Note: Currently the data displayed is updated but it is unstable.',
+              'Note: Currently the data displayed is updated but it is unstable. (Live Data Fetching is only available on my local machine, the NodeJS API will be made public soon [stable])',
               style: TextStyle(
                   fontSize: 12,
                   fontStyle: FontStyle.italic,
