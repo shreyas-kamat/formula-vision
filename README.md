@@ -79,8 +79,8 @@ flutter run
 
 ## Credits
 This project uses the following open-source packages:
-- [Jolpica-F1]([url](https://github.com/jolpica/jolpica-f1))
-- [Flutter]([url](https://flutter.dev/))
+- [Jolpica-F1](https://github.com/jolpica/jolpica-f1)
+- [Flutter](https://flutter.dev/)
 
 ## License
-This Project is licensed under the Apache License v2.0 which can be found [here]([url](https://github.com/skat9234/formula-vision/blob/main/LICENSE))
+This Project is licensed under the Apache License v2.0 which can be found [here](https://github.com/skat9234/formula-vision/blob/main/LICENSE)
