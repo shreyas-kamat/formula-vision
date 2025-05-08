@@ -256,11 +256,20 @@ class CircuitPainter extends CustomPainter {
     // Close the path for a complete circuit
     circuitPath.close();
 
+    // Draw the black highlight
+    final highlightPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.4)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth =
+          (4.0 * scale) + (10.0 * scale) // Thicker than the white line
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPath(circuitPath, highlightPaint);
+
     // Draw the circuit path
     final trackPaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0 * scale
+      ..strokeWidth = 4.0 * scale
       ..strokeCap = StrokeCap.round;
 
     canvas.drawPath(circuitPath, trackPaint);
@@ -295,7 +304,7 @@ class CircuitPainter extends CustomPainter {
             text: corner['number'].toString(),
             style: TextStyle(
               color: Colors.white,
-              fontSize: 10.0 * scale,
+              fontSize: 8.0 * scale,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -316,7 +325,7 @@ class CircuitPainter extends CustomPainter {
     // Draw marshal lights
     if (circuitData.containsKey('marshalLights')) {
       final lightsPaint = Paint()
-        ..color = Colors.yellow
+        ..color = Colors.yellow.withValues(alpha: 0.5)
         ..style = PaintingStyle.fill;
 
       for (var light in circuitData['marshalLights']) {
