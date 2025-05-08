@@ -171,7 +171,6 @@ class _CircuitListState extends State<CircuitList> {
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
-            iconTheme: IconThemeData(color: Colors.white),
             title: Text(
               'Formula 1 Circuits',
               style: TextStyle(
@@ -180,30 +179,30 @@ class _CircuitListState extends State<CircuitList> {
               ),
             ),
             actions: [
-              // Switch(
-              //   value: _showOnlyCurrentSeason,
-              //   onChanged: (value) {
-              //     setState(() {
-              //       _showOnlyCurrentSeason = value;
-              //     });
-              //   },
-              //   activeColor: Colors.red,
-              //   activeTrackColor: Colors.red.withOpacity(0.3),
-              //   inactiveThumbColor: Colors.white,
-              //   inactiveTrackColor: Colors.white.withOpacity(0.3),
-              // ),
-              // Padding(
-              //   padding: const EdgeInsets.only(right: 16.0),
-              //   child: Center(
-              //     child: Text(
-              //       '2025 Season',
-              //       style: TextStyle(
-              //         color: Colors.white,
-              //         fontSize: 12,
-              //       ),
-              //     ),
-              //   ),
-              // ),
+              Switch(
+                value: _showOnlyCurrentSeason,
+                onChanged: (value) {
+                  setState(() {
+                    _showOnlyCurrentSeason = value;
+                  });
+                },
+                activeColor: Colors.red,
+                activeTrackColor: Colors.red.withOpacity(0.3),
+                inactiveThumbColor: Colors.white,
+                inactiveTrackColor: Colors.white.withOpacity(0.3),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(right: 16.0),
+                child: Center(
+                  child: Text(
+                    '2025 Season',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
           body: _isLoading

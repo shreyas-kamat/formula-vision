@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:formulavision/pages/nav_page.dart';
 import 'package:provider/provider.dart';
 import 'data/models/live_data.model.dart';
 import 'pages/test_page.dart';
 
-Future main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
+void main() {
   runApp(const MyApp());
 }
 
