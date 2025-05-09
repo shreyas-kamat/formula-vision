@@ -1201,7 +1201,7 @@ class TimingDataDriver {
       lastLapTime: json['LastLapTime'] != null
           ? I1.fromJson(json['LastLapTime'])
           : I1(
-              value: '',
+              value: '-:--.---',
               status: 0,
               overallFastest: false,
               personalFastest: false),
