@@ -68,7 +68,11 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
   @override
   void dispose() {
-    _disconnectFromServer();
+    if (_sseSubscription != null) {
+      _sseSubscription!.cancel();
+      _sseSubscription = null;
+    }
+    _liveDataController.close(); // Close the StreamController
     super.dispose();
   }
 
@@ -189,11 +193,13 @@ class _TelemetryPageState extends State<TelemetryPage> {
         },
         onError: (error) {
           print('SSE stream error: $error');
-          setState(() {
-            _isConnected = false;
-            _connectionStatus = "SSE connection error";
-            _errorMessage = error.toString();
-          });
+          if (mounted) {
+            setState(() {
+              _isConnected = false;
+              _connectionStatus = "SSE connection error";
+              _errorMessage = error.toString();
+            });
+          }
           client.close();
         },
         onDone: () {
@@ -216,16 +222,17 @@ class _TelemetryPageState extends State<TelemetryPage> {
   }
 
   void _disconnectFromServer() {
-    // Cancel SSE subscription if active
     if (_sseSubscription != null) {
       _sseSubscription!.cancel();
       _sseSubscription = null;
     }
 
-    setState(() {
-      _isConnected = false;
-      _connectionStatus = "Disconnected";
-    });
+    if (mounted) {
+      setState(() {
+        _isConnected = false;
+        _connectionStatus = "Disconnected";
+      });
+    }
   }
 
   void _processTelemetryData(dynamic data) {

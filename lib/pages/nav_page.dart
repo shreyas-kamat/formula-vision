@@ -1,5 +1,8 @@
 import 'package:flashy_tab_bar2/flashy_tab_bar2.dart';
 import 'package:flutter/material.dart';
+import 'package:formulavision/auth/email_verification.dart';
+import 'package:formulavision/auth/forgotpw_page.dart';
+import 'package:formulavision/auth/login_page.dart';
 import 'package:formulavision/pages/dashboard_page.dart';
 import 'package:formulavision/pages/home_page.dart';
 import 'package:formulavision/pages/schedule_page.dart';
@@ -22,6 +25,7 @@ class _NavPageState extends State<NavPage> {
     DashboardPage(),
     SchedulePage(),
     StandingsPage(),
+    TestPage(),
   ];
 
   @override
@@ -67,6 +71,11 @@ class _NavPageState extends State<NavPage> {
             FlashyTabBarItem(
                 icon: Icon(Icons.leaderboard),
                 title: Text('Standings'),
+                activeColor: Colors.redAccent,
+                inactiveColor: Colors.white),
+            FlashyTabBarItem(
+                icon: Icon(Icons.science),
+                title: Text('Testing'),
                 activeColor: Colors.redAccent,
                 inactiveColor: Colors.white),
           ],

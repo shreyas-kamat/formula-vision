@@ -51,7 +51,7 @@ dependencies:
   shared_preferences:
   flutter_native_splash: ^2.4.4
   flutter_dotenv: ^5.2.1
-  
+  jwt_decoder: ^2.0.1
 
 dev_dependencies:
   flutter_test:
@@ -73,6 +73,8 @@ flutter:
   assets:
 
     - .env
+
+    - assets/logo/MainLogo.png
 
   # Maps to the assets directory
     - assets/Formula_1.json

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:formulavision/data/functions/live_data.function.dart';
 import 'package:formulavision/data/models/live_data.model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LiveHomePage extends StatefulWidget {
   const LiveHomePage({super.key});
@@ -14,6 +15,7 @@ class LiveHomePage extends StatefulWidget {
 }
 
 class _LiveHomePageState extends State<LiveHomePage> {
+  String username = 'User';
   bool isRaining = false;
   int windAngle = 135; // Angle in degrees (0-360) for wind direction
   String _connectionStatus = "Disconnected";
@@ -28,6 +30,18 @@ class _LiveHomePageState extends State<LiveHomePage> {
     // TODO: implement initState
     super.initState();
     _initialize();
+    fetchUserName().then((userName) {
+      setState(() {
+        username = userName;
+        print('User Name: $userName');
+      });
+    });
+  }
+
+  Future<String> fetchUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? userName = prefs.getString('username');
+    return userName ?? 'User';
   }
 
   Future<void> _initialize() async {
@@ -51,7 +65,7 @@ class _LiveHomePageState extends State<LiveHomePage> {
         }
 
         imageUrl =
-            'https://media.formula1.com/image/upload/f_auto,c_limit,w_1440,q_auto/f_auto/q_auto/content/dam/fom-website/2018-redesign-assets/Track%20icons%204x3/${location}%20carbon';
+            'https://media.formula1.com/image/upload/f_auto,c_limit,w_1440,q_auto/f_auto/q_auto/content/dam/fom-website/2018-redesign-assets/Track%20icons%204x3/$location%20carbon';
         print(liveDataList[0].sessionInfo?.meeting.country.name);
       }
     }
@@ -117,7 +131,7 @@ class _LiveHomePageState extends State<LiveHomePage> {
                     ),
                     Row(
                       children: [
-                        Text('User',
+                        Text(username,
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 25,
