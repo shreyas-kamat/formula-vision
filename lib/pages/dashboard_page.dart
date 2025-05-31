@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:formulavision/data/functions/live_data.function.dart';
 import 'package:formulavision/data/models/live_data.model.dart';
@@ -47,17 +48,22 @@ class _TelemetryPageState extends State<TelemetryPage> {
   bool _useSimulation = false;
   bool _useSSE = true; // Add flag to use SSE instead of WebSockets
 
-  // Server URL - update this with your server address
-  final String _serverUrl = 'http://192.168.100.238:3000';
-
   final _liveDataController = StreamController<List<LiveData>>.broadcast();
   Stream<List<LiveData>> get liveDataStream => _liveDataController.stream;
 
   @override
   void initState() {
     super.initState();
-    fetchInitialData();
-    _connectSSE();
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    await fetchInitialData();
+    // Only connect to SSE if initial data was fetched successfully
+    // and we are not already connected.
+    if (_connectionStatus == "Initial data loaded" && !_isConnected) {
+      await _connectSSE();
+    }
   }
 
   @override
@@ -74,7 +80,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
     try {
       final response = await http.get(
-        Uri.parse('$_serverUrl/initialData'),
+        Uri.parse('${dotenv.env['API_URL']}/initialData'),
       );
 
       if (response.statusCode == 200) {
@@ -111,7 +117,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
     try {
       // Negotiate connection with simulation parameter
       final response = await http.get(
-        Uri.parse('$_serverUrl/negotiate?simulation=${_useSimulation}'),
+        Uri.parse(
+            '${dotenv.env['API_URL']}/negotiate?simulation=${_useSimulation}'),
       );
 
       if (response.statusCode == 200) {
@@ -135,7 +142,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
   Future<void> _connectSSE() async {
     try {
       final sseUrl =
-          '$_serverUrl/events${_useSimulation ? '?simulation=true' : ''}';
+          '${dotenv.env['API_URL']}/events${_useSimulation ? '?simulation=true' : ''}';
       print('Connecting to SSE endpoint: $sseUrl');
 
       // Create a client that doesn't automatically close the connection
@@ -230,83 +237,100 @@ class _TelemetryPageState extends State<TelemetryPage> {
     if (data is Map) {
       // SignalR connection init message (has "C" key)
       if (data.containsKey('C')) {
-        print('Received SignalR connection message with ID: ${data['C']}');
+        print('Received Partial Update Message with ID: ${data['C']}');
         // This is just a connection message, not actual data
         setState(() {});
       }
-      // if (data.containsKey('R')) {
-      //   print('Received Initial Data: ${data['R']}');
-      //   // Process Initial Data and Store Locally
-      //   if (data['R'].containsKey('SessionInfo')) {
-      //     setState(() {
-      //       // _sessionInfoFuture = fetchSessionInfo(data['R']['SessionInfo']);
-      //     });
-      //     print(_sessionInfoFuture.toString());
-      //   } else {
-      //     print('No SessionInfo found in initial data');
-      //   }
-      //   return;
-      // }
 
       // Handle different types of messages
-      if (data.containsKey('M')) {
-        print('Data contains M key');
-
+      if (data.containsKey('M') && data['M'] is List) {
         final messageArray = data['M'];
-        if (messageArray.isNotEmpty && messageArray[0] is Map) {
-          final message = messageArray[0];
-          if (message.containsKey('A') &&
-              message['A'] is List &&
-              message['A'].isNotEmpty) {
-            final messageType = message['A'][0];
-            if (message['A'].length > 1) {
-              final updated = message['A'][1];
+        print('Processing ${messageArray.length} messages in update');
 
-              if (messageType == 'ExtrapolatedClock') {
-                setState(() {
-                  _updateExtrapolatedClock(updated);
-                });
-                print('ExtrapolatedClock Updated Successfully: $updated');
-              }
+        // Process each message in the array
+        for (var messageObject in messageArray) {
+          if (messageObject is Map &&
+              messageObject.containsKey('A') &&
+              messageObject['A'] is List &&
+              messageObject['A'].isNotEmpty) {
+            final messageType = messageObject['A'][0];
 
-              if (messageType == 'WeatherData') {
-                setState(() {
-                  _updateWeatherData(updated);
-                });
-                print('WeatherData Updated Successfully: $updated');
-              } else if (messageType == 'SessionInfo') {
-                setState(() {
-                  _updateSessionInfo(updated);
-                });
-                print('SessionInfo Updated Successfully: $updated');
-              } else if (messageType == 'TimingData') {
-                setState(() {
-                  _updateTimingData(updated);
-                });
-                print('TimingData Updated Successfully: $updated');
-              } else if (messageType == 'DriverList') {
-                setState(() {
-                  _updateDriverList(updated);
-                });
-                print('DriverList Updated Successfully: $updated');
-              } else if (messageType == 'TrackStatus') {
-                setState(() {
-                  _updateTrackStatus(updated);
-                });
-                print('TrackStatus Updated Successfully: $updated');
-              } else {
-                print('No relevant data found in message type: $messageType');
+            if (messageObject['A'].length > 1) {
+              final updated = messageObject['A'][1];
+              final timestamp =
+                  messageObject['A'].length > 2 ? messageObject['A'][2] : null;
+
+              print(
+                  'Processing $messageType update with timestamp: $timestamp');
+
+              // Handle each message type appropriately
+              switch (messageType) {
+                case 'ExtrapolatedClock':
+                  setState(() {
+                    _updateExtrapolatedClock(updated);
+                  });
+                  print('ExtrapolatedClock Updated Successfully');
+                  break;
+
+                case 'WeatherData':
+                  setState(() {
+                    _updateWeatherData(updated);
+                  });
+                  print('WeatherData Updated Successfully');
+                  break;
+
+                case 'SessionInfo':
+                  setState(() {
+                    _updateSessionInfo(updated);
+                  });
+                  print('SessionInfo Updated Successfully');
+                  break;
+
+                case 'TimingData':
+                  setState(() {
+                    _updateTimingData(updated);
+                  });
+                  print('TimingData Updated Successfully');
+                  break;
+
+                // case 'TimingAppData':
+                //   setState(() {
+                //     _updateTimingAppData(updated);
+                //   });
+                //   print('TimingAppData Updated Successfully');
+                //   break;
+
+                case 'DriverList':
+                  setState(() {
+                    _updateDriverList(updated);
+                  });
+                  print('DriverList Updated Successfully');
+                  break;
+
+                case 'TrackStatus':
+                  setState(() {
+                    _updateTrackStatus(updated);
+                  });
+                  print('TrackStatus Updated Successfully');
+                  break;
+
+                default:
+                  print('No handler for message type: $messageType');
               }
             } else {
-              print('Message "A" array does not contain data payload');
+              print('Message "$messageType" has no data payload');
             }
           } else {
-            print('Message does not contain valid "A" array');
+            print('Message does not contain valid "A" array structure');
           }
-        } else {
-          print('M array is empty or does not contain expected structure');
         }
       }
+    }
+    // After processing all updates in a batch
+    if (_liveDataController != null && !_liveDataController.isClosed) {
+      _liveDataFuture!.then((liveDataList) {
+        _liveDataController.add(liveDataList);
+      });
     }
   }
 
@@ -700,7 +724,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
                       final lastLapData =
                           driverData['LastLapTime'] as Map<String, dynamic>;
                       updatedLastLap = I1(
-                        value: lastLapData['Value'] ?? '',
+                        value: lastLapData['Value'] ?? '-:--.---',
                         status: lastLapData['Status'] ?? 0,
                         overallFastest: lastLapData['OverallFastest'] ?? false,
                         personalFastest:
@@ -710,7 +734,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
                       updatedLastLap = currentDriverData!.lastLapTime;
                     } else {
                       updatedLastLap = I1(
-                        value: '',
+                        value: '-:--.---',
                         status: 0,
                         overallFastest: false,
                         personalFastest: false,
@@ -1054,48 +1078,48 @@ class _TelemetryPageState extends State<TelemetryPage> {
                                         liveData[0].trackStatus!),
                                     _buildWeatherCard(liveData[0].weatherData!),
 
-                                    // SingleChildScrollView(
-                                    //   scrollDirection: Axis.horizontal,
-                                    //   child: Row(
-                                    //     children: [
-                                    //       Text('Pos',
-                                    //           style: TextStyle(
-                                    //               color: Colors.white,
-                                    //               fontWeight: FontWeight.bold)),
-                                    //       SizedBox(width: 30),
-                                    //       Text('Driver',
-                                    //           style: TextStyle(
-                                    //               color: Colors.white,
-                                    //               fontWeight: FontWeight.bold)),
-                                    //       SizedBox(
-                                    //           width:
-                                    //               50), // Match spacing in rows
-                                    //       Text('Fastest Lap',
-                                    //           style: TextStyle(
-                                    //               color: Colors.white,
-                                    //               fontWeight: FontWeight.bold)),
-                                    //       SizedBox(width: 20),
-                                    //       Text('Interval',
-                                    //           style: TextStyle(
-                                    //               color: Colors.white,
-                                    //               fontWeight: FontWeight.bold)),
-                                    //       SizedBox(width: 20),
-                                    //       Text('Tyres',
-                                    //           style: TextStyle(
-                                    //               color: Colors.white,
-                                    //               fontWeight: FontWeight.bold)),
-                                    //       SizedBox(width: 20),
-                                    //       Text('Pit',
-                                    //           style: TextStyle(
-                                    //               color: Colors.white,
-                                    //               fontWeight: FontWeight.bold)),
-                                    //     ],
-                                    //   ),
-                                    // ),
-                                    // _buildDriverList(
-                                    //     liveData[0].driverList!.drivers,
-                                    //     liveData[0].timingData!.lines,
-                                    //     liveData[0].timingAppData!.lines),
+                                    SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      child: Row(
+                                        children: [
+                                          Text('Pos',
+                                              style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold)),
+                                          SizedBox(width: 30),
+                                          Text('Driver',
+                                              style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold)),
+                                          SizedBox(
+                                              width:
+                                                  50), // Match spacing in rows
+                                          Text('Current Lap',
+                                              style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold)),
+                                          SizedBox(width: 20),
+                                          Text('Interval',
+                                              style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold)),
+                                          SizedBox(width: 20),
+                                          Text('Tyres',
+                                              style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold)),
+                                          SizedBox(width: 20),
+                                          Text('Pit',
+                                              style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold)),
+                                        ],
+                                      ),
+                                    ),
+                                    _buildDriverList(
+                                        liveData[0].driverList!.drivers,
+                                        liveData[0].timingData!.lines,
+                                        liveData[0].timingAppData!.lines),
                                   ],
                                 );
                               } else if (snapshot.hasError) {
