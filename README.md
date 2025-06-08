@@ -1,7 +1,7 @@
 
 <h1 align="center">
   <br>
-    <a href="https://github.com/skat9234/formula-vision"><img src="https://github.com/user-attachments/assets/c7363ebc-9bd2-47bf-b631-49e61968f9d6" alt="Fladder" width="200"></a>
+    <a href="https://github.com/skat9234/formula-vision"><img src="https://github.com/user-attachments/assets/c7363ebc-9bd2-47bf-b631-49e61968f9d6" alt="FormulaVision" width="200"></a>
   <br>
   FormulaVision
   <br>
