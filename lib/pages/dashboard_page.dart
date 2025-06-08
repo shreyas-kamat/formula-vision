@@ -16,7 +16,7 @@ class DashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'F1 Live Telemetry',
+      title: 'Live',
       theme: ThemeData(
         primarySwatch: Colors.red,
         brightness: Brightness.dark,
