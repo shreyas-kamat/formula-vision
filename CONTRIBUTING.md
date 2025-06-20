@@ -3,7 +3,7 @@ Welcome to Formula-Vision, a Flutter-based project for Live Data, Championship S
 
 ### Table Of Contents
 - <a href="#contributor-license-agreement">License Agreement</a>
-- <a href=" #how-to-contribute">How to Contribute</a>
+- <a href="#how-to-contribute">How to Contribute</a>
 - <a href="#development-setup">Development Setup</a>
 - <a href="#commit--branch-creation-format">Commit & Branch Creation Format</a>
 
@@ -33,7 +33,7 @@ If you do not agree to these terms, please do not submit contributions to this p
 ### Did you patch that **successfully** fixes a bug?
 * Make sure your changes don't affect any other features (App is Stable)
 * Make a Github [Pull Request](https://github.com/shreyas-kamat/formula-vision/pulls)
-* Ensure you follow [Commit Style Guidelines](url) while doing so.
+* Ensure you follow [Commit Style Guidelines](https://github.com/shreyas-kamat/formula-vision/edit/main/CONTRIBUTING.md#commit--branch-creation-format) while doing so.
 * Ensure the PR description clearly describes the problem and solution. Include the relevant issue number if applicable.
 * Before submitting, please read the [License](/LICENSE) and [Contributor License Agreement](#contributor-license-agreement) as by contributing and submitting a PR you agree to follow both.
 
