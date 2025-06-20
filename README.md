@@ -15,7 +15,7 @@
   <a href="#screenshots">Screenshots</a> •
   <a href="#planned-features">Planned Features</a> •
   <a href="#downloads">Downloads</a> •
-  <a href="#contributing-guidelines">Contributing</a> •
+  <a href="https://github.com/shreyas-kamat/formula-vision/blob/main/CONTRIBUTING.md">Contributing</a> •
   <a href="#credits">Credits</a> •
   <a href="#license">License</a>
 </p>
@@ -61,21 +61,7 @@ The stable features functioning properly are:
 [Releases](https://github.com/skat9234/formula-vision/releases)
 
 ## Contributing Guidelines
-Clone the repository
-```
-git clone https://github.com/skat9234/formula-vision.git
-cd formula-vision
-```
-Download Packages
-```
-flutter pub get
-```
-Run the Project
-```
-flutter run
-```
-
-**More Contributing Guidelines to be added soon**
+[Refer](https://github.com/shreyas-kamat/formula-vision/blob/main/CONTRIBUTING.md)
 
 ## Credits
 This project uses the following open-source packages:
