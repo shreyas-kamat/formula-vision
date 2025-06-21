@@ -17,7 +17,8 @@
   <a href="#downloads">Downloads</a> •
   <a href="https://github.com/shreyas-kamat/formula-vision/blob/main/CONTRIBUTING.md">Contributing</a> •
   <a href="#credits">Credits</a> •
-  <a href="#license">License</a>
+  <a href="#license">License</a> •
+  <a href="https://www.reddit.com/r/formulavision/">Reddit</a> 
 </p>
 
 <div align="center">
