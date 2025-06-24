@@ -5,6 +5,7 @@ import 'package:formulavision/auth/register_page.dart';
 import 'package:formulavision/data/functions/auth.function.dart';
 import 'package:formulavision/pages/nav_page.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -36,7 +37,7 @@ class _LoginPageState extends State<LoginPage> {
                     child: SizedBox(
                       height: 220,
                       child: GestureDetector(
-                        onTap: () {
+                        onTap: () async {
                           Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
@@ -193,7 +194,7 @@ class _LoginPageState extends State<LoginPage> {
                                 },
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: Color.fromRGBO(232, 76, 104, 1),
+                                    color: Colors.redAccent.shade700,
                                     borderRadius: BorderRadius.circular(50),
                                   ),
                                   child: Padding(
@@ -246,20 +247,21 @@ class _LoginPageState extends State<LoginPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        'Not a Member?',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
+                      // Text(
+                      //   'Not a Member?',
+                      //   style: TextStyle(
+                      //       fontWeight: FontWeight.bold, color: Colors.white),
+                      // ),
                       GestureDetector(
                         onTap: () {
                           Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => RegisterPage()));
+                                  builder: (context) => NavPage()));
                         },
                         child: Text(
-                          ' Register Now!',
+                          // ' Register Now!',
+                          'Sign In as Guest',
                           style: TextStyle(
                               color: Colors.blue, fontWeight: FontWeight.bold),
                         ),

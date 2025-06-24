@@ -70,13 +70,15 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   
+
+  
   assets:
 
     - .env
 
     - assets/logo/MainLogo.png
 
-  # Maps to the assets directory
+  # Maps to the assets directory: https://api.multiviewer.app/api/v1/circuits/${circuitKey}/${year}
     - assets/Formula_1.json
     - assets/maps.json
     - assets/TrackMaps/Algarve.json

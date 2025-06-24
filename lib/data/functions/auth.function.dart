@@ -66,6 +66,40 @@ Future<void> login(BuildContext context, String email, String password) async {
   }
 }
 
+Future<bool> checkTokenValidity(String token) async {
+  var url = Uri.parse('${dotenv.env['API_URL']}/api/v1/auth/validate');
+  var response = await http.get(
+    url,
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $token',
+    },
+  );
+
+  if (response.statusCode == 200) {
+    var responseBody = json.decode(response.body);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_id', responseBody['userId']);
+    print(responseBody['status']);
+    print(responseBody['userId']);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+Future<bool> isLoggedIn() async {
+  final prefs = await SharedPreferences.getInstance();
+  final String? token = prefs.getString('jwt_token');
+
+  if (token != null) {
+    print(token);
+    return await checkTokenValidity(token);
+  } else {
+    return false;
+  }
+}
+
 Future<void> forgotPassword(BuildContext context, String email) async {
   var url = Uri.parse('${dotenv.env['API_URL']}/api/v1/auth/forgot-password');
   var response = await http.post(
@@ -315,6 +349,7 @@ Future<void> logout(BuildContext context) async {
   await prefs.remove('jwt_token');
   await prefs.remove('refresh_token'); // Also remove refresh token
   await prefs.remove('user_id');
+  await prefs.remove('username');
 
   // Navigate to the login page
   Navigator.pushReplacement(
