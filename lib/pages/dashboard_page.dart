@@ -3,10 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:formulavision/components/driver_tile.dart';
+import 'package:formulavision/components/weather_info_card.dart';
 import 'package:formulavision/data/functions/live_data.function.dart';
 import 'package:formulavision/data/models/live_data.model.dart';
 import 'package:formulavision/pages/live_details_page.dart';
+import 'package:formulavision/pages/test_page.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
 
@@ -16,7 +20,7 @@ class DashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'F1 Live Telemetry',
+      title: 'Live',
       theme: ThemeData(
         primarySwatch: Colors.red,
         brightness: Brightness.dark,
@@ -68,7 +72,11 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
   @override
   void dispose() {
-    _disconnectFromServer();
+    if (_sseSubscription != null) {
+      _sseSubscription!.cancel();
+      _sseSubscription = null;
+    }
+    _liveDataController.close(); // Close the StreamController
     super.dispose();
   }
 
@@ -79,8 +87,14 @@ class _TelemetryPageState extends State<TelemetryPage> {
     });
 
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('jwt_token');
       final response = await http.get(
         Uri.parse('${dotenv.env['API_URL']}/initialData'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
       );
 
       if (response.statusCode == 200) {
@@ -147,11 +161,24 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
       // Create a client that doesn't automatically close the connection
       final client = http.Client();
-
+      final prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('jwt_token');
       // Connect to the SSE endpoint with appropriate headers
       final request = http.Request('GET', Uri.parse(sseUrl));
       request.headers['Accept'] = 'text/event-stream';
       request.headers['Cache-Control'] = 'no-cache';
+      request.headers['Content-Type'] = 'application/json; charset=UTF-8';
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+
+      // final response = await http.get(
+      //   Uri.parse('${dotenv.env['API_URL']}/initialData'),
+      //   headers: <String, String>{
+      //     'Content-Type': 'application/json; charset=UTF-8',
+      //     'Authorization': 'Bearer $token',
+      //   },
+      // );
 
       final streamedResponse = await client.send(request);
 
@@ -162,9 +189,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
       setState(() {
         _isConnected = true;
-        _connectionStatus = _useSimulation
-            ? "Connected SSE (Simulation)"
-            : "Connected SSE (Live)";
+        _connectionStatus = _useSimulation ? "Connected (Sim)" : "Connected";
       });
 
       // Process the stream of events
@@ -189,11 +214,13 @@ class _TelemetryPageState extends State<TelemetryPage> {
         },
         onError: (error) {
           print('SSE stream error: $error');
-          setState(() {
-            _isConnected = false;
-            _connectionStatus = "SSE connection error";
-            _errorMessage = error.toString();
-          });
+          if (mounted) {
+            setState(() {
+              _isConnected = false;
+              _connectionStatus = "SSE connection error";
+              _errorMessage = error.toString();
+            });
+          }
           client.close();
         },
         onDone: () {
@@ -216,24 +243,23 @@ class _TelemetryPageState extends State<TelemetryPage> {
   }
 
   void _disconnectFromServer() {
-    // Cancel SSE subscription if active
     if (_sseSubscription != null) {
       _sseSubscription!.cancel();
       _sseSubscription = null;
     }
 
-    setState(() {
-      _isConnected = false;
-      _connectionStatus = "Disconnected";
-    });
+    if (mounted) {
+      setState(() {
+        _isConnected = false;
+        _connectionStatus = "Disconnected";
+      });
+    }
   }
 
   void _processTelemetryData(dynamic data) {
     // Handle empty data case
     print('Processing telemetry data: ${data.runtimeType}');
     print('Data keys: ${data.keys.toList()}');
-
-    // Process the incoming data
     if (data is Map) {
       // SignalR connection init message (has "C" key)
       if (data.containsKey('C')) {
@@ -434,55 +460,60 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
           // Update each driver in the list
           for (var racingNumber in driverKeys) {
-            final driverData = data[racingNumber];
+            final driverData = data[racingNumber] ?? {};
+            final prev = currentDrivers[racingNumber];
 
-            // Create or update driver
             Driver updatedDriver = Driver(
-              racingNumber: driverData.containsKey('RacingNumber')
-                  ? driverData['RacingNumber']
-                  : currentDrivers[racingNumber]?.racingNumber ?? '',
-              broadcastName: driverData.containsKey('BroadcastName')
-                  ? driverData['BroadcastName']
-                  : currentDrivers[racingNumber]?.broadcastName ?? '',
-              fullName: driverData.containsKey('FullName')
-                  ? driverData['FullName']
-                  : currentDrivers[racingNumber]?.fullName ?? '',
-              countryCode: driverData.containsKey('CountryCode')
-                  ? driverData['CountryCode']
-                  : currentDrivers[racingNumber]?.countryCode ?? '',
-              tla: driverData.containsKey('Tla')
-                  ? driverData['Tla']
-                  : currentDrivers[racingNumber]?.tla ?? '',
-              line: driverData.containsKey('Line')
-                  ? driverData['Line']
-                  : currentDrivers[racingNumber]?.line ?? 0,
-              teamName: driverData.containsKey('TeamName')
-                  ? driverData['TeamName']
-                  : currentDrivers[racingNumber]?.teamName ?? '',
-              teamColour: driverData.containsKey('TeamColour')
-                  ? driverData['TeamColour']
-                  : currentDrivers[racingNumber]?.teamColour ?? '',
-              firstName: driverData.containsKey('FirstName')
-                  ? driverData['FirstName']
-                  : currentDrivers[racingNumber]?.firstName ?? '',
-              lastName: driverData.containsKey('LastName')
-                  ? driverData['LastName']
-                  : currentDrivers[racingNumber]?.lastName ?? '',
-              reference: driverData.containsKey('Reference')
-                  ? driverData['Reference']
-                  : currentDrivers[racingNumber]?.reference ?? '',
-              headshotUrl: driverData.containsKey('HeadshotUrl')
-                  ? driverData['HeadshotUrl']
-                  : currentDrivers[racingNumber]?.headshotUrl ?? '',
+              racingNumber: driverData['RacingNumber'] ??
+                  driverData['racingNumber'] ??
+                  prev?.racingNumber ??
+                  racingNumber,
+              broadcastName: driverData['BroadcastName'] ??
+                  driverData['broadcastName'] ??
+                  prev?.broadcastName ??
+                  '',
+              fullName: driverData['FullName'] ??
+                  driverData['fullName'] ??
+                  prev?.fullName ??
+                  '',
+              countryCode: driverData['CountryCode'] ??
+                  driverData['countryCode'] ??
+                  prev?.countryCode ??
+                  '',
+              tla: driverData['Tla'] ??
+                  driverData['tla'] ??
+                  driverData['TLA'] ??
+                  prev?.tla ??
+                  '',
+              line: driverData['Line'] ?? driverData['line'] ?? prev?.line ?? 0,
+              teamName: driverData['TeamName'] ??
+                  driverData['teamName'] ??
+                  prev?.teamName ??
+                  '',
+              teamColour: driverData['TeamColour'] ??
+                  driverData['teamColour'] ??
+                  driverData['team_color'] ??
+                  prev?.teamColour ??
+                  '',
+              firstName: driverData['FirstName'] ??
+                  driverData['firstName'] ??
+                  prev?.firstName ??
+                  '',
+              lastName: driverData['LastName'] ??
+                  driverData['lastName'] ??
+                  prev?.lastName ??
+                  '',
+              reference: driverData['Reference'] ??
+                  driverData['reference'] ??
+                  prev?.reference ??
+                  '',
+              headshotUrl: driverData['HeadshotUrl'] ??
+                  driverData['headshotUrl'] ??
+                  prev?.headshotUrl ??
+                  '',
             );
 
-            // Update the driver in the current map
-            if (currentDrivers.containsKey(racingNumber)) {
-              currentDrivers[racingNumber] = updatedDriver;
-            } else {
-              // Add new driver if it doesn't exist
-              currentDrivers[racingNumber] = updatedDriver;
-            }
+            currentDrivers[racingNumber] = updatedDriver;
           }
 
           // Create a new DriverList
@@ -969,7 +1000,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('F1 Live Telemetry'),
+        title: const Text('Live Dashboard'),
         backgroundColor: Colors.red,
         actions: [
           Chip(
@@ -1034,20 +1065,20 @@ class _TelemetryPageState extends State<TelemetryPage> {
                 ),
               ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
 
             // Messages received counter
             Text(
               'Messages received: $_messageCount',
               style: const TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
             ),
-            Text(
-              'Note: Currently the data displayed is updated but it is unstable. (Live Data Fetching is only available on my local machine, the NodeJS API will be made public soon [stable])',
-              style: TextStyle(
-                  fontSize: 12,
-                  fontStyle: FontStyle.italic,
-                  color: Colors.grey),
-            ),
+            // Text(
+            //   'Note: Currently the data displayed is updated but it is unstable. (Live Data Fetching is only available on my local machine, the NodeJS API will be made public soon [stable])',
+            //   style: TextStyle(
+            //       fontSize: 12,
+            //       fontStyle: FontStyle.italic,
+            //       color: Colors.grey),
+            // ),
 
             const SizedBox(height: 16),
 
@@ -1068,54 +1099,25 @@ class _TelemetryPageState extends State<TelemetryPage> {
                                   snapshot.data!.isNotEmpty) {
                                 final liveData = snapshot.data!;
                                 return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
                                     // _buildExtrapolatedClock(liveData[0]
                                     //     .extrapolatedClock!
                                     //     .remaining),
+
                                     _buildSessionInfoCard(
                                         liveData[0].sessionInfo!),
                                     _buildTrackStatusCard(
                                         liveData[0].trackStatus!),
                                     _buildWeatherCard(liveData[0].weatherData!),
 
-                                    SingleChildScrollView(
-                                      scrollDirection: Axis.horizontal,
-                                      child: Row(
-                                        children: [
-                                          Text('Pos',
-                                              style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold)),
-                                          SizedBox(width: 30),
-                                          Text('Driver',
-                                              style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold)),
-                                          SizedBox(
-                                              width:
-                                                  50), // Match spacing in rows
-                                          Text('Current Lap',
-                                              style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold)),
-                                          SizedBox(width: 20),
-                                          Text('Interval',
-                                              style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold)),
-                                          SizedBox(width: 20),
-                                          Text('Tyres',
-                                              style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold)),
-                                          SizedBox(width: 20),
-                                          Text('Pit',
-                                              style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold)),
-                                        ],
-                                      ),
-                                    ),
+                                    SizedBox(height: 10),
+                                    Text('Drivers',
+                                        style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold)),
+                                    SizedBox(height: 5),
                                     _buildDriverList(
                                         liveData[0].driverList!.drivers,
                                         liveData[0].timingData!.lines,
@@ -1226,28 +1228,37 @@ class _TelemetryPageState extends State<TelemetryPage> {
   }
 
   Widget _buildWeatherCard(WeatherData weather) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Weather Conditions',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            _buildInfoRow('Air Temperature:', '${weather.airTemp}°C'),
-            _buildInfoRow('Track Temperature:', '${weather.trackTemp}°C'),
-            _buildInfoRow('Wind Speed:', '${(weather.windSpeed)} m/s'),
-            _buildInfoRow(
-                'Weather:', weather.rainfall == '0' ? 'Clear' : 'Rain'),
-            _buildInfoRow('Humidity:', '${weather.humidity}%'),
-            _buildInfoRow('Pressure:', '${weather.pressure} hPa'),
-          ],
-        ),
-      ),
+    // return Card(
+    //   margin: const EdgeInsets.only(bottom: 16),
+    //   child: Padding(
+    //     padding: const EdgeInsets.all(16.0),
+    //     child: Column(
+    //       crossAxisAlignment: CrossAxisAlignment.start,
+    //       children: [
+    //         const Text(
+    //           'Weather Conditions',
+    //           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    //         ),
+    //         const SizedBox(height: 8),
+    //         _buildInfoRow('Air Temperature:', '${weather.airTemp}°C'),
+    //         _buildInfoRow('Track Temperature:', '${weather.trackTemp}°C'),
+    //         _buildInfoRow('Wind Speed:', '${(weather.windSpeed)} m/s'),
+    //         _buildInfoRow(
+    //             'Weather:', weather.rainfall == '0' ? 'Clear' : 'Rain'),
+    //         _buildInfoRow('Humidity:', '${weather.humidity}%'),
+    //         _buildInfoRow('Pressure:', '${weather.pressure} hPa'),
+    //       ],
+    //     ),
+    //   ),
+    // );
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: WeatherInfoCard(
+          airTemp: weather.airTemp,
+          trackTemp: weather.trackTemp,
+          windSpeed: weather.windSpeed,
+          humidity: weather.humidity,
+          weatherCondition: weather.rainfall == '0' ? 'Clear' : 'Rain'),
     );
   }
 
@@ -1356,6 +1367,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
         final entry = sortedDrivers[index];
         final String racingNumber = entry.key;
         final Driver driver = entry.value;
+
         final TimingDataDriver timing = timingData[racingNumber]!;
         final TimingAppDataDriver timingApp = timingAppData[racingNumber]!;
 
@@ -1401,106 +1413,118 @@ class _TelemetryPageState extends State<TelemetryPage> {
           teamColor = Colors.grey;
         }
 
+        // return Padding(
+        //   padding: const EdgeInsets.symmetric(vertical: 5),
+        //   child: Container(
+        //     width: double.infinity,
+        //     height: 60,
+        //     decoration: BoxDecoration(
+        //       borderRadius: BorderRadius.circular(10),
+        //       border: timing.lastLapTime.overallFastest
+        //           ? Border.all(color: Colors.purple, width: 1)
+        //           : Border.all(color: Colors.white, width: 0.5),
+        //     ),
+        //     child: MaterialButton(
+        //       color: Color.fromRGBO(115, 115, 115, 1),
+        //       shape: RoundedRectangleBorder(
+        //         borderRadius: BorderRadius.circular(10),
+        //       ),
+        //       onPressed: () {
+        //         Navigator.push(
+        //             context,
+        //             MaterialPageRoute(
+        //               builder: (context) => LiveDetailsPage(
+        //                 racingNumber: racingNumber,
+        //               ),
+        //             ));
+        //       },
+        //       child: SingleChildScrollView(
+        //         scrollDirection: Axis.horizontal,
+        //         child: Row(
+        //           mainAxisAlignment: MainAxisAlignment.start,
+        //           crossAxisAlignment: CrossAxisAlignment.center,
+        //           children: [
+        //             Text(driver.line.toString(),
+        //                 style: TextStyle(
+        //                     color: Colors.white,
+        //                     fontSize: 25,
+        //                     fontWeight: FontWeight.w900)),
+        //             SizedBox(width: 20),
+        //             Container(
+        //               width: 5,
+        //               height: 25,
+        //               decoration: BoxDecoration(
+        //                 color: teamColor,
+        //                 borderRadius: BorderRadius.circular(10),
+        //               ),
+        //             ),
+        //             SizedBox(width: 5),
+        //             Text(
+        //               driver.tla.isNotEmpty ? driver.tla : '???',
+        //               style: TextStyle(
+        //                 color: Colors.white,
+        //                 fontSize: 20,
+        //                 fontFamily: 'formula-bold',
+        //               ),
+        //             ),
+        //             SizedBox(width: 50), // Add a minimum spacing
+        //             Text(timing.lastLapTime.value,
+        //                 style: TextStyle(
+        //                   color: Colors.white,
+        //                   fontWeight: FontWeight.w900,
+        //                   fontSize: 15,
+        //                 )),
+        //             SizedBox(width: 20),
+        //             Container(
+        //               width: 70,
+        //               height: 30,
+        //               decoration: BoxDecoration(
+        //                 color: intervalText == "Leader"
+        //                     ? Colors.red
+        //                     : Colors.green,
+        //                 borderRadius: BorderRadius.circular(40),
+        //               ),
+        //               child: Center(
+        //                 child: Padding(
+        //                   padding: const EdgeInsets.all(4.0),
+        //                   child: Text(intervalText,
+        //                       style: TextStyle(
+        //                         color: Colors.white,
+        //                         fontSize: 15,
+        //                         fontWeight: FontWeight.w900,
+        //                       )),
+        //                 ),
+        //               ),
+        //             ),
+        //             SizedBox(width: 20),
+        //             // SvgPicture.asset(
+        //             //   tyrePath(timingApp.stints[0].compound ?? 'Unknown'),
+        //             //   width: 30,
+        //             //   height: 30,
+        //             //   placeholderBuilder: (context) =>
+        //             //       CircularProgressIndicator(),
+        //             // ),
+        //             SizedBox(width: 20),
+        //             Text(timing.numberOfPitStops.toString(),
+        //                 style: TextStyle(
+        //                     color: Colors.white,
+        //                     fontSize: 25,
+        //                     fontWeight: FontWeight.w900)),
+        //           ],
+        //         ),
+        //       ),
+        //     ),
+        //   ),
+        // );
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 5),
-          child: Container(
-            width: double.infinity,
-            height: 60,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              border: timing.lastLapTime.overallFastest
-                  ? Border.all(color: Colors.purple, width: 1)
-                  : Border.all(color: Colors.white, width: 0.5),
-            ),
-            child: MaterialButton(
-              color: Color.fromRGBO(115, 115, 115, 1),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => LiveDetailsPage(
-                        racingNumber: racingNumber,
-                      ),
-                    ));
-              },
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(driver.line.toString(),
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 25,
-                            fontWeight: FontWeight.w900)),
-                    SizedBox(width: 20),
-                    Container(
-                      width: 5,
-                      height: 25,
-                      decoration: BoxDecoration(
-                        color: teamColor,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    SizedBox(width: 5),
-                    Text(driver.tla,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          // fontWeight: FontWeight.w900,
-                          fontFamily: 'formula-bold',
-                        )),
-                    SizedBox(width: 50), // Add a minimum spacing
-                    Text(timing.lastLapTime.value,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 15,
-                        )),
-                    SizedBox(width: 20),
-                    Container(
-                      width: 70,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        color: intervalText == "Leader"
-                            ? Colors.red
-                            : Colors.green,
-                        borderRadius: BorderRadius.circular(40),
-                      ),
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: Text(intervalText,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w900,
-                              )),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 20),
-                    // SvgPicture.asset(
-                    //   tyrePath(timingApp.stints[0].compound ?? 'Unknown'),
-                    //   width: 30,
-                    //   height: 30,
-                    //   placeholderBuilder: (context) =>
-                    //       CircularProgressIndicator(),
-                    // ),
-                    SizedBox(width: 20),
-                    Text(timing.numberOfPitStops.toString(),
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 25,
-                            fontWeight: FontWeight.w900)),
-                  ],
-                ),
-              ),
-            ),
+          child: DriverInfoCard(
+            position: driver.line,
+            teamColor: teamColor,
+            tla: driver.tla.isNotEmpty ? driver.tla : '???',
+            interval: intervalText,
+            currentLapTime: timing.lastLapTime.value,
+            pitStops: timing.numberOfPitStops,
           ),
         );
       },

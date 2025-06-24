@@ -1,5 +1,9 @@
 import 'package:flashy_tab_bar2/flashy_tab_bar2.dart';
 import 'package:flutter/material.dart';
+import 'package:formulavision/auth/dash_auth.dart';
+import 'package:formulavision/auth/email_verification.dart';
+import 'package:formulavision/auth/forgotpw_page.dart';
+import 'package:formulavision/auth/login_page.dart';
 import 'package:formulavision/pages/dashboard_page.dart';
 import 'package:formulavision/pages/home_page.dart';
 import 'package:formulavision/pages/schedule_page.dart';
@@ -19,7 +23,7 @@ class _NavPageState extends State<NavPage> {
 
   List<Widget> tabItems = [
     HomePage(),
-    DashboardPage(),
+    DashAuth(),
     SchedulePage(),
     StandingsPage(),
   ];
