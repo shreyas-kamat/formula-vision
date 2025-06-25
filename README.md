@@ -34,6 +34,8 @@
 # FormulaVision
 An Unofficial, Free & Open-Source app for Realtime Stats, Schedules & Track Data in Formula One
 
+**NOTE: Currently, this project is Android-only, iOS Release will be out by July/Aug 2025** 
+
 ## Features
 - Drivers Championship Standings
 - Constructors Championship Standings
@@ -48,8 +50,8 @@ The stable features functioning properly are:
 
 ## Alpha Features
   - Realtime Stats
-  - HomePage Dashboard (Dependent on Realtime Stats Data) \
-**NOTE**: Currently Unavailable, will soon be hosted publicly
+  - HomePage Dashboard 
+
 
 ## Planned Features
   - Authentication
@@ -71,3 +73,6 @@ This project uses the following open-source packages:
 
 ## License
 This Project is licensed under the Apache License v2.0 which can be found [here](https://github.com/skat9234/formula-vision/blob/main/LICENSE)
+
+## NOTICE
+This project/app is unofficial and is not associated in any way with the Formula 1 companies. F1, FORMULA ONE, FORMULA 1, FIA FORMULA ONE WORLD CHAMPIONSHIP, GRAND PRIX and related marks are trade marks of Formula One Licensing B.V.
