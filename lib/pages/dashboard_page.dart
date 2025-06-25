@@ -1022,16 +1022,16 @@ class _TelemetryPageState extends State<TelemetryPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                ElevatedButton.icon(
-                  icon: Icon(_isConnected ? Icons.stop : Icons.play_arrow),
-                  label: Text(_isConnected ? 'Disconnect' : 'Connect'),
-                  onPressed:
-                      _isConnected ? _disconnectFromServer : _connectToServer,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _isConnected ? Colors.red : Colors.green,
-                    foregroundColor: Colors.white,
-                  ),
-                ),
+                // ElevatedButton.icon(
+                //   icon: Icon(_isConnected ? Icons.stop : Icons.play_arrow),
+                //   label: Text(_isConnected ? 'Disconnect' : 'Connect'),
+                //   onPressed:
+                //       _isConnected ? _disconnectFromServer : _connectToServer,
+                //   style: ElevatedButton.styleFrom(
+                //     backgroundColor: _isConnected ? Colors.red : Colors.green,
+                //     foregroundColor: Colors.white,
+                //   ),
+                // ),
                 // ElevatedButton.icon(
                 //   icon:
                 //       Icon(_useSimulation ? Icons.toggle_on : Icons.toggle_off),
@@ -1056,14 +1056,14 @@ class _TelemetryPageState extends State<TelemetryPage> {
               ],
             ),
 
-            if (_errorMessage.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Text(
-                  'Error: $_errorMessage',
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ),
+            // if (_errorMessage.isNotEmpty)
+            //   Padding(
+            //     padding: const EdgeInsets.only(top: 8.0),
+            //     child: Text(
+            //       'Error: $_errorMessage',
+            //       style: const TextStyle(color: Colors.red),
+            //     ),
+            //   ),
 
             const SizedBox(height: 10),
 
