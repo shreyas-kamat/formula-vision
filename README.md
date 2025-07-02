@@ -34,35 +34,31 @@
 # FormulaVision
 An Unofficial, Free & Open-Source app for Realtime Stats, Schedules & Track Data in Formula One
 
+**NOTE: Currently, this project is Android-only, iOS Release will be out by July/Aug 2025** 
+
 ## Features
 - Drivers Championship Standings
 - Constructors Championship Standings
 - Schedule for the Season
 
-### NOTE
-Currently the `Realtime Stats` only work on my (owner) local machine, as it is in alpha and unstable at the moment.
-The stable features functioning properly are:
-  -  Drivers Championship Standings
-  -  Constructors Championship Standing
-  -  Schedule for the Season
-
-## Alpha Features
+## Alpha Features (Invite-only)
+For Access to Invite-only Features, contact [formulavision@yahoo.com](mailto:formulavision@yahoo.com)
   - Realtime Stats
-  - HomePage Dashboard (Dependent on Realtime Stats Data) \
-**NOTE**: Currently Unavailable, will soon be hosted publicly
+  - HomePage Dashboard
+  - Authentication
+
 
 ## Planned Features
-  - Authentication
   - Settings (Dependent on Authentication)
   - Themes
   - Scheduling Data fetching Revamp (currently fetched by parsing a `.ics` file, to be changed to fetch via the API)
-  - Splash Screen
+
 
 ## Downloads
 [Releases](https://github.com/skat9234/formula-vision/releases)
 
 ## Contributing Guidelines
-[Refer](https://github.com/shreyas-kamat/formula-vision/blob/main/CONTRIBUTING.md)
+[Refer to CONTRIBUTING.md](https://github.com/shreyas-kamat/formula-vision/blob/main/CONTRIBUTING.md)
 
 ## Credits
 This project uses the following open-source packages:
@@ -71,3 +67,6 @@ This project uses the following open-source packages:
 
 ## License
 This Project is licensed under the Apache License v2.0 which can be found [here](https://github.com/skat9234/formula-vision/blob/main/LICENSE)
+
+## NOTICE
+This project/app is unofficial and is not associated in any way with the Formula 1 companies. F1, FORMULA ONE, FORMULA 1, FIA FORMULA ONE WORLD CHAMPIONSHIP, GRAND PRIX and related marks are trade marks of Formula One Licensing B.V.
