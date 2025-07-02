@@ -1,18 +1,26 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:formulavision/components/driver_tile.dart';
 import 'package:formulavision/components/weather_info_card.dart';
+import 'package:formulavision/data/functions/cardata.function.dart';
 import 'package:formulavision/data/functions/live_data.function.dart';
 import 'package:formulavision/data/models/live_data.model.dart';
-import 'package:formulavision/pages/live_details_page.dart';
-import 'package:formulavision/pages/test_page.dart';
-import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter/services.dart' show rootBundle;
+
+// Helper class to queue messages with timestamps
+class _DelayedMessage {
+  final dynamic data;
+  final DateTime receivedAt;
+
+  _DelayedMessage(this.data, this.receivedAt);
+}
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -52,6 +60,12 @@ class _TelemetryPageState extends State<TelemetryPage> {
   bool _useSimulation = false;
   bool _useSSE = true; // Add flag to use SSE instead of WebSockets
 
+  // Delay-related variables
+  int _delaySeconds = 0; // User-defined delay in seconds
+  final Queue<_DelayedMessage> _messageQueue = Queue<_DelayedMessage>();
+  Timer? _delayTimer;
+  bool _delayEnabled = false;
+
   final _liveDataController = StreamController<List<LiveData>>.broadcast();
   Stream<List<LiveData>> get liveDataStream => _liveDataController.stream;
 
@@ -59,6 +73,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
   void initState() {
     super.initState();
     _initialize();
+    final data = decompressCarData();
+    print(data);
   }
 
   Future<void> _initialize() async {
@@ -76,6 +92,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
       _sseSubscription!.cancel();
       _sseSubscription = null;
     }
+    _delayTimer?.cancel(); // Clean up delay timer
+    _messageQueue.clear(); // Clear any queued messages
     _liveDataController.close(); // Close the StreamController
     super.dispose();
   }
@@ -192,6 +210,11 @@ class _TelemetryPageState extends State<TelemetryPage> {
         _connectionStatus = _useSimulation ? "Connected (Sim)" : "Connected";
       });
 
+      // Start delay timer if delay is enabled
+      if (_delayEnabled && _delaySeconds > 0) {
+        _startDelayTimer();
+      }
+
       // Process the stream of events
       _sseSubscription = streamedResponse.stream
           .transform(utf8.decoder)
@@ -256,7 +279,68 @@ class _TelemetryPageState extends State<TelemetryPage> {
     }
   }
 
+  // Method to toggle delay on/off
+  void _toggleDelay() {
+    setState(() {
+      _delayEnabled = !_delayEnabled;
+      if (!_delayEnabled) {
+        // Process all queued messages immediately when disabled
+        _processQueuedMessages();
+        _delayTimer?.cancel();
+      } else if (_delaySeconds > 0) {
+        _startDelayTimer();
+      }
+    });
+  }
+
+  // Method to update delay value
+  void _updateDelay(int seconds) {
+    setState(() {
+      _delaySeconds = seconds;
+      if (_delayEnabled && seconds > 0) {
+        _startDelayTimer();
+      } else if (seconds == 0) {
+        _processQueuedMessages();
+        _delayTimer?.cancel();
+      }
+    });
+  }
+
+  // Start the delay timer
+  void _startDelayTimer() {
+    _delayTimer?.cancel();
+    _delayTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      _processQueuedMessages();
+    });
+  }
+
+  // Process messages that have waited long enough
+  void _processQueuedMessages() {
+    final now = DateTime.now();
+    while (_messageQueue.isNotEmpty) {
+      final message = _messageQueue.first;
+      final waitTime = now.difference(message.receivedAt).inSeconds;
+
+      if (waitTime >= _delaySeconds) {
+        _messageQueue.removeFirst();
+        _processTelemetryDataImmediate(message.data);
+      } else {
+        break; // Stop processing if this message isn't ready yet
+      }
+    }
+  }
+
+  // Add message to delay queue or process immediately
   void _processTelemetryData(dynamic data) {
+    if (_delayEnabled && _delaySeconds > 0) {
+      _messageQueue.add(_DelayedMessage(data, DateTime.now()));
+    } else {
+      _processTelemetryDataImmediate(data);
+    }
+  }
+
+  // Original processing method renamed
+  void _processTelemetryDataImmediate(dynamic data) {
     // Handle empty data case
     print('Processing telemetry data: ${data.runtimeType}');
     print('Data keys: ${data.keys.toList()}');
@@ -1022,37 +1106,89 @@ class _TelemetryPageState extends State<TelemetryPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // ElevatedButton.icon(
-                //   icon: Icon(_isConnected ? Icons.stop : Icons.play_arrow),
-                //   label: Text(_isConnected ? 'Disconnect' : 'Connect'),
-                //   onPressed:
-                //       _isConnected ? _disconnectFromServer : _connectToServer,
-                //   style: ElevatedButton.styleFrom(
-                //     backgroundColor: _isConnected ? Colors.red : Colors.green,
-                //     foregroundColor: Colors.white,
-                //   ),
-                // ),
-                // ElevatedButton.icon(
-                //   icon:
-                //       Icon(_useSimulation ? Icons.toggle_on : Icons.toggle_off),
-                //   label: Text(_useSimulation ? 'Simulation' : 'Live Data'),
-                //   onPressed: _toggleSimulation,
-                //   style: ElevatedButton.styleFrom(
-                //     backgroundColor:
-                //         _useSimulation ? Colors.amber : Colors.blue,
-                //     foregroundColor: Colors.black,
-                //   ),
-                // ),
-                // // Add a button to toggle between SSE and WebSocket
-                // ElevatedButton.icon(
-                //   icon: Icon(_useSSE ? Icons.http : Icons.web),
-                //   label: Text(_useSSE ? 'SSE' : 'WS'),
-                //   onPressed: _toggleConnectionType,
-                //   style: ElevatedButton.styleFrom(
-                //     backgroundColor: _useSSE ? Colors.purple : Colors.teal,
-                //     foregroundColor: Colors.white,
-                //   ),
-                // ),
+                // Delay toggle button
+                ElevatedButton.icon(
+                  icon: Icon(
+                    _delayEnabled ? Icons.pause : Icons.play_arrow,
+                    color: Colors.white,
+                  ),
+                  label: Text(_delayEnabled ? 'Delay ON' : 'Delay OFF'),
+                  onPressed: _toggleDelay,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        _delayEnabled ? Colors.orange : Colors.grey,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Delay controls with +/- buttons and text input
+                if (_delayEnabled) ...[
+                  Column(
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Decrease button
+                          IconButton(
+                            onPressed: _delaySeconds > 0
+                                ? () => _updateDelay(_delaySeconds - 5)
+                                : null,
+                            icon: const Icon(Icons.remove),
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.orange.withOpacity(0.2),
+                              foregroundColor: Colors.orange,
+                              padding: const EdgeInsets.all(8),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Text input field
+                          Container(
+                            width: 60,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Center(
+                              child: TextField(
+                                controller: TextEditingController(
+                                    text: _delaySeconds.toString()),
+                                textAlign: TextAlign.center,
+                                keyboardType: TextInputType.number,
+                                style: const TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                ),
+                                onSubmitted: (value) {
+                                  final newDelay =
+                                      int.tryParse(value) ?? _delaySeconds;
+                                  _updateDelay(
+                                      newDelay.clamp(0, 300)); // Max 5 minutes
+                                },
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(width: 8),
+                          // Increase button
+                          IconButton(
+                            onPressed: _delaySeconds < 300
+                                ? () => _updateDelay(_delaySeconds + 5)
+                                : null,
+                            icon: const Icon(Icons.add),
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.orange.withOpacity(0.2),
+                              foregroundColor: Colors.orange,
+                              padding: const EdgeInsets.all(8),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      // Preset buttons
+                    ],
+                  ),
+                ],
               ],
             ),
 
@@ -1067,10 +1203,32 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
             const SizedBox(height: 10),
 
-            // Messages received counter
-            Text(
-              'Messages received: $_messageCount',
-              style: const TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+            // Messages received counter and delay info
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Messages received: $_messageCount',
+                  style: const TextStyle(
+                      fontSize: 14, fontStyle: FontStyle.italic),
+                ),
+                if (_delayEnabled) ...[
+                  Text(
+                    'Queued messages: ${_messageQueue.length}',
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.orange),
+                  ),
+                  Text(
+                    'Delay: ${_delaySeconds}s',
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.orange),
+                  ),
+                ],
+              ],
             ),
             // Text(
             //   'Note: Currently the data displayed is updated but it is unstable. (Live Data Fetching is only available on my local machine, the NodeJS API will be made public soon [stable])',
@@ -1105,7 +1263,15 @@ class _TelemetryPageState extends State<TelemetryPage> {
                                     // _buildExtrapolatedClock(liveData[0]
                                     //     .extrapolatedClock!
                                     //     .remaining),
-
+                                    SizedBox(height: 10),
+                                    // TrackMapWidget(
+                                    //   trackJsonAsset:
+                                    //       'assets/TrackMaps/Spielberg.json',
+                                    //   driverPositions: testDriverPositions,
+                                    //   width: 350,
+                                    //   height: 200,
+                                    // ),
+                                    SizedBox(height: 10),
                                     _buildSessionInfoCard(
                                         liveData[0].sessionInfo!),
                                     _buildTrackStatusCard(
@@ -1167,6 +1333,13 @@ class _TelemetryPageState extends State<TelemetryPage> {
               //     ),
               //   ),
             ),
+            // TrackMapWidget(
+            //   trackImageAsset: 'assets/TrackMaps/your_track_map.png', // Replace with actual asset
+            //   drivers: liveData[0].driverList!.drivers,
+            //   width: 350,
+            //   height: 200,
+            //   coordinateMapper: _mapCoordinates,
+            // ),
           ],
         ),
       ),
@@ -1562,6 +1735,26 @@ class _TelemetryPageState extends State<TelemetryPage> {
   //         ),
   //       );
 
+  // Helper method to build preset delay buttons
+  Widget _buildPresetButton(int seconds) {
+    final isSelected = _delaySeconds == seconds;
+    return SizedBox(
+      width: 32,
+      height: 28,
+      child: ElevatedButton(
+        onPressed: () => _updateDelay(seconds),
+        style: ElevatedButton.styleFrom(
+          backgroundColor:
+              isSelected ? Colors.orange : Colors.orange.withOpacity(0.3),
+          foregroundColor: isSelected ? Colors.white : Colors.orange,
+          padding: EdgeInsets.zero,
+          textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+        ),
+        child: Text('$seconds'),
+      ),
+    );
+  }
+
   Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -1602,3 +1795,214 @@ Widget _buildExtrapolatedClock(String remainingTime) {
   return Text(duration.toString(),
       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold));
 }
+
+// Add this widget class at the bottom of your file (or in a separate file if you prefer)
+class TrackMapWidget extends StatefulWidget {
+  final String trackJsonAsset;
+  final Map<String, dynamic> driverPositions; // Map of driverNo -> {X, Y, Z}
+  final double width;
+  final double height;
+
+  const TrackMapWidget({
+    super.key,
+    required this.trackJsonAsset,
+    required this.driverPositions,
+    required this.width,
+    required this.height,
+  });
+
+  @override
+  State<TrackMapWidget> createState() => _TrackMapWidgetState();
+}
+
+class _TrackMapWidgetState extends State<TrackMapWidget> {
+  List<Offset> _trackPoints = [];
+  double? minX, maxX, minY, maxY;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTrack();
+  }
+
+  Future<void> _loadTrack() async {
+    final jsonStr = await rootBundle.loadString(widget.trackJsonAsset);
+    final jsonData = jsonDecode(jsonStr);
+
+    // Parse x and y arrays
+    final List xList = jsonData['x'];
+    final List yList = jsonData['y'];
+    List<Offset> points = [];
+    for (int i = 0; i < xList.length && i < yList.length; i++) {
+      points.add(
+          Offset((xList[i] as num).toDouble(), (yList[i] as num).toDouble()));
+    }
+
+    // Find min/max for normalization
+    double minX = points.map((e) => e.dx).reduce((a, b) => a < b ? a : b);
+    double maxX = points.map((e) => e.dx).reduce((a, b) => a > b ? a : b);
+    double minY = points.map((e) => e.dy).reduce((a, b) => a < b ? a : b);
+    double maxY = points.map((e) => e.dy).reduce((a, b) => a > b ? a : b);
+
+    setState(() {
+      _trackPoints = points;
+      this.minX = minX;
+      this.maxX = maxX;
+      this.minY = minY;
+      this.maxY = maxY;
+    });
+  }
+
+  // Normalizes a point to widget size
+  Offset _normalize(Offset pt) {
+    if (minX == null || maxX == null || minY == null || maxY == null)
+      return Offset.zero;
+    double normX = (pt.dx - minX!) / (maxX! - minX!);
+    double normY = (pt.dy - minY!) / (maxY! - minY!);
+    // Flip Y axis for typical track orientation
+    // normY = 1.0 - normY;
+    return Offset(normX * widget.width, normY * widget.height);
+  }
+
+  // Normalizes driver coordinates
+  Offset _normalizeDriver(double x, double y) {
+    if (minX == null || maxX == null || minY == null || maxY == null)
+      return Offset.zero;
+    double normX = (x - minX!) / (maxX! - minX!);
+    double normY = (y - minY!) / (maxY! - minY!);
+    // normY = 1.0 - normY;
+    return Offset(normX * widget.width, normY * widget.height);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_trackPoints.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return SizedBox(
+      width: widget.width,
+      height: widget.height,
+      child: CustomPaint(
+        painter: _TrackPainter(
+          trackPoints: _trackPoints,
+          normalize: _normalize,
+          driverPositions: widget.driverPositions,
+          normalizeDriver: _normalizeDriver,
+        ),
+      ),
+    );
+  }
+}
+
+class _TrackPainter extends CustomPainter {
+  final List<Offset> trackPoints;
+  final Offset Function(Offset pt) normalize;
+  final Map<String, dynamic> driverPositions;
+  final Offset Function(double x, double y) normalizeDriver;
+
+  _TrackPainter({
+    required this.trackPoints,
+    required this.normalize,
+    required this.driverPositions,
+    required this.normalizeDriver,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Draw track path
+    if (trackPoints.isNotEmpty) {
+      final path = Path()
+        ..moveTo(
+          normalize(trackPoints[0]).dx,
+          normalize(trackPoints[0]).dy,
+        );
+      for (final pt in trackPoints.skip(1)) {
+        final npt = normalize(pt);
+        path.lineTo(npt.dx, npt.dy);
+      }
+      final paint = Paint()
+        ..color = Colors.grey.shade800
+        ..strokeWidth = 4
+        ..style = PaintingStyle.stroke;
+      canvas.drawPath(path, paint);
+    }
+
+    // Draw drivers with team colour
+    driverPositions.forEach((driverNo, entry) {
+      final double? x = (entry['X'] as num?)?.toDouble();
+      final double? y = (entry['Y'] as num?)?.toDouble();
+      if (x == null || y == null) return;
+      final Offset pos = normalizeDriver(x, y);
+
+      // Default to red if no teamColour
+      Color teamColor = Colors.red;
+      if (entry['teamColour'] != null &&
+          entry['teamColour'] is String &&
+          (entry['teamColour'] as String).length == 6) {
+        try {
+          teamColor = Color(int.parse('0xFF${entry['teamColour']}'));
+        } catch (_) {
+          teamColor = Colors.red;
+        }
+      }
+
+      final paint = Paint()
+        ..color = teamColor
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(pos, 8, paint);
+
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: driverNo,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      textPainter.paint(canvas, pos + const Offset(-10, -18));
+    });
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+// Example usage for testing (in your build method):
+// final testPositions = <String, dynamic>{
+//   "1": {"X": 1479, "Y": -940, "Z": 7312},
+//   "4": {"X": 1200, "Y": -1014, "Z": 7307},
+//   // ...etc
+// };
+// TrackMapWidget(
+//   trackJsonAsset: 'assets/TrackMaps/Spielberg.json',
+//   driverPositions: testPositions,
+//   width: 350,
+//   height: 200,
+// );
+
+// Example driver positions for testing
+final Map<String, dynamic> testDriverPositions = {
+  "1": {"Status": "OnTrack", "X": 1479, "Y": -940, "Z": 7312},
+  "4": {"Status": "OnTrack", "X": 1200, "Y": -1014, "Z": 7307},
+  "5": {"Status": "OnTrack", "X": 1489, "Y": -938, "Z": 7312},
+  "6": {"Status": "OnTrack", "X": -585, "Y": -1493, "Z": 7301},
+  "10": {"Status": "OnTrack", "X": 1452, "Y": -947, "Z": 7313},
+  "12": {"Status": "OnTrack", "X": 1426, "Y": -954, "Z": 7313},
+  "14": {"Status": "OnTrack", "X": 70, "Y": -1317, "Z": 7313},
+  "16": {"Status": "OnTrack", "X": 1136, "Y": -1031, "Z": 7312},
+  "18": {"Status": "OnTrack", "X": -40, "Y": -1347, "Z": 7312},
+  "22": {"Status": "OnTrack", "X": 292, "Y": -1258, "Z": 7312},
+  "23": {"Status": "OnTrack", "X": -860, "Y": -1567, "Z": 7312},
+  "27": {"Status": "OnTrack", "X": -981, "Y": -1598, "Z": 7312},
+  "30": {"Status": "OnTrack", "X": 1560, "Y": -920, "Z": 7313},
+  "31": {"Status": "OnTrack", "X": -484, "Y": -1466, "Z": 7311},
+  "43": {"Status": "OnTrack", "X": -204, "Y": -1391, "Z": 7307},
+  "44": {"Status": "OnTrack", "X": 1558, "Y": -920, "Z": 7312},
+  "55": {"Status": "OnTrack", "X": -898, "Y": -1577, "Z": 7312},
+  "63": {"Status": "OnTrack", "X": 1489, "Y": -938, "Z": 7312},
+  "81": {"Status": "OnTrack", "X": 1147, "Y": -1028, "Z": 7312},
+  "87": {"Status": "OnTrack", "X": -436, "Y": -1453, "Z": 7312},
+};

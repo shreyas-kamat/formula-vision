@@ -52,6 +52,7 @@ dependencies:
   flutter_native_splash: ^2.4.4
   flutter_dotenv: ^5.2.1
   jwt_decoder: ^2.0.1
+  archive: ^4.0.7
 
 dev_dependencies:
   flutter_test:

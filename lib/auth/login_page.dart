@@ -26,8 +26,9 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       backgroundColor: Colors.grey.shade900,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
+        child: FocusTraversalGroup(
+          child: ListView(
+            padding: EdgeInsets.zero,
             children: [
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
