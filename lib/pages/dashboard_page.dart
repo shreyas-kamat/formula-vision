@@ -1266,6 +1266,42 @@ class _TelemetryPageState extends State<TelemetryPage> {
                 //     return const SizedBox.shrink();
                 //   },
                 // ),
+
+                // Compact Lap count display
+                FutureBuilder<List<LiveData>>(
+                  future: _liveDataFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData &&
+                        snapshot.data!.isNotEmpty &&
+                        snapshot.data![0].lapCount != null &&
+                        snapshot.data![0].sessionInfo != null) {
+                      final liveData = snapshot.data![0];
+                      final lapCount = liveData.lapCount!;
+                      final sessionInfo = liveData.sessionInfo!;
+
+                      // Only show lap count for 'Sprint' or 'Race' sessions
+                      final sessionType = sessionInfo.type.toLowerCase();
+                      final sessionName = sessionInfo.name.toLowerCase();
+
+                      final isRaceOrSprint = sessionType == 'race' ||
+                          sessionType == 'sprint' ||
+                          sessionName.contains('race') ||
+                          sessionName.contains('sprint');
+
+                      if (isRaceOrSprint) {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
+                          child: CompactLapCountCard(
+                            currentLap: lapCount.currentLap,
+                            totalLaps: lapCount.totalLaps,
+                            sessionType: sessionInfo.name,
+                          ),
+                        );
+                      }
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
               ],
             ),
             // Text(

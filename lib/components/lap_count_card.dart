@@ -184,3 +184,125 @@ class LapCountCard extends StatelessWidget {
     );
   }
 }
+
+class CompactLapCountCard extends StatelessWidget {
+  final int currentLap;
+  final int totalLaps;
+  final String sessionType;
+
+  const CompactLapCountCard({
+    super.key,
+    required this.currentLap,
+    required this.totalLaps,
+    required this.sessionType,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Calculate progress percentage
+    final double progress = totalLaps > 0 ? currentLap / totalLaps : 0.0;
+
+    return Container(
+      height: 50,
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.grey[900]!,
+            Colors.grey[800]!,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Left side - Session type and flag icon
+          Row(
+            children: [
+              Icon(
+                Icons.flag_outlined,
+                color: Colors.red[400],
+                size: 16,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                sessionType.toUpperCase(),
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+
+          // Center - Lap count
+          Row(
+            children: [
+              Text(
+                currentLap.toString(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  fontFamily: 'Formula1',
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '/',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                totalLaps.toString(),
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+
+          // Right side - Progress percentage
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.red[400]?.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.red[400]!,
+                width: 1,
+              ),
+            ),
+            child: Text(
+              '${(progress * 100).toStringAsFixed(0)}%',
+              style: TextStyle(
+                color: Colors.red[400],
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
