@@ -66,6 +66,13 @@ class _TelemetryPageState extends State<TelemetryPage> {
   Timer? _delayTimer;
   bool _delayEnabled = false;
 
+  // Extrapolated clock variables
+  Timer? _clockTimer;
+  String _currentClockDisplay = "00:00:00";
+  DateTime? _lastClockUpdate;
+  String? _baseRemainingTime;
+  bool _clockExtrapolating = false;
+
   final _liveDataController = StreamController<List<LiveData>>.broadcast();
   Stream<List<LiveData>> get liveDataStream => _liveDataController.stream;
 
@@ -93,6 +100,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
       _sseSubscription = null;
     }
     _delayTimer?.cancel(); // Clean up delay timer
+    _clockTimer?.cancel(); // Clean up clock timer
     _messageQueue.clear(); // Clear any queued messages
     _liveDataController.close(); // Close the StreamController
     super.dispose();
@@ -290,6 +298,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
       } else if (_delaySeconds > 0) {
         _startDelayTimer();
       }
+      // Update clock timer for delay changes
+      _handleDelayToggle();
     });
   }
 
@@ -303,6 +313,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
         _processQueuedMessages();
         _delayTimer?.cancel();
       }
+      // Update clock timer for delay changes
+      _handleDelayToggle();
     });
   }
 
@@ -336,6 +348,96 @@ class _TelemetryPageState extends State<TelemetryPage> {
       _messageQueue.add(_DelayedMessage(data, DateTime.now()));
     } else {
       _processTelemetryDataImmediate(data);
+    }
+  }
+
+  // Extrapolated clock methods
+  void _startClockTimer() {
+    _clockTimer?.cancel();
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _updateClockDisplay();
+    });
+  }
+
+  void _stopClockTimer() {
+    _clockTimer?.cancel();
+  }
+
+  void _updateClockDisplay() {
+    if (!_clockExtrapolating ||
+        _baseRemainingTime == null ||
+        _lastClockUpdate == null) {
+      return;
+    }
+
+    // Apply delay if enabled
+    final effectiveUpdateTime = _delayEnabled && _delaySeconds > 0
+        ? _lastClockUpdate!.add(Duration(seconds: _delaySeconds))
+        : _lastClockUpdate!;
+
+    final now = DateTime.now();
+    final secondsElapsed = now.difference(effectiveUpdateTime).inSeconds;
+
+    // Parse the base remaining time (format: "HH:MM:SS" or "MM:SS")
+    final parts = _baseRemainingTime!.split(':');
+    int totalSeconds = 0;
+
+    if (parts.length == 3) {
+      // HH:MM:SS format
+      totalSeconds = int.parse(parts[0]) * 3600 +
+          int.parse(parts[1]) * 60 +
+          int.parse(parts[2]);
+    } else if (parts.length == 2) {
+      // MM:SS format
+      totalSeconds = int.parse(parts[0]) * 60 + int.parse(parts[1]);
+    }
+
+    // Subtract elapsed time
+    totalSeconds -= secondsElapsed;
+
+    // Ensure we don't go negative
+    if (totalSeconds < 0) {
+      totalSeconds = 0;
+    }
+
+    // Format back to time string
+    final hours = totalSeconds ~/ 3600;
+    final minutes = (totalSeconds % 3600) ~/ 60;
+    final seconds = totalSeconds % 60;
+
+    setState(() {
+      if (hours > 0) {
+        _currentClockDisplay =
+            '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+      } else {
+        _currentClockDisplay =
+            '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+      }
+    });
+  }
+
+  void _resetClockTimer(String remainingTime, bool extrapolating) {
+    _baseRemainingTime = remainingTime;
+    _clockExtrapolating = extrapolating;
+    _lastClockUpdate = DateTime.now();
+
+    // Set current display immediately
+    setState(() {
+      _currentClockDisplay = remainingTime;
+    });
+
+    if (extrapolating) {
+      _startClockTimer();
+    } else {
+      _stopClockTimer();
+    }
+  }
+
+  // Handle delay effect on clock timer
+  void _handleDelayToggle() {
+    if (_clockExtrapolating) {
+      // If clock is running, restart timer to account for delay change
+      _startClockTimer();
     }
   }
 
@@ -424,6 +526,13 @@ class _TelemetryPageState extends State<TelemetryPage> {
                   print('TrackStatus Updated Successfully');
                   break;
 
+                case 'LapCount':
+                  setState(() {
+                    _updateLapCount(updated);
+                  });
+                  print('LapCount Updated Successfully');
+                  break;
+
                 default:
                   print('No handler for message type: $messageType');
               }
@@ -458,21 +567,28 @@ class _TelemetryPageState extends State<TelemetryPage> {
             if (liveDataList.isNotEmpty) {
               final currentLiveData = liveDataList[0];
 
+              // Get the new values
+              final newRemaining = data.containsKey('Remaining')
+                  ? data['Remaining']
+                  : currentLiveData.extrapolatedClock!.remaining;
+              final newExtrapolating = data.containsKey('Extrapolating')
+                  ? data['Extrapolating']
+                  : currentLiveData.extrapolatedClock!.extrapolating;
+
               // Create a new ExtrapolatedClock with updated values
               ExtrapolatedClock updatedExtrapolatedClock = ExtrapolatedClock(
                 utc: data.containsKey('Utc')
                     ? data['Utc']
                     : currentLiveData.extrapolatedClock!.utc,
-                remaining: data.containsKey('Remaining')
-                    ? data['Remaining']
-                    : currentLiveData.extrapolatedClock!.remaining,
-                extrapolating: data.containsKey('Extrapolating')
-                    ? data['Extrapolating']
-                    : currentLiveData.extrapolatedClock!.extrapolating,
+                remaining: newRemaining,
+                extrapolating: newExtrapolating,
               );
 
               // Update the extrapolated clock in the current live data object
               currentLiveData.extrapolatedClock = updatedExtrapolatedClock;
+
+              // Reset the clock timer with new values (respects delay)
+              _resetClockTimer(newRemaining, newExtrapolating);
 
               return liveDataList;
             }
@@ -1080,6 +1196,45 @@ class _TelemetryPageState extends State<TelemetryPage> {
     }
   }
 
+  void _updateLapCount(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      print('Updating lap count with: ${data.keys.toList()}');
+      if (data.isEmpty) {
+        print('Received empty lap count data, skipping update');
+        return;
+      }
+
+      setState(() {
+        if (_liveDataFuture != null) {
+          _liveDataFuture = _liveDataFuture!.then((liveDataList) {
+            if (liveDataList.isNotEmpty) {
+              final currentLiveData = liveDataList[0];
+
+              // Create a new LapCount with updated values
+              LapCount updatedLapCount = LapCount(
+                currentLap: data.containsKey('CurrentLap')
+                    ? data['CurrentLap']
+                    : currentLiveData.lapCount?.currentLap ?? 0,
+                totalLaps: data.containsKey('TotalLaps')
+                    ? data['TotalLaps']
+                    : currentLiveData.lapCount?.totalLaps ?? 0,
+              );
+
+              // Update the lap count in the current live data object
+              currentLiveData.lapCount = updatedLapCount;
+
+              return liveDataList;
+            }
+            return liveDataList;
+          });
+        }
+      });
+    } else {
+      print(
+          'Received non-map lap count data: ${data.runtimeType}, cannot update');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1228,6 +1383,123 @@ class _TelemetryPageState extends State<TelemetryPage> {
                         color: Colors.orange),
                   ),
                 ],
+                // Extrapolated clock display
+                if (_clockExtrapolating ||
+                    _currentClockDisplay != "00:00:00") ...[
+                  Container(
+                    margin: const EdgeInsets.only(top: 8.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12.0, vertical: 8.0),
+                    decoration: BoxDecoration(
+                      color: _clockExtrapolating
+                          ? Colors.green.shade50
+                          : Colors.grey.shade100,
+                      border: Border.all(
+                          color: _clockExtrapolating
+                              ? Colors.green.shade300
+                              : Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _clockExtrapolating ? Icons.timer : Icons.timer_off,
+                          color: _clockExtrapolating
+                              ? Colors.green.shade600
+                              : Colors.grey.shade600,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _currentClockDisplay,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'monospace',
+                            color: _clockExtrapolating
+                                ? Colors.green.shade800
+                                : Colors.grey.shade800,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        if (_clockExtrapolating)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.green.shade600,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'LIVE',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+                // Lap count display
+                FutureBuilder<List<LiveData>>(
+                  future: _liveDataFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData &&
+                        snapshot.data!.isNotEmpty &&
+                        snapshot.data![0].lapCount != null &&
+                        snapshot.data![0].sessionInfo != null) {
+                      final liveData = snapshot.data![0];
+                      final lapCount = liveData.lapCount!;
+                      final sessionInfo = liveData.sessionInfo!;
+
+                      // Only show lap count for 'Sprint' or 'Race' sessions
+                      final sessionType = sessionInfo.type.toLowerCase();
+                      final sessionName = sessionInfo.name.toLowerCase();
+
+                      final isRaceOrSprint = sessionType == 'race' ||
+                          sessionType == 'sprint' ||
+                          sessionName.contains('race') ||
+                          sessionName.contains('sprint');
+
+                      if (isRaceOrSprint) {
+                        return Container(
+                          margin: const EdgeInsets.only(top: 8.0),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12.0, vertical: 6.0),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            border: Border.all(color: Colors.red.shade200),
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.flag,
+                                color: Colors.red.shade600,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Lap ${lapCount.currentLap}/${lapCount.totalLaps}',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.red.shade800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
               ],
             ),
             // Text(
