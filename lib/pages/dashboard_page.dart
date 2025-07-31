@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:formulavision/components/driver_tile.dart';
+import 'package:formulavision/components/lap_count_card.dart';
 import 'package:formulavision/components/weather_info_card.dart';
 import 'package:formulavision/data/functions/cardata.function.dart';
 import 'package:formulavision/data/functions/live_data.function.dart';
@@ -376,10 +377,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
               // Handle each message type appropriately
               switch (messageType) {
                 case 'ExtrapolatedClock':
-                  setState(() {
-                    _updateExtrapolatedClock(updated);
-                  });
-                  print('ExtrapolatedClock Updated Successfully');
+                  // Extrapolated clock implementation removed
+                  print('ExtrapolatedClock message received (but ignored)');
                   break;
 
                 case 'WeatherData':
@@ -424,6 +423,13 @@ class _TelemetryPageState extends State<TelemetryPage> {
                   print('TrackStatus Updated Successfully');
                   break;
 
+                case 'LapCount':
+                  setState(() {
+                    _updateLapCount(updated);
+                  });
+                  print('LapCount Updated Successfully');
+                  break;
+
                 default:
                   print('No handler for message type: $messageType');
               }
@@ -441,48 +447,6 @@ class _TelemetryPageState extends State<TelemetryPage> {
       _liveDataFuture!.then((liveDataList) {
         _liveDataController.add(liveDataList);
       });
-    }
-  }
-
-  void _updateExtrapolatedClock(dynamic data) {
-    if (data is Map<String, dynamic>) {
-      print('Updating extrapolated clock with: ${data.keys.toList()}');
-      if (data.isEmpty) {
-        print('Received empty extrapolated clock data, skipping update');
-        return;
-      }
-
-      setState(() {
-        if (_liveDataFuture != null) {
-          _liveDataFuture = _liveDataFuture!.then((liveDataList) {
-            if (liveDataList.isNotEmpty) {
-              final currentLiveData = liveDataList[0];
-
-              // Create a new ExtrapolatedClock with updated values
-              ExtrapolatedClock updatedExtrapolatedClock = ExtrapolatedClock(
-                utc: data.containsKey('Utc')
-                    ? data['Utc']
-                    : currentLiveData.extrapolatedClock!.utc,
-                remaining: data.containsKey('Remaining')
-                    ? data['Remaining']
-                    : currentLiveData.extrapolatedClock!.remaining,
-                extrapolating: data.containsKey('Extrapolating')
-                    ? data['Extrapolating']
-                    : currentLiveData.extrapolatedClock!.extrapolating,
-              );
-
-              // Update the extrapolated clock in the current live data object
-              currentLiveData.extrapolatedClock = updatedExtrapolatedClock;
-
-              return liveDataList;
-            }
-            return liveDataList;
-          });
-        }
-      });
-    } else {
-      print(
-          'Received non-map extrapolated clock data: ${data.runtimeType}, cannot update');
     }
   }
 
@@ -1080,6 +1044,45 @@ class _TelemetryPageState extends State<TelemetryPage> {
     }
   }
 
+  void _updateLapCount(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      print('Updating lap count with: ${data.keys.toList()}');
+      if (data.isEmpty) {
+        print('Received empty lap count data, skipping update');
+        return;
+      }
+
+      setState(() {
+        if (_liveDataFuture != null) {
+          _liveDataFuture = _liveDataFuture!.then((liveDataList) {
+            if (liveDataList.isNotEmpty) {
+              final currentLiveData = liveDataList[0];
+
+              // Create a new LapCount with updated values
+              LapCount updatedLapCount = LapCount(
+                currentLap: data.containsKey('CurrentLap')
+                    ? data['CurrentLap']
+                    : currentLiveData.lapCount?.currentLap ?? 0,
+                totalLaps: data.containsKey('TotalLaps')
+                    ? data['TotalLaps']
+                    : currentLiveData.lapCount?.totalLaps ?? 0,
+              );
+
+              // Update the lap count in the current live data object
+              currentLiveData.lapCount = updatedLapCount;
+
+              return liveDataList;
+            }
+            return liveDataList;
+          });
+        }
+      });
+    } else {
+      print(
+          'Received non-map lap count data: ${data.runtimeType}, cannot update');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1228,6 +1231,77 @@ class _TelemetryPageState extends State<TelemetryPage> {
                         color: Colors.orange),
                   ),
                 ],
+                // Lap count display
+                // FutureBuilder<List<LiveData>>(
+                //   future: _liveDataFuture,
+                //   builder: (context, snapshot) {
+                //     if (snapshot.hasData &&
+                //         snapshot.data!.isNotEmpty &&
+                //         snapshot.data![0].lapCount != null &&
+                //         snapshot.data![0].sessionInfo != null) {
+                //       final liveData = snapshot.data![0];
+                //       final lapCount = liveData.lapCount!;
+                //       final sessionInfo = liveData.sessionInfo!;
+
+                //       // Only show lap count for 'Sprint' or 'Race' sessions
+                //       final sessionType = sessionInfo.type.toLowerCase();
+                //       final sessionName = sessionInfo.name.toLowerCase();
+
+                //       final isRaceOrSprint = sessionType == 'race' ||
+                //           sessionType == 'sprint' ||
+                //           sessionName.contains('race') ||
+                //           sessionName.contains('sprint');
+
+                //       if (isRaceOrSprint) {
+                //         return Padding(
+                //           padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                //           child: LapCountCard(
+                //             currentLap: lapCount.currentLap,
+                //             totalLaps: lapCount.totalLaps,
+                //             sessionType: sessionInfo.name,
+                //           ),
+                //         );
+                //       }
+                //     }
+                //     return const SizedBox.shrink();
+                //   },
+                // ),
+
+                // Compact Lap count display
+                FutureBuilder<List<LiveData>>(
+                  future: _liveDataFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData &&
+                        snapshot.data!.isNotEmpty &&
+                        snapshot.data![0].lapCount != null &&
+                        snapshot.data![0].sessionInfo != null) {
+                      final liveData = snapshot.data![0];
+                      final lapCount = liveData.lapCount!;
+                      final sessionInfo = liveData.sessionInfo!;
+
+                      // Only show lap count for 'Sprint' or 'Race' sessions
+                      final sessionType = sessionInfo.type.toLowerCase();
+                      final sessionName = sessionInfo.name.toLowerCase();
+
+                      final isRaceOrSprint = sessionType == 'race' ||
+                          sessionType == 'sprint' ||
+                          sessionName.contains('race') ||
+                          sessionName.contains('sprint');
+
+                      if (isRaceOrSprint) {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
+                          child: CompactLapCountCard(
+                            currentLap: lapCount.currentLap,
+                            totalLaps: lapCount.totalLaps,
+                            sessionType: sessionInfo.name,
+                          ),
+                        );
+                      }
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
               ],
             ),
             // Text(
@@ -1773,27 +1847,6 @@ class _TelemetryPageState extends State<TelemetryPage> {
       ),
     );
   }
-}
-
-Widget _buildExtrapolatedClock(String remainingTime) {
-  // Convert the remaining time to a Duration object
-  Duration duration;
-  try {
-    final parts = remainingTime.split(':');
-    if (parts.length == 3) {
-      final hours = int.parse(parts[0]);
-      final minutes = int.parse(parts[1]);
-      final seconds = int.parse(parts[2]);
-      duration = Duration(hours: hours, minutes: minutes, seconds: seconds);
-    } else {
-      throw FormatException('Invalid time format');
-    }
-  } catch (e) {
-    duration = Duration.zero; // Default to zero if parsing fails
-    print('Error parsing remainingTime: $remainingTime - $e');
-  }
-  return Text(duration.toString(),
-      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold));
 }
 
 // Add this widget class at the bottom of your file (or in a separate file if you prefer)
