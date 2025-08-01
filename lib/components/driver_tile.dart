@@ -6,7 +6,9 @@ class DriverInfoCard extends StatelessWidget {
   final String tla;
   final String interval;
   final String currentLapTime;
+  final String bestLapTime;
   final int pitStops;
+  final String sessionType;
 
   const DriverInfoCard({
     super.key,
@@ -15,14 +17,16 @@ class DriverInfoCard extends StatelessWidget {
     required this.tla,
     required this.interval,
     required this.currentLapTime,
+    required this.bestLapTime,
     required this.pitStops,
+    required this.sessionType,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 80,
+      height: 100,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -97,7 +101,7 @@ class DriverInfoCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 24),
 
-                      // Lap time
+                      // Lap times
                       Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,43 +124,55 @@ class DriverInfoCard extends StatelessWidget {
                               fontFamily: 'Roboto Mono',
                             ),
                           ),
+                          Text(
+                            bestLapTime,
+                            style: const TextStyle(
+                              color: Colors.greenAccent,
+                              fontSize: 12,
+                              // fontWeight: FontWeight.w600,
+                              fontFamily: 'Roboto Mono',
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(width: 24),
 
-                      // Interval
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'INTERVAL',
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.green[700],
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              interval,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
+                      // Interval (only visible for race or sprint sessions)
+                      if (sessionType.toLowerCase() == 'race' ||
+                          sessionType.toLowerCase() == 'sprint') ...[
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'INTERVAL',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 24),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.green[700],
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                interval,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 24),
+                      ],
 
                       // Pit stops
                       Column(

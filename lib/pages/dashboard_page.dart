@@ -7,6 +7,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:formulavision/components/driver_tile.dart';
 import 'package:formulavision/components/lap_count_card.dart';
 import 'package:formulavision/components/weather_info_card.dart';
+import 'package:formulavision/components/session_info_card.dart';
+import 'package:formulavision/components/track_status_card.dart';
 import 'package:formulavision/data/functions/cardata.function.dart';
 import 'package:formulavision/data/functions/live_data.function.dart';
 import 'package:formulavision/data/models/live_data.model.dart';
@@ -377,8 +379,10 @@ class _TelemetryPageState extends State<TelemetryPage> {
               // Handle each message type appropriately
               switch (messageType) {
                 case 'ExtrapolatedClock':
-                  // Extrapolated clock implementation removed
-                  print('ExtrapolatedClock message received (but ignored)');
+                  setState(() {
+                    _updateExtrapolatedClock(updated);
+                  });
+                  print('ExtrapolatedClock Updated Successfully');
                   break;
 
                 case 'WeatherData':
@@ -1083,6 +1087,48 @@ class _TelemetryPageState extends State<TelemetryPage> {
     }
   }
 
+  void _updateExtrapolatedClock(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      print('Updating extrapolated clock with: ${data.keys.toList()}');
+      if (data.isEmpty) {
+        print('Received empty extrapolated clock data, skipping update');
+        return;
+      }
+
+      setState(() {
+        if (_liveDataFuture != null) {
+          _liveDataFuture = _liveDataFuture!.then((liveDataList) {
+            if (liveDataList.isNotEmpty) {
+              final currentLiveData = liveDataList[0];
+
+              // Create a new ExtrapolatedClock with updated values
+              ExtrapolatedClock updatedExtrapolatedClock = ExtrapolatedClock(
+                utc: data.containsKey('Utc')
+                    ? data['Utc']
+                    : currentLiveData.extrapolatedClock?.utc ?? '',
+                remaining: data.containsKey('Remaining')
+                    ? data['Remaining']
+                    : currentLiveData.extrapolatedClock?.remaining ?? '',
+                extrapolating: data.containsKey('Extrapolating')
+                    ? data['Extrapolating']
+                    : currentLiveData.extrapolatedClock?.extrapolating ?? false,
+              );
+
+              // Update the extrapolated clock in the current live data object
+              currentLiveData.extrapolatedClock = updatedExtrapolatedClock;
+
+              return liveDataList;
+            }
+            return liveDataList;
+          });
+        }
+      });
+    } else {
+      print(
+          'Received non-map extrapolated clock data: ${data.runtimeType}, cannot update');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1279,25 +1325,40 @@ class _TelemetryPageState extends State<TelemetryPage> {
                       final lapCount = liveData.lapCount!;
                       final sessionInfo = liveData.sessionInfo!;
 
-                      // Only show lap count for 'Sprint' or 'Race' sessions
+                      // Check if it's a race or sprint session for lap count display
                       final sessionType = sessionInfo.type.toLowerCase();
                       final sessionName = sessionInfo.name.toLowerCase();
 
-                      final isRaceOrSprint = sessionType == 'race' ||
-                          sessionType == 'sprint' ||
-                          sessionName.contains('race') ||
-                          sessionName.contains('sprint');
+                      // Only show lap count for race and sprint sessions
+                      // Explicitly exclude practice, qualifying, and other session types
+                      final isRaceOrSprint = (sessionType == 'race' ||
+                              sessionType == 'sprint' ||
+                              sessionName.contains('race') ||
+                              sessionName.contains('sprint')) &&
+                          !sessionName.contains('practice') &&
+                          !sessionName.contains('qualifying') &&
+                          !sessionName.contains('qual');
 
-                      if (isRaceOrSprint) {
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
-                          child: CompactLapCountCard(
-                            currentLap: lapCount.currentLap,
-                            totalLaps: lapCount.totalLaps,
-                            sessionType: sessionInfo.name,
-                          ),
-                        );
-                      }
+                      // Debug: Print session info to help verify detection
+                      print(
+                          'Session Type: "$sessionType", Session Name: "$sessionName", Show Lap Count: $isRaceOrSprint');
+
+                      // Always show the card, but conditionally show lap count
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
+                        child: CompactLapCountCard(
+                          currentLap: lapCount.currentLap,
+                          totalLaps: lapCount.totalLaps,
+                          sessionType: sessionInfo.name,
+                          extrapolatedClock:
+                              liveData.extrapolatedClock?.remaining,
+                          isClockExtrapolating:
+                              liveData.extrapolatedClock?.extrapolating ??
+                                  false,
+                          showLapCount:
+                              isRaceOrSprint, // Only show lap count for race/sprint
+                        ),
+                      );
                     }
                     return const SizedBox.shrink();
                   },
@@ -1361,7 +1422,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
                                     _buildDriverList(
                                         liveData[0].driverList!.drivers,
                                         liveData[0].timingData!.lines,
-                                        liveData[0].timingAppData!.lines),
+                                        liveData[0].timingAppData!.lines,
+                                        liveData[0].sessionInfo?.type ??
+                                            'practice'),
                                   ],
                                 );
                               } else if (snapshot.hasError) {
@@ -1431,45 +1494,26 @@ class _TelemetryPageState extends State<TelemetryPage> {
   }
 
   Widget _buildSessionInfoCard(SessionInfo session) {
-    final sessionInfo = _telemetryData['SessionInfo'];
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Session Information',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            _buildInfoRow('Name:', session.meeting.name ?? 'Unknown'),
-            _buildInfoRow('Type:', '${session.name}' ?? 'Unknown'),
-            _buildInfoRow('Status:', session.archiveStatus.status ?? 'Unknown'),
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: SessionInfoCard(
+        raceName: session.meeting.name,
+        sessionName: session.name,
+        sessionType: session.type,
+        location: session.meeting.location,
+        country: session.meeting.country.name,
+        circuit: session.meeting.circuit.shortName,
+        status: session.archiveStatus.status,
       ),
     );
   }
 
   Widget _buildTrackStatusCard(TrackStatus trackStatus) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Track Status',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            _buildInfoRow('Status:', trackStatus.status),
-            _buildInfoRow('Message:', trackStatus.message),
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TrackStatusCard(
+        status: trackStatus.status,
+        message: trackStatus.message,
       ),
     );
   }
@@ -1594,7 +1638,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
   Widget _buildDriverList(
       Map<String, Driver> drivers,
       Map<String, TimingDataDriver> timingData,
-      Map<String, TimingAppDataDriver> timingAppData) {
+      Map<String, TimingAppDataDriver> timingAppData,
+      String sessionType) {
     // Sort drivers by line number (current race position)
     List<MapEntry<String, Driver>> sortedDrivers = drivers.entries.toList()
       ..sort((a, b) => a.value.line.compareTo(b.value.line));
@@ -1771,7 +1816,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
             tla: driver.tla.isNotEmpty ? driver.tla : '???',
             interval: intervalText,
             currentLapTime: timing.lastLapTime.value,
+            bestLapTime: timing.bestLapTime.value,
             pitStops: timing.numberOfPitStops,
+            sessionType: sessionType,
           ),
         );
       },

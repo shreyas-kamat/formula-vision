@@ -4,12 +4,16 @@ class LapCountCard extends StatelessWidget {
   final int currentLap;
   final int totalLaps;
   final String sessionType;
+  final String? extrapolatedClock; // Format: "HH:MM:SS"
+  final bool isClockExtrapolating;
 
   const LapCountCard({
     super.key,
     required this.currentLap,
     required this.totalLaps,
     required this.sessionType,
+    this.extrapolatedClock,
+    this.isClockExtrapolating = false,
   });
 
   @override
@@ -44,138 +48,164 @@ class LapCountCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with session type
+              // Main content: [Clock] [Completion %] [Laps/Total]
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(
-                    sessionType.toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.0,
+                  // Extrapolated Clock Section
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isClockExtrapolating
+                              ? 'TIME REMAINING'
+                              : 'SESSION TIME',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          extrapolatedClock ?? '--:--:--',
+                          style: TextStyle(
+                            color: isClockExtrapolating
+                                ? Colors.red[400]
+                                : Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            fontFamily: 'Formula1',
+                            height: 1.0,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  Icon(
-                    Icons.flag_outlined,
-                    color: Colors.red[400],
-                    size: 20,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
 
-              // Lap count display
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  // Current lap (large number)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'LAP',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      Text(
-                        currentLap.toString(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 36,
-                          fontWeight: FontWeight.w900,
-                          fontFamily: 'Formula1',
-                          height: 0.9,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // Divider
+                  // Vertical Divider
                   Container(
-                    width: 2,
-                    height: 30,
+                    width: 1.5,
+                    height: 35,
                     decoration: BoxDecoration(
-                      color: Colors.red[400],
+                      color: Colors.grey[600],
                       borderRadius: BorderRadius.circular(1),
                     ),
                   ),
 
-                  // Total laps
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      const Text(
-                        'OF',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
+                  // Completion Percentage Section
+                  Expanded(
+                    flex: 1,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          'COMPLETE',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
                         ),
-                      ),
-                      Text(
-                        totalLaps.toString(),
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Formula1',
-                          height: 0.9,
+                        const SizedBox(height: 4),
+                        Text(
+                          '${(progress * 100).toStringAsFixed(1)}%',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Formula1',
+                            height: 1.0,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                  ),
+
+                  // Vertical Divider
+                  Container(
+                    width: 1.5,
+                    height: 35,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[600],
+                      borderRadius: BorderRadius.circular(1),
+                    ),
+                  ),
+
+                  // Laps Section
+                  Expanded(
+                    flex: 1,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          'LAPS',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: currentLap.toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w900,
+                                  fontFamily: 'Formula1',
+                                  height: 1.0,
+                                ),
+                              ),
+                              TextSpan(
+                                text: '/',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.0,
+                                ),
+                              ),
+                              TextSpan(
+                                text: totalLaps.toString(),
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.0,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
 
               const SizedBox(height: 16),
 
-              // Progress bar
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'PROGRESS',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      Text(
-                        '${(progress * 100).toStringAsFixed(1)}%',
-                        style: TextStyle(
-                          color: Colors.red[400],
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+              // Progress bar (visual indicator)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: Colors.grey[700],
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Colors.red[400]!,
                   ),
-                  const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      backgroundColor: Colors.grey[700],
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.red[400]!,
-                      ),
-                      minHeight: 6,
-                    ),
-                  ),
-                ],
+                  minHeight: 4,
+                ),
               ),
             ],
           ),
@@ -189,12 +219,18 @@ class CompactLapCountCard extends StatelessWidget {
   final int currentLap;
   final int totalLaps;
   final String sessionType;
+  final String? extrapolatedClock; // Format: "HH:MM:SS"
+  final bool isClockExtrapolating;
+  final bool showLapCount; // Whether to show lap count and completion
 
   const CompactLapCountCard({
     super.key,
     required this.currentLap,
     required this.totalLaps,
     required this.sessionType,
+    this.extrapolatedClock,
+    this.isClockExtrapolating = false,
+    this.showLapCount = true, // Default to true for backward compatibility
   });
 
   @override
@@ -227,80 +263,73 @@ class CompactLapCountCard extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Left side - Session type and flag icon
-          Row(
-            children: [
-              Icon(
-                Icons.flag_outlined,
-                color: Colors.red[400],
-                size: 16,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                sessionType.toUpperCase(),
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
+          // Extrapolated Clock
+          Text(
+            extrapolatedClock ?? '--:--:--',
+            style: TextStyle(
+              color: isClockExtrapolating ? Colors.red[400] : Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Formula1',
+            ),
           ),
 
-          // Center - Lap count
-          Row(
-            children: [
-              Text(
-                currentLap.toString(),
+          // Show lap count and completion only if showLapCount is true
+          if (showLapCount) ...[
+            // Completion percentage
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                '${(progress * 100).toStringAsFixed(0)}%',
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  fontFamily: 'Formula1',
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(width: 4),
-              Text(
-                '/',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                totalLaps.toString(),
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
+            ),
 
-          // Right side - Progress percentage
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.red[400]?.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.red[400]!,
-                width: 1,
-              ),
+            // Lap count
+            Row(
+              children: [
+                Text(
+                  currentLap.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'Formula1',
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Text(
+                  '/',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Text(
+                  totalLaps.toString(),
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
-            child: Text(
-              '${(progress * 100).toStringAsFixed(0)}%',
-              style: TextStyle(
-                color: Colors.red[400],
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+          ],
         ],
       ),
     );
