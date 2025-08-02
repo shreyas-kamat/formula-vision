@@ -1317,13 +1317,47 @@ class _TelemetryPageState extends State<TelemetryPage> {
                 FutureBuilder<List<LiveData>>(
                   future: _liveDataFuture,
                   builder: (context, snapshot) {
+                    // Debug: Print what data we have
+                    print('=== CompactLapCountCard Debug ===');
+                    print(
+                        '_liveDataFuture != null: ${_liveDataFuture != null}');
+                    print(
+                        'snapshot.connectionState: ${snapshot.connectionState}');
+                    print('snapshot.hasData: ${snapshot.hasData}');
+                    print('snapshot.hasError: ${snapshot.hasError}');
+                    if (snapshot.hasError) {
+                      print('snapshot.error: ${snapshot.error}');
+                    }
+                    if (snapshot.hasData) {
+                      print(
+                          'snapshot.data!.isNotEmpty: ${snapshot.data!.isNotEmpty}');
+                      if (snapshot.data!.isNotEmpty) {
+                        final liveData = snapshot.data![0];
+                        print(
+                            'liveData.lapCount != null: ${liveData.lapCount != null}');
+                        print(
+                            'liveData.sessionInfo != null: ${liveData.sessionInfo != null}');
+                        print(
+                            'liveData.extrapolatedClock != null: ${liveData.extrapolatedClock != null}');
+                        if (liveData.extrapolatedClock != null) {
+                          print(
+                              'extrapolatedClock.remaining: "${liveData.extrapolatedClock!.remaining}"');
+                          print(
+                              'extrapolatedClock.extrapolating: ${liveData.extrapolatedClock!.extrapolating}');
+                        }
+                      }
+                    }
+
                     if (snapshot.hasData &&
                         snapshot.data!.isNotEmpty &&
-                        snapshot.data![0].lapCount != null &&
                         snapshot.data![0].sessionInfo != null) {
                       final liveData = snapshot.data![0];
-                      final lapCount = liveData.lapCount!;
                       final sessionInfo = liveData.sessionInfo!;
+
+                      // Use default values if lapCount is null
+                      final lapCount = liveData.lapCount;
+                      final currentLap = lapCount?.currentLap ?? 0;
+                      final totalLaps = lapCount?.totalLaps ?? 0;
 
                       // Check if it's a race or sprint session for lap count display
                       final sessionType = sessionInfo.type.toLowerCase();
@@ -1331,24 +1365,47 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
                       // Only show lap count for race and sprint sessions
                       // Explicitly exclude practice, qualifying, and other session types
+                      // Handle all possible capitalizations: Practice/practice, Qualifying/qualifying, etc.
                       final isRaceOrSprint = (sessionType == 'race' ||
                               sessionType == 'sprint' ||
                               sessionName.contains('race') ||
                               sessionName.contains('sprint')) &&
+                          !sessionType.contains('practice') &&
+                          !sessionType.contains('qualifying') &&
+                          !sessionType.contains('qual') &&
                           !sessionName.contains('practice') &&
                           !sessionName.contains('qualifying') &&
                           !sessionName.contains('qual');
 
                       // Debug: Print session info to help verify detection
                       print(
-                          'Session Type: "$sessionType", Session Name: "$sessionName", Show Lap Count: $isRaceOrSprint');
+                          'Original - Session Type: "${sessionInfo.type}", Session Name: "${sessionInfo.name}"');
+                      print(
+                          'Lowercase - Session Type: "$sessionType", Session Name: "$sessionName"');
+
+                      // Debug: Show evaluation steps
+                      final hasRaceOrSprint = (sessionType == 'race' ||
+                          sessionType == 'sprint' ||
+                          sessionName.contains('race') ||
+                          sessionName.contains('sprint'));
+                      final hasPractice = sessionType.contains('practice') ||
+                          sessionName.contains('practice');
+                      final hasQualifying =
+                          sessionType.contains('qualifying') ||
+                              sessionType.contains('qual') ||
+                              sessionName.contains('qualifying') ||
+                              sessionName.contains('qual');
+
+                      print(
+                          'Evaluation: hasRaceOrSprint=$hasRaceOrSprint, hasPractice=$hasPractice, hasQualifying=$hasQualifying');
+                      print('Final Result: Show Lap Count: $isRaceOrSprint');
 
                       // Always show the card, but conditionally show lap count
                       return Padding(
                         padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
                         child: CompactLapCountCard(
-                          currentLap: lapCount.currentLap,
-                          totalLaps: lapCount.totalLaps,
+                          currentLap: currentLap,
+                          totalLaps: totalLaps,
                           sessionType: sessionInfo.name,
                           extrapolatedClock:
                               liveData.extrapolatedClock?.remaining,
@@ -1360,6 +1417,27 @@ class _TelemetryPageState extends State<TelemetryPage> {
                         ),
                       );
                     }
+
+                    // If we have any data at all, show the card with available information
+                    if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                      final liveData = snapshot.data![0];
+                      print('=== Showing card with available data ===');
+
+                      return CompactLapCountCard(
+                        currentLap: 0,
+                        totalLaps: 0,
+                        sessionType: 'Session',
+                        extrapolatedClock:
+                            liveData.extrapolatedClock?.remaining,
+                        isClockExtrapolating:
+                            liveData.extrapolatedClock?.extrapolating ?? false,
+                        showLapCount:
+                            false, // Don't show lap count if no session info
+                      );
+                    }
+
+                    print(
+                        '=== No data available, showing SizedBox.shrink() ===');
                     return const SizedBox.shrink();
                   },
                 ),
