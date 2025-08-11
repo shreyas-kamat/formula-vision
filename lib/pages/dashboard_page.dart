@@ -126,6 +126,13 @@ class _TelemetryPageState extends State<TelemetryPage> {
           _liveDataFuture = fetchLiveData(data['R']);
         });
 
+        // Also add initial data to the stream
+        _liveDataFuture!.then((liveDataList) {
+          if (!_liveDataController.isClosed) {
+            _liveDataController.add(liveDataList);
+          }
+        });
+
         setState(() {
           _connectionStatus = "Initial data loaded";
         });
@@ -366,79 +373,70 @@ class _TelemetryPageState extends State<TelemetryPage> {
               messageObject.containsKey('A') &&
               messageObject['A'] is List &&
               messageObject['A'].isNotEmpty) {
-            final messageType = messageObject['A'][0];
+            // Handle the actual message format where A[0] contains nested objects
+            final messageData = messageObject['A'][0];
+            print('Processing message data: $messageData');
 
-            if (messageObject['A'].length > 1) {
-              final updated = messageObject['A'][1];
-              final timestamp =
-                  messageObject['A'].length > 2 ? messageObject['A'][2] : null;
+            if (messageData is Map<String, dynamic>) {
+              // Iterate through each key-value pair in the message data
+              messageData.forEach((messageType, updated) {
+                print('Processing $messageType update with data: $updated');
 
-              print(
-                  'Processing $messageType update with timestamp: $timestamp');
-
-              // Handle each message type appropriately
-              switch (messageType) {
-                case 'ExtrapolatedClock':
-                  setState(() {
+                // Handle each message type appropriately
+                switch (messageType) {
+                  case 'ExtrapolatedClock':
                     _updateExtrapolatedClock(updated);
-                  });
-                  print('ExtrapolatedClock Updated Successfully');
-                  break;
+                    print('ExtrapolatedClock Updated Successfully');
+                    break;
 
-                case 'WeatherData':
-                  setState(() {
-                    _updateWeatherData(updated);
-                  });
-                  print('WeatherData Updated Successfully');
-                  break;
+                  case 'WeatherData':
+                    setState(() {
+                      _updateWeatherData(updated);
+                    });
+                    print('WeatherData Updated Successfully');
+                    break;
 
-                case 'SessionInfo':
-                  setState(() {
-                    _updateSessionInfo(updated);
-                  });
-                  print('SessionInfo Updated Successfully');
-                  break;
+                  case 'SessionInfo':
+                    setState(() {
+                      _updateSessionInfo(updated);
+                    });
+                    print('SessionInfo Updated Successfully');
+                    break;
 
-                case 'TimingData':
-                  setState(() {
-                    _updateTimingData(updated);
-                  });
-                  print('TimingData Updated Successfully');
-                  break;
+                  case 'TimingData':
+                    setState(() {
+                      _updateTimingData(updated);
+                    });
+                    print('TimingData Updated Successfully');
+                    break;
 
-                // case 'TimingAppData':
-                //   setState(() {
-                //     _updateTimingAppData(updated);
-                //   });
-                //   print('TimingAppData Updated Successfully');
-                //   break;
+                  case 'DriverList':
+                    setState(() {
+                      _updateDriverList(updated);
+                    });
+                    print('DriverList Updated Successfully');
+                    break;
 
-                case 'DriverList':
-                  setState(() {
-                    _updateDriverList(updated);
-                  });
-                  print('DriverList Updated Successfully');
-                  break;
+                  case 'TrackStatus':
+                    setState(() {
+                      _updateTrackStatus(updated);
+                    });
+                    print('TrackStatus Updated Successfully');
+                    break;
 
-                case 'TrackStatus':
-                  setState(() {
-                    _updateTrackStatus(updated);
-                  });
-                  print('TrackStatus Updated Successfully');
-                  break;
+                  case 'LapCount':
+                    setState(() {
+                      _updateLapCount(updated);
+                    });
+                    print('LapCount Updated Successfully');
+                    break;
 
-                case 'LapCount':
-                  setState(() {
-                    _updateLapCount(updated);
-                  });
-                  print('LapCount Updated Successfully');
-                  break;
-
-                default:
-                  print('No handler for message type: $messageType');
-              }
+                  default:
+                    print('No handler for message type: $messageType');
+                }
+              });
             } else {
-              print('Message "$messageType" has no data payload');
+              print('Message data is not a Map: ${messageData.runtimeType}');
             }
           } else {
             print('Message does not contain valid "A" array structure');
@@ -447,7 +445,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
       }
     }
     // After processing all updates in a batch
-    if (_liveDataController != null && !_liveDataController.isClosed) {
+    if (!_liveDataController.isClosed) {
       _liveDataFuture!.then((liveDataList) {
         _liveDataController.add(liveDataList);
       });
@@ -1090,39 +1088,46 @@ class _TelemetryPageState extends State<TelemetryPage> {
   void _updateExtrapolatedClock(dynamic data) {
     if (data is Map<String, dynamic>) {
       print('Updating extrapolated clock with: ${data.keys.toList()}');
+      print('ExtrapolatedClock data values: $data');
       if (data.isEmpty) {
         print('Received empty extrapolated clock data, skipping update');
         return;
       }
 
-      setState(() {
-        if (_liveDataFuture != null) {
-          _liveDataFuture = _liveDataFuture!.then((liveDataList) {
-            if (liveDataList.isNotEmpty) {
-              final currentLiveData = liveDataList[0];
+      if (_liveDataFuture != null) {
+        _liveDataFuture = _liveDataFuture!.then((liveDataList) {
+          if (liveDataList.isNotEmpty) {
+            final currentLiveData = liveDataList[0];
 
-              // Create a new ExtrapolatedClock with updated values
-              ExtrapolatedClock updatedExtrapolatedClock = ExtrapolatedClock(
-                utc: data.containsKey('Utc')
-                    ? data['Utc']
-                    : currentLiveData.extrapolatedClock?.utc ?? '',
-                remaining: data.containsKey('Remaining')
-                    ? data['Remaining']
-                    : currentLiveData.extrapolatedClock?.remaining ?? '',
-                extrapolating: data.containsKey('Extrapolating')
-                    ? data['Extrapolating']
-                    : currentLiveData.extrapolatedClock?.extrapolating ?? false,
-              );
+            // Log current values before update
+            print(
+                'Before update - Current extrapolated clock: ${currentLiveData.extrapolatedClock?.remaining}');
 
-              // Update the extrapolated clock in the current live data object
-              currentLiveData.extrapolatedClock = updatedExtrapolatedClock;
+            // Create a new ExtrapolatedClock with updated values
+            ExtrapolatedClock updatedExtrapolatedClock = ExtrapolatedClock(
+              utc: data.containsKey('Utc')
+                  ? data['Utc']
+                  : currentLiveData.extrapolatedClock?.utc ?? '',
+              remaining: data.containsKey('Remaining')
+                  ? data['Remaining']
+                  : currentLiveData.extrapolatedClock?.remaining ?? '',
+              extrapolating: data.containsKey('Extrapolating')
+                  ? data['Extrapolating']
+                  : currentLiveData.extrapolatedClock?.extrapolating ?? false,
+            );
 
-              return liveDataList;
-            }
+            // Update the extrapolated clock in the current live data object
+            currentLiveData.extrapolatedClock = updatedExtrapolatedClock;
+
+            // Log new values after update
+            print(
+                'After update - New extrapolated clock: ${updatedExtrapolatedClock.remaining}');
+
             return liveDataList;
-          });
-        }
-      });
+          }
+          return liveDataList;
+        });
+      }
     } else {
       print(
           'Received non-map extrapolated clock data: ${data.runtimeType}, cannot update');
@@ -1314,8 +1319,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
                 // ),
 
                 // Compact Lap count display
-                FutureBuilder<List<LiveData>>(
-                  future: _liveDataFuture,
+                StreamBuilder<List<LiveData>>(
+                  stream: liveDataStream,
+                  initialData: _liveDataFuture != null ? [] : null,
                   builder: (context, snapshot) {
                     // Debug: Print what data we have
                     print('=== CompactLapCountCard Debug ===');
@@ -1462,8 +1468,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
                   : SingleChildScrollView(
                       child: Column(
                         children: [
-                          FutureBuilder<List<LiveData>>(
-                            future: _liveDataFuture,
+                          StreamBuilder<List<LiveData>>(
+                            stream: liveDataStream,
                             initialData: [], // Initial empty data
                             builder: (context, snapshot) {
                               if (snapshot.hasData &&
