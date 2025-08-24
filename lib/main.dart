@@ -1,32 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:formulavision/auth/login_page.dart';
+import 'package:formulavision/data/functions/auth.function.dart';
+import 'package:formulavision/data/services/auth_service.dart';
 import 'package:formulavision/pages/nav_page.dart';
-import 'package:provider/provider.dart';
-import 'data/models/live_data.model.dart';
-import 'pages/test_page.dart';
 
-void main() {
+Future main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
+
+  await AuthService().initialize();
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider<F1DataModel>(
-          create: (_) => F1DataModel(),
-        ),
-      ],
-      child: MaterialApp(
-        title: 'Formula Vision',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-        ),
-        home: const NavPage(),
-      ),
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Transactions',
+      home: NavPage(),
+      // home: FutureBuilder<bool>(
+      //   future: isLoggedIn(),
+      //   builder: (context, snapshot) {
+      //     if (snapshot.connectionState == ConnectionState.waiting) {
+      //       return Scaffold(
+      //         backgroundColor: Colors.black,
+      //         body: Center(
+      //           child: CircularProgressIndicator(),
+      //         ),
+      //       );
+      //     } else if (snapshot.hasError) {
+      //       return Scaffold(
+      //         body: Center(
+      //           child: Text('Error: ${snapshot.error}'),
+      //         ),
+      //       );
+      //     } else if (snapshot.data == true) {
+      //       return const NavPage();
+      //     } else {
+      //       // return LoginPage();
+      //       return const NavPage();
+      //     }
+      //   },
+      // ),
+      // home: NavPage(),
     );
   }
 }

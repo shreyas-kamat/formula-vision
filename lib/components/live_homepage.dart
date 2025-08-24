@@ -1,10 +1,13 @@
 import 'dart:convert';
+import 'package:formulavision/auth/login_page.dart';
+import 'package:formulavision/data/functions/auth.function.dart';
 import 'package:formulavision/pages/circuit_list.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:formulavision/data/functions/live_data.function.dart';
 import 'package:formulavision/data/models/live_data.model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LiveHomePage extends StatefulWidget {
   const LiveHomePage({super.key});
@@ -14,6 +17,7 @@ class LiveHomePage extends StatefulWidget {
 }
 
 class _LiveHomePageState extends State<LiveHomePage> {
+  String username = 'User';
   bool isRaining = false;
   int windAngle = 135; // Angle in degrees (0-360) for wind direction
   String _connectionStatus = "Disconnected";
@@ -28,6 +32,18 @@ class _LiveHomePageState extends State<LiveHomePage> {
     // TODO: implement initState
     super.initState();
     _initialize();
+    fetchUserName().then((userName) {
+      setState(() {
+        username = userName;
+        print('User Name: $userName');
+      });
+    });
+  }
+
+  Future<String> fetchUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? userName = prefs.getString('username');
+    return userName ?? 'User';
   }
 
   Future<void> _initialize() async {
@@ -51,7 +67,7 @@ class _LiveHomePageState extends State<LiveHomePage> {
         }
 
         imageUrl =
-            'https://media.formula1.com/image/upload/f_auto,c_limit,w_1440,q_auto/f_auto/q_auto/content/dam/fom-website/2018-redesign-assets/Track%20icons%204x3/${location}%20carbon';
+            'https://media.formula1.com/image/upload/f_auto,c_limit,w_1440,q_auto/f_auto/q_auto/content/dam/fom-website/2018-redesign-assets/Track%20icons%204x3/$location%20carbon';
         print(liveDataList[0].sessionInfo?.meeting.country.name);
       }
     }
@@ -59,8 +75,14 @@ class _LiveHomePageState extends State<LiveHomePage> {
 
   Future<void> fetchInitialData() async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('jwt_token');
       final response = await http.get(
         Uri.parse('${dotenv.env['API_URL']}/initialData'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
       );
 
       if (response.statusCode == 200) {
@@ -103,28 +125,117 @@ class _LiveHomePageState extends State<LiveHomePage> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Column(children: [
-                Column(
+                Row(
                   children: [
-                    Row(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Hello,',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 25,
-                              fontFamily: 'formula',
-                            )),
+                        Row(
+                          children: [
+                            Text('Hello,',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 25,
+                                  fontFamily: 'formula',
+                                )),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            Text(
+                              username.length > 16
+                                  ? '${username.substring(0, 13)}...'
+                                  : username,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 25,
+                                fontFamily: 'formula-bold',
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
-                    Row(
-                      children: [
-                        Text('User',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 25,
-                              fontFamily: 'formula-bold',
-                            )),
-                      ],
-                    ),
+                    Spacer(),
+                    FutureBuilder<bool>(
+                      future: isLoggedIn(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return SizedBox(
+                            width: 120,
+                            height: 40,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                          );
+                        }
+                        final loggedIn = snapshot.data ?? false;
+                        return loggedIn
+                            ? ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      Colors.white.withOpacity(0.1),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                    side: BorderSide(
+                                        color: Colors.white, width: 1),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 18, vertical: 10),
+                                ),
+                                icon: Icon(Icons.logout, color: Colors.white),
+                                label: Text(
+                                  'Logout',
+                                  style: TextStyle(
+                                    fontFamily: 'formula-bold',
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                onPressed: () async {
+                                  logout(context);
+                                },
+                              )
+                            : ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      Colors.white.withOpacity(0.1),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                    side: BorderSide(
+                                        color: Colors.white, width: 1),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 18, vertical: 10),
+                                ),
+                                icon: Icon(Icons.login, color: Colors.white),
+                                label: Text(
+                                  'Log In',
+                                  style: TextStyle(
+                                    fontFamily: 'formula-bold',
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const LoginPage(),
+                                    ),
+                                  );
+                                },
+                              );
+                      },
+                    )
                   ],
                 ),
                 SizedBox(height: 40),

@@ -141,12 +141,14 @@ class RaceWeekend {
   final String location;
   final List<F1Event> events;
   bool isExpanded;
+  final bool isCurrentRace;
 
   RaceWeekend({
     required this.name,
     required this.location,
     required this.events,
     this.isExpanded = false,
+    this.isCurrentRace = false,
   });
 
   // Get the main date for the race weekend (typically the race day)
@@ -181,6 +183,27 @@ class RaceWeekend {
       return "${DateFormat('MMM d, y').format(firstDay)} - ${DateFormat('MMM d, y').format(lastDay)}";
     }
   }
+
+  // Check if this race weekend is currently live
+  bool get isLive {
+    final now = DateTime.now();
+    return events.any(
+        (event) => event.startTime.isBefore(now) && event.endTime.isAfter(now));
+  }
+
+  // Check if we're currently in this race weekend (between first and last event)
+  bool get isActiveWeekend {
+    if (events.isEmpty) return false;
+
+    final now = DateTime.now();
+    final sortedEvents = List<F1Event>.from(events);
+    sortedEvents.sort((a, b) => a.startTime.compareTo(b.startTime));
+
+    final weekendStart = sortedEvents.first.startTime;
+    final weekendEnd = sortedEvents.last.endTime;
+
+    return now.isAfter(weekendStart) && now.isBefore(weekendEnd);
+  }
 }
 
 class SchedulePage extends StatefulWidget {
@@ -191,7 +214,8 @@ class SchedulePage extends StatefulWidget {
 }
 
 class _SchedulePageState extends State<SchedulePage> {
-  List<RaceWeekend> _raceWeekends = [];
+  List<RaceWeekend> _upcomingRaces = [];
+  List<RaceWeekend> _completedRaces = [];
   bool _isLoading = true;
 
   @override
@@ -231,6 +255,7 @@ class _SchedulePageState extends State<SchedulePage> {
       }
 
       // Create race weekends from grouped events
+      final now = DateTime.now();
       final raceWeekends = groupedEvents.entries.map((entry) {
         final parts = entry.key.split('_');
         final name = parts[0];
@@ -240,18 +265,75 @@ class _SchedulePageState extends State<SchedulePage> {
         final sortedEvents = entry.value
           ..sort((a, b) => a.startTime.compareTo(b.startTime));
 
+        // Check if this is the current race (has live events, is an active weekend, or is the next upcoming)
+        bool isCurrentRace = sortedEvents.any((event) =>
+            event.startTime.isBefore(now) && event.endTime.isAfter(now));
+
+        // Also check if we're within the race weekend timeframe
+        if (!isCurrentRace) {
+          final weekendStart = sortedEvents.first.startTime;
+          final weekendEnd = sortedEvents.last.endTime;
+          isCurrentRace = now.isAfter(weekendStart) && now.isBefore(weekendEnd);
+        }
+
         return RaceWeekend(
           name: name,
           location: location,
           events: sortedEvents,
+          isCurrentRace: isCurrentRace,
+          isExpanded: isCurrentRace, // Auto-expand current race
         );
       }).toList();
 
-      // Sort race weekends by date
-      raceWeekends.sort((a, b) => a.weekendDate.compareTo(b.weekendDate));
+      // Sort race weekends with current/upcoming race first
+
+      // Separate upcoming and completed races
+      List<RaceWeekend> upcomingRaces = [];
+      List<RaceWeekend> completedRaces = [];
+      RaceWeekend? currentActiveRace;
+
+      for (var weekend in raceWeekends) {
+        if (weekend.isLive || weekend.isActiveWeekend) {
+          currentActiveRace = weekend;
+          upcomingRaces.add(weekend);
+        } else {
+          // Check if any event in this weekend is happening now or in the future
+          bool hasUpcomingEvent =
+              weekend.events.any((event) => event.endTime.isAfter(now));
+
+          if (hasUpcomingEvent || weekend.weekendDate.isAfter(now)) {
+            upcomingRaces.add(weekend);
+          } else {
+            completedRaces.add(weekend);
+          }
+        }
+      }
+
+      // If no live/active race, find the next upcoming race and mark it as current
+      if (currentActiveRace == null && upcomingRaces.isNotEmpty) {
+        // Sort to find the earliest upcoming race
+        upcomingRaces.sort((a, b) => a.weekendDate.compareTo(b.weekendDate));
+        final nextRace = upcomingRaces.first;
+
+        // Replace with updated version that's marked as current
+        upcomingRaces[0] = RaceWeekend(
+          name: nextRace.name,
+          location: nextRace.location,
+          events: nextRace.events,
+          isCurrentRace: true,
+          isExpanded: true,
+        );
+      }
+
+      // Sort upcoming races by date (earliest first)
+      upcomingRaces.sort((a, b) => a.weekendDate.compareTo(b.weekendDate));
+
+      // Sort completed races by date (most recent first)
+      completedRaces.sort((a, b) => b.weekendDate.compareTo(a.weekendDate));
 
       setState(() {
-        _raceWeekends = raceWeekends;
+        _upcomingRaces = upcomingRaces;
+        _completedRaces = completedRaces;
         _isLoading = false;
       });
     } catch (e) {
@@ -281,60 +363,152 @@ class _SchedulePageState extends State<SchedulePage> {
       child: SafeArea(
         child: Scaffold(
           backgroundColor: Colors.transparent,
-          body: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Schedule',
+          body: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 0.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Text(
+                    'SCHEDULE',
                     style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 30,
-                        fontFamily: 'formula-bold'),
+                      color: Colors.white,
+                      fontSize: 30,
+                      fontFamily: 'formula-bold',
+                    ),
                   ),
-                  SizedBox(height: 15),
-                  Container(
-                    height: MediaQuery.of(context).size.height * 0.8,
-                    width: double.infinity,
-                    child: _isLoading
-                        ? Center(
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                            ),
-                          )
-                        : Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              children: [
-                                Expanded(
-                                  child: ListView.separated(
-                                    physics: BouncingScrollPhysics(),
-                                    itemCount: _raceWeekends.length,
-                                    separatorBuilder: (context, index) =>
-                                        SizedBox(height: 12),
-                                    itemBuilder: (context, index) {
-                                      final raceWeekend = _raceWeekends[index];
-                                      return Container(
-                                        decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(20)),
-                                        child:
-                                            _buildRaceWeekendPanel(raceWeekend),
-                                      );
-                                    },
-                                  ),
+                ),
+                const SizedBox(height: 30),
+                Expanded(
+                  child: DefaultTabController(
+                    length: 2,
+                    child: Column(
+                      children: [
+                        Center(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withValues(alpha: 0.3),
+                                  blurRadius: 20,
+                                  spreadRadius: 5,
                                 ),
                               ],
+                              gradient: LinearGradient(
+                                begin: Alignment.topRight,
+                                end: Alignment.bottomLeft,
+                                colors: [
+                                  Colors.white.withValues(alpha: 0.4),
+                                  Colors.white.withValues(alpha: 0.8),
+                                  Colors.white.withValues(alpha: 0.4),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(40),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 8.0,
+                                horizontal: 8.0,
+                              ),
+                              child: TabBar(
+                                labelColor: Colors.white,
+                                dividerColor: Colors.transparent,
+                                tabAlignment: TabAlignment.center,
+                                padding: EdgeInsets.zero,
+                                unselectedLabelColor: Colors.redAccent,
+                                indicator: BoxDecoration(
+                                  color: Colors.redAccent,
+                                  borderRadius: BorderRadius.circular(30.0),
+                                ),
+                                labelPadding: EdgeInsets.zero,
+                                tabs: [
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 20.0),
+                                    child: Tab(
+                                      child: Text(
+                                        'UPCOMING',
+                                        style: TextStyle(
+                                          fontFamily: 'formula-bold',
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 20.0),
+                                    child: Tab(
+                                      child: Text(
+                                        'COMPLETED',
+                                        style: TextStyle(
+                                          fontFamily: 'formula-bold',
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                  )
-                ],
-              ),
+                        ),
+                        const SizedBox(height: 20),
+                        Expanded(
+                          child: TabBarView(
+                            children: [
+                              _buildRaceList(_upcomingRaces),
+                              _buildRaceList(_completedRaces),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildRaceList(List<RaceWeekend> races) {
+    if (_isLoading) {
+      return Center(
+        child: CircularProgressIndicator(
+          color: Colors.white,
+        ),
+      );
+    }
+
+    if (races.isEmpty) {
+      return Center(
+        child: Text(
+          'No races available',
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 16,
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: ListView.separated(
+        physics: BouncingScrollPhysics(),
+        itemCount: races.length,
+        separatorBuilder: (context, index) => SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          final raceWeekend = races[index];
+          return Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: _buildRaceWeekendPanel(raceWeekend),
+          );
+        },
       ),
     );
   }
@@ -347,28 +521,64 @@ class _SchedulePageState extends State<SchedulePage> {
           dividerColor: Colors.transparent, // Removes the divider line
         ),
         child: ExpansionTile(
+          initiallyExpanded: raceWeekend.isExpanded,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           clipBehavior:
               Clip.antiAlias, // Ensures content respects border radius
           backgroundColor: Colors.white.withValues(alpha: 0.2),
-          collapsedBackgroundColor: Colors.white.withValues(alpha: 0.5),
+          collapsedBackgroundColor:
+              (raceWeekend.isCurrentRace || raceWeekend.isActiveWeekend)
+                  ? Colors.red.withValues(alpha: 0.3)
+                  : Colors.white.withValues(alpha: 0.5),
           collapsedShape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                raceWeekend.name,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontFamily: 'formula-bold',
-                ),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      raceWeekend.name,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontFamily: 'formula-bold',
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (raceWeekend.isLive ||
+                      raceWeekend.isActiveWeekend ||
+                      raceWeekend.isCurrentRace)
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: raceWeekend.isLive
+                            ? Colors.red
+                            : raceWeekend.isActiveWeekend
+                                ? Colors.orange
+                                : Colors.blue,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        raceWeekend.isLive
+                            ? 'LIVE'
+                            : raceWeekend.isActiveWeekend
+                                ? 'WEEKEND'
+                                : 'NEXT',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontFamily: 'formula-bold',
+                        ),
+                      ),
+                    ),
+                ],
               ),
               SizedBox(height: 4),
               Row(
@@ -420,6 +630,10 @@ class _SchedulePageState extends State<SchedulePage> {
   }
 
   Widget _buildEventItem(F1Event event) {
+    final now = DateTime.now();
+    final isLiveEvent =
+        event.startTime.isBefore(now) && event.endTime.isAfter(now);
+
     Color eventColor;
 
     // Assign color based on event type
@@ -460,6 +674,9 @@ class _SchedulePageState extends State<SchedulePage> {
                 borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(40),
                     bottomLeft: Radius.circular(40)),
+                border: isLiveEvent
+                    ? Border.all(color: Colors.red, width: 2)
+                    : null,
               ),
               child: Row(
                 children: [
@@ -500,14 +717,42 @@ class _SchedulePageState extends State<SchedulePage> {
                   ),
                   SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      event.sessionName,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                event.sessionName,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (isLiveEvent)
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'LIVE',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 8,
+                                    fontFamily: 'formula-bold',
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -519,10 +764,11 @@ class _SchedulePageState extends State<SchedulePage> {
             flex: 1,
             child: Container(
               height: 80,
-              // alignment: Alignment.center,
               padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.4),
+                color: isLiveEvent
+                    ? Colors.red.withValues(alpha: 0.6)
+                    : Colors.white.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.only(
                     topRight: Radius.circular(20),
                     bottomRight: Radius.circular(20)),

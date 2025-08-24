@@ -453,22 +453,29 @@ class TimingAppDataDriver {
   factory TimingAppDataDriver.fromJson(Map<String, dynamic> json) {
     List<Stint> stintsList = [];
     if (json['Stints'] != null) {
-      stintsList = List<Stint>.from(
-        json['Stints'].map((x) => Stint.fromJson(x)),
-      );
+      if (json['Stints'] is Map) {
+        stintsList = (json['Stints'] as Map)
+            .values
+            .map((x) => Stint.fromJson(Map<String, dynamic>.from(x)))
+            .toList();
+      } else if (json['Stints'] is List) {
+        stintsList = (json['Stints'] as List)
+            .map((x) => Stint.fromJson(Map<String, dynamic>.from(x)))
+            .toList();
+      }
     }
 
     return TimingAppDataDriver(
-      racingNumber: json['racingNumber'] ?? '',
+      racingNumber: json['RacingNumber'] ?? json['racingNumber'] ?? '',
       stints: stintsList,
-      line: json['line'] ?? 0,
-      gridPos: json['GridPos'] ?? '',
+      line: json['Line'] ?? json['line'] ?? 0,
+      gridPos: json['GridPos'] ?? json['gridPos'] ?? '',
     );
   }
 
   Map<String, dynamic> toJson() => {
         'racingNumber': racingNumber,
-        'stints': stints.map((x) => x.toJson()).toList(),
+        'Stints': stints.map((x) => x.toJson()).toList(),
         'line': line,
         'gridPos': gridPos,
       };
@@ -487,9 +494,9 @@ class Stint {
 
   factory Stint.fromJson(Map<String, dynamic> json) {
     return Stint(
-      totalLaps: json['totalLaps'],
-      compound: json['Compound'],
-      isNew: json['new'],
+      totalLaps: json['TotalLaps'] ?? json['totalLaps'],
+      compound: json['Compound'] ?? json['compound'],
+      isNew: json['New'] ?? json['new'],
     );
   }
 
@@ -1201,7 +1208,7 @@ class TimingDataDriver {
       lastLapTime: json['LastLapTime'] != null
           ? I1.fromJson(json['LastLapTime'])
           : I1(
-              value: '',
+              value: '-:--.---',
               status: 0,
               overallFastest: false,
               personalFastest: false),

@@ -116,6 +116,12 @@ Future<List<LiveData>> fetchLiveData(dynamic response) async {
                   response['ExtrapolatedClock']['Extrapolating'] ?? 0,
             )
           : null,
+      lapCount: response['LapCount'] is Map
+          ? LapCount(
+              currentLap: response['LapCount']['CurrentLap'] ?? 0,
+              totalLaps: response['LapCount']['TotalLaps'] ?? 0,
+            )
+          : null,
     );
     fetchedData.add(data);
   }

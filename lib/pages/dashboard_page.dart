@@ -1,13 +1,27 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:collection';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:formulavision/components/driver_tile.dart';
+import 'package:formulavision/components/lap_count_card.dart';
+import 'package:formulavision/components/weather_info_card.dart';
+import 'package:formulavision/data/functions/cardata.function.dart';
 import 'package:formulavision/data/functions/live_data.function.dart';
 import 'package:formulavision/data/models/live_data.model.dart';
-import 'package:formulavision/pages/live_details_page.dart';
-import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter/services.dart' show rootBundle;
+
+// Helper class to queue messages with timestamps
+class _DelayedMessage {
+  final dynamic data;
+  final DateTime receivedAt;
+
+  _DelayedMessage(this.data, this.receivedAt);
+}
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -15,7 +29,7 @@ class DashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'F1 Live Telemetry',
+      title: 'Live',
       theme: ThemeData(
         primarySwatch: Colors.red,
         brightness: Brightness.dark,
@@ -47,8 +61,11 @@ class _TelemetryPageState extends State<TelemetryPage> {
   bool _useSimulation = false;
   bool _useSSE = true; // Add flag to use SSE instead of WebSockets
 
-  // Server URL - update this with your server address
-  final String _serverUrl = 'http://192.168.100.238:3000';
+  // Delay-related variables
+  int _delaySeconds = 0; // User-defined delay in seconds
+  final Queue<_DelayedMessage> _messageQueue = Queue<_DelayedMessage>();
+  Timer? _delayTimer;
+  bool _delayEnabled = false;
 
   final _liveDataController = StreamController<List<LiveData>>.broadcast();
   Stream<List<LiveData>> get liveDataStream => _liveDataController.stream;
@@ -56,13 +73,29 @@ class _TelemetryPageState extends State<TelemetryPage> {
   @override
   void initState() {
     super.initState();
-    fetchInitialData();
-    _connectSSE();
+    _initialize();
+    final data = decompressCarData();
+    print(data);
+  }
+
+  Future<void> _initialize() async {
+    await fetchInitialData();
+    // Only connect to SSE if initial data was fetched successfully
+    // and we are not already connected.
+    if (_connectionStatus == "Initial data loaded" && !_isConnected) {
+      await _connectSSE();
+    }
   }
 
   @override
   void dispose() {
-    _disconnectFromServer();
+    if (_sseSubscription != null) {
+      _sseSubscription!.cancel();
+      _sseSubscription = null;
+    }
+    _delayTimer?.cancel(); // Clean up delay timer
+    _messageQueue.clear(); // Clear any queued messages
+    _liveDataController.close(); // Close the StreamController
     super.dispose();
   }
 
@@ -73,8 +106,14 @@ class _TelemetryPageState extends State<TelemetryPage> {
     });
 
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('jwt_token');
       final response = await http.get(
-        Uri.parse('$_serverUrl/initialData'),
+        Uri.parse('${dotenv.env['API_URL']}/initialData'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
       );
 
       if (response.statusCode == 200) {
@@ -111,7 +150,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
     try {
       // Negotiate connection with simulation parameter
       final response = await http.get(
-        Uri.parse('$_serverUrl/negotiate?simulation=${_useSimulation}'),
+        Uri.parse(
+            '${dotenv.env['API_URL']}/negotiate?simulation=${_useSimulation}'),
       );
 
       if (response.statusCode == 200) {
@@ -135,16 +175,29 @@ class _TelemetryPageState extends State<TelemetryPage> {
   Future<void> _connectSSE() async {
     try {
       final sseUrl =
-          '$_serverUrl/events${_useSimulation ? '?simulation=true' : ''}';
+          '${dotenv.env['API_URL']}/events${_useSimulation ? '?simulation=true' : ''}';
       print('Connecting to SSE endpoint: $sseUrl');
 
       // Create a client that doesn't automatically close the connection
       final client = http.Client();
-
+      final prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('jwt_token');
       // Connect to the SSE endpoint with appropriate headers
       final request = http.Request('GET', Uri.parse(sseUrl));
       request.headers['Accept'] = 'text/event-stream';
       request.headers['Cache-Control'] = 'no-cache';
+      request.headers['Content-Type'] = 'application/json; charset=UTF-8';
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+
+      // final response = await http.get(
+      //   Uri.parse('${dotenv.env['API_URL']}/initialData'),
+      //   headers: <String, String>{
+      //     'Content-Type': 'application/json; charset=UTF-8',
+      //     'Authorization': 'Bearer $token',
+      //   },
+      // );
 
       final streamedResponse = await client.send(request);
 
@@ -155,10 +208,13 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
       setState(() {
         _isConnected = true;
-        _connectionStatus = _useSimulation
-            ? "Connected SSE (Simulation)"
-            : "Connected SSE (Live)";
+        _connectionStatus = _useSimulation ? "Connected (Sim)" : "Connected";
       });
+
+      // Start delay timer if delay is enabled
+      if (_delayEnabled && _delaySeconds > 0) {
+        _startDelayTimer();
+      }
 
       // Process the stream of events
       _sseSubscription = streamedResponse.stream
@@ -182,11 +238,13 @@ class _TelemetryPageState extends State<TelemetryPage> {
         },
         onError: (error) {
           print('SSE stream error: $error');
-          setState(() {
-            _isConnected = false;
-            _connectionStatus = "SSE connection error";
-            _errorMessage = error.toString();
-          });
+          if (mounted) {
+            setState(() {
+              _isConnected = false;
+              _connectionStatus = "SSE connection error";
+              _errorMessage = error.toString();
+            });
+          }
           client.close();
         },
         onDone: () {
@@ -209,146 +267,186 @@ class _TelemetryPageState extends State<TelemetryPage> {
   }
 
   void _disconnectFromServer() {
-    // Cancel SSE subscription if active
     if (_sseSubscription != null) {
       _sseSubscription!.cancel();
       _sseSubscription = null;
     }
 
+    if (mounted) {
+      setState(() {
+        _isConnected = false;
+        _connectionStatus = "Disconnected";
+      });
+    }
+  }
+
+  // Method to toggle delay on/off
+  void _toggleDelay() {
     setState(() {
-      _isConnected = false;
-      _connectionStatus = "Disconnected";
+      _delayEnabled = !_delayEnabled;
+      if (!_delayEnabled) {
+        // Process all queued messages immediately when disabled
+        _processQueuedMessages();
+        _delayTimer?.cancel();
+      } else if (_delaySeconds > 0) {
+        _startDelayTimer();
+      }
     });
   }
 
-  void _processTelemetryData(dynamic data) {
-    // Handle empty data case
-    print('Processing telemetry data: ${data.runtimeType}');
-    print('Data keys: ${data.keys.toList()}');
-
-    // Process the incoming data
-    if (data is Map) {
-      // SignalR connection init message (has "C" key)
-      if (data.containsKey('C')) {
-        print('Received SignalR connection message with ID: ${data['C']}');
-        // This is just a connection message, not actual data
-        setState(() {});
+  // Method to update delay value
+  void _updateDelay(int seconds) {
+    setState(() {
+      _delaySeconds = seconds;
+      if (_delayEnabled && seconds > 0) {
+        _startDelayTimer();
+      } else if (seconds == 0) {
+        _processQueuedMessages();
+        _delayTimer?.cancel();
       }
-      // if (data.containsKey('R')) {
-      //   print('Received Initial Data: ${data['R']}');
-      //   // Process Initial Data and Store Locally
-      //   if (data['R'].containsKey('SessionInfo')) {
-      //     setState(() {
-      //       // _sessionInfoFuture = fetchSessionInfo(data['R']['SessionInfo']);
-      //     });
-      //     print(_sessionInfoFuture.toString());
-      //   } else {
-      //     print('No SessionInfo found in initial data');
-      //   }
-      //   return;
-      // }
+    });
+  }
 
-      // Handle different types of messages
-      if (data.containsKey('M')) {
-        print('Data contains M key');
+  // Start the delay timer
+  void _startDelayTimer() {
+    _delayTimer?.cancel();
+    _delayTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      _processQueuedMessages();
+    });
+  }
 
-        final messageArray = data['M'];
-        if (messageArray.isNotEmpty && messageArray[0] is Map) {
-          final message = messageArray[0];
-          if (message.containsKey('A') &&
-              message['A'] is List &&
-              message['A'].isNotEmpty) {
-            final messageType = message['A'][0];
-            if (message['A'].length > 1) {
-              final updated = message['A'][1];
+  // Process messages that have waited long enough
+  void _processQueuedMessages() {
+    final now = DateTime.now();
+    while (_messageQueue.isNotEmpty) {
+      final message = _messageQueue.first;
+      final waitTime = now.difference(message.receivedAt).inSeconds;
 
-              if (messageType == 'ExtrapolatedClock') {
-                setState(() {
-                  _updateExtrapolatedClock(updated);
-                });
-                print('ExtrapolatedClock Updated Successfully: $updated');
-              }
-
-              if (messageType == 'WeatherData') {
-                setState(() {
-                  _updateWeatherData(updated);
-                });
-                print('WeatherData Updated Successfully: $updated');
-              } else if (messageType == 'SessionInfo') {
-                setState(() {
-                  _updateSessionInfo(updated);
-                });
-                print('SessionInfo Updated Successfully: $updated');
-              } else if (messageType == 'TimingData') {
-                setState(() {
-                  _updateTimingData(updated);
-                });
-                print('TimingData Updated Successfully: $updated');
-              } else if (messageType == 'DriverList') {
-                setState(() {
-                  _updateDriverList(updated);
-                });
-                print('DriverList Updated Successfully: $updated');
-              } else if (messageType == 'TrackStatus') {
-                setState(() {
-                  _updateTrackStatus(updated);
-                });
-                print('TrackStatus Updated Successfully: $updated');
-              } else {
-                print('No relevant data found in message type: $messageType');
-              }
-            } else {
-              print('Message "A" array does not contain data payload');
-            }
-          } else {
-            print('Message does not contain valid "A" array');
-          }
-        } else {
-          print('M array is empty or does not contain expected structure');
-        }
+      if (waitTime >= _delaySeconds) {
+        _messageQueue.removeFirst();
+        _processTelemetryDataImmediate(message.data);
+      } else {
+        break; // Stop processing if this message isn't ready yet
       }
     }
   }
 
-  void _updateExtrapolatedClock(dynamic data) {
-    if (data is Map<String, dynamic>) {
-      print('Updating extrapolated clock with: ${data.keys.toList()}');
-      if (data.isEmpty) {
-        print('Received empty extrapolated clock data, skipping update');
-        return;
+  // Add message to delay queue or process immediately
+  void _processTelemetryData(dynamic data) {
+    if (_delayEnabled && _delaySeconds > 0) {
+      _messageQueue.add(_DelayedMessage(data, DateTime.now()));
+    } else {
+      _processTelemetryDataImmediate(data);
+    }
+  }
+
+  // Original processing method renamed
+  void _processTelemetryDataImmediate(dynamic data) {
+    // Handle empty data case
+    print('Processing telemetry data: ${data.runtimeType}');
+    print('Data keys: ${data.keys.toList()}');
+    if (data is Map) {
+      // SignalR connection init message (has "C" key)
+      if (data.containsKey('C')) {
+        print('Received Partial Update Message with ID: ${data['C']}');
+        // This is just a connection message, not actual data
+        setState(() {});
       }
 
-      setState(() {
-        if (_liveDataFuture != null) {
-          _liveDataFuture = _liveDataFuture!.then((liveDataList) {
-            if (liveDataList.isNotEmpty) {
-              final currentLiveData = liveDataList[0];
+      // Handle different types of messages
+      if (data.containsKey('M') && data['M'] is List) {
+        final messageArray = data['M'];
+        print('Processing ${messageArray.length} messages in update');
 
-              // Create a new ExtrapolatedClock with updated values
-              ExtrapolatedClock updatedExtrapolatedClock = ExtrapolatedClock(
-                utc: data.containsKey('Utc')
-                    ? data['Utc']
-                    : currentLiveData.extrapolatedClock!.utc,
-                remaining: data.containsKey('Remaining')
-                    ? data['Remaining']
-                    : currentLiveData.extrapolatedClock!.remaining,
-                extrapolating: data.containsKey('Extrapolating')
-                    ? data['Extrapolating']
-                    : currentLiveData.extrapolatedClock!.extrapolating,
-              );
+        // Process each message in the array
+        for (var messageObject in messageArray) {
+          if (messageObject is Map &&
+              messageObject.containsKey('A') &&
+              messageObject['A'] is List &&
+              messageObject['A'].isNotEmpty) {
+            final messageType = messageObject['A'][0];
 
-              // Update the extrapolated clock in the current live data object
-              currentLiveData.extrapolatedClock = updatedExtrapolatedClock;
+            if (messageObject['A'].length > 1) {
+              final updated = messageObject['A'][1];
+              final timestamp =
+                  messageObject['A'].length > 2 ? messageObject['A'][2] : null;
 
-              return liveDataList;
+              print(
+                  'Processing $messageType update with timestamp: $timestamp');
+
+              // Handle each message type appropriately
+              switch (messageType) {
+                case 'ExtrapolatedClock':
+                  // Extrapolated clock implementation removed
+                  print('ExtrapolatedClock message received (but ignored)');
+                  break;
+
+                case 'WeatherData':
+                  setState(() {
+                    _updateWeatherData(updated);
+                  });
+                  print('WeatherData Updated Successfully');
+                  break;
+
+                case 'SessionInfo':
+                  setState(() {
+                    _updateSessionInfo(updated);
+                  });
+                  print('SessionInfo Updated Successfully');
+                  break;
+
+                case 'TimingData':
+                  setState(() {
+                    _updateTimingData(updated);
+                  });
+                  print('TimingData Updated Successfully');
+                  break;
+
+                // case 'TimingAppData':
+                //   setState(() {
+                //     _updateTimingAppData(updated);
+                //   });
+                //   print('TimingAppData Updated Successfully');
+                //   break;
+
+                case 'DriverList':
+                  setState(() {
+                    _updateDriverList(updated);
+                  });
+                  print('DriverList Updated Successfully');
+                  break;
+
+                case 'TrackStatus':
+                  setState(() {
+                    _updateTrackStatus(updated);
+                  });
+                  print('TrackStatus Updated Successfully');
+                  break;
+
+                case 'LapCount':
+                  setState(() {
+                    _updateLapCount(updated);
+                  });
+                  print('LapCount Updated Successfully');
+                  break;
+
+                default:
+                  print('No handler for message type: $messageType');
+              }
+            } else {
+              print('Message "$messageType" has no data payload');
             }
-            return liveDataList;
-          });
+          } else {
+            print('Message does not contain valid "A" array structure');
+          }
         }
+      }
+    }
+    // After processing all updates in a batch
+    if (_liveDataController != null && !_liveDataController.isClosed) {
+      _liveDataFuture!.then((liveDataList) {
+        _liveDataController.add(liveDataList);
       });
-    } else {
-      print(
-          'Received non-map extrapolated clock data: ${data.runtimeType}, cannot update');
     }
   }
 
@@ -410,55 +508,60 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
           // Update each driver in the list
           for (var racingNumber in driverKeys) {
-            final driverData = data[racingNumber];
+            final driverData = data[racingNumber] ?? {};
+            final prev = currentDrivers[racingNumber];
 
-            // Create or update driver
             Driver updatedDriver = Driver(
-              racingNumber: driverData.containsKey('RacingNumber')
-                  ? driverData['RacingNumber']
-                  : currentDrivers[racingNumber]?.racingNumber ?? '',
-              broadcastName: driverData.containsKey('BroadcastName')
-                  ? driverData['BroadcastName']
-                  : currentDrivers[racingNumber]?.broadcastName ?? '',
-              fullName: driverData.containsKey('FullName')
-                  ? driverData['FullName']
-                  : currentDrivers[racingNumber]?.fullName ?? '',
-              countryCode: driverData.containsKey('CountryCode')
-                  ? driverData['CountryCode']
-                  : currentDrivers[racingNumber]?.countryCode ?? '',
-              tla: driverData.containsKey('Tla')
-                  ? driverData['Tla']
-                  : currentDrivers[racingNumber]?.tla ?? '',
-              line: driverData.containsKey('Line')
-                  ? driverData['Line']
-                  : currentDrivers[racingNumber]?.line ?? 0,
-              teamName: driverData.containsKey('TeamName')
-                  ? driverData['TeamName']
-                  : currentDrivers[racingNumber]?.teamName ?? '',
-              teamColour: driverData.containsKey('TeamColour')
-                  ? driverData['TeamColour']
-                  : currentDrivers[racingNumber]?.teamColour ?? '',
-              firstName: driverData.containsKey('FirstName')
-                  ? driverData['FirstName']
-                  : currentDrivers[racingNumber]?.firstName ?? '',
-              lastName: driverData.containsKey('LastName')
-                  ? driverData['LastName']
-                  : currentDrivers[racingNumber]?.lastName ?? '',
-              reference: driverData.containsKey('Reference')
-                  ? driverData['Reference']
-                  : currentDrivers[racingNumber]?.reference ?? '',
-              headshotUrl: driverData.containsKey('HeadshotUrl')
-                  ? driverData['HeadshotUrl']
-                  : currentDrivers[racingNumber]?.headshotUrl ?? '',
+              racingNumber: driverData['RacingNumber'] ??
+                  driverData['racingNumber'] ??
+                  prev?.racingNumber ??
+                  racingNumber,
+              broadcastName: driverData['BroadcastName'] ??
+                  driverData['broadcastName'] ??
+                  prev?.broadcastName ??
+                  '',
+              fullName: driverData['FullName'] ??
+                  driverData['fullName'] ??
+                  prev?.fullName ??
+                  '',
+              countryCode: driverData['CountryCode'] ??
+                  driverData['countryCode'] ??
+                  prev?.countryCode ??
+                  '',
+              tla: driverData['Tla'] ??
+                  driverData['tla'] ??
+                  driverData['TLA'] ??
+                  prev?.tla ??
+                  '',
+              line: driverData['Line'] ?? driverData['line'] ?? prev?.line ?? 0,
+              teamName: driverData['TeamName'] ??
+                  driverData['teamName'] ??
+                  prev?.teamName ??
+                  '',
+              teamColour: driverData['TeamColour'] ??
+                  driverData['teamColour'] ??
+                  driverData['team_color'] ??
+                  prev?.teamColour ??
+                  '',
+              firstName: driverData['FirstName'] ??
+                  driverData['firstName'] ??
+                  prev?.firstName ??
+                  '',
+              lastName: driverData['LastName'] ??
+                  driverData['lastName'] ??
+                  prev?.lastName ??
+                  '',
+              reference: driverData['Reference'] ??
+                  driverData['reference'] ??
+                  prev?.reference ??
+                  '',
+              headshotUrl: driverData['HeadshotUrl'] ??
+                  driverData['headshotUrl'] ??
+                  prev?.headshotUrl ??
+                  '',
             );
 
-            // Update the driver in the current map
-            if (currentDrivers.containsKey(racingNumber)) {
-              currentDrivers[racingNumber] = updatedDriver;
-            } else {
-              // Add new driver if it doesn't exist
-              currentDrivers[racingNumber] = updatedDriver;
-            }
+            currentDrivers[racingNumber] = updatedDriver;
           }
 
           // Create a new DriverList
@@ -700,7 +803,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
                       final lastLapData =
                           driverData['LastLapTime'] as Map<String, dynamic>;
                       updatedLastLap = I1(
-                        value: lastLapData['Value'] ?? '',
+                        value: lastLapData['Value'] ?? '-:--.---',
                         status: lastLapData['Status'] ?? 0,
                         overallFastest: lastLapData['OverallFastest'] ?? false,
                         personalFastest:
@@ -710,7 +813,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
                       updatedLastLap = currentDriverData!.lastLapTime;
                     } else {
                       updatedLastLap = I1(
-                        value: '',
+                        value: '-:--.---',
                         status: 0,
                         overallFastest: false,
                         personalFastest: false,
@@ -941,11 +1044,50 @@ class _TelemetryPageState extends State<TelemetryPage> {
     }
   }
 
+  void _updateLapCount(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      print('Updating lap count with: ${data.keys.toList()}');
+      if (data.isEmpty) {
+        print('Received empty lap count data, skipping update');
+        return;
+      }
+
+      setState(() {
+        if (_liveDataFuture != null) {
+          _liveDataFuture = _liveDataFuture!.then((liveDataList) {
+            if (liveDataList.isNotEmpty) {
+              final currentLiveData = liveDataList[0];
+
+              // Create a new LapCount with updated values
+              LapCount updatedLapCount = LapCount(
+                currentLap: data.containsKey('CurrentLap')
+                    ? data['CurrentLap']
+                    : currentLiveData.lapCount?.currentLap ?? 0,
+                totalLaps: data.containsKey('TotalLaps')
+                    ? data['TotalLaps']
+                    : currentLiveData.lapCount?.totalLaps ?? 0,
+              );
+
+              // Update the lap count in the current live data object
+              currentLiveData.lapCount = updatedLapCount;
+
+              return liveDataList;
+            }
+            return liveDataList;
+          });
+        }
+      });
+    } else {
+      print(
+          'Received non-map lap count data: ${data.runtimeType}, cannot update');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('F1 Live Telemetry'),
+        title: const Text('Live Dashboard'),
         backgroundColor: Colors.red,
         actions: [
           Chip(
@@ -967,63 +1109,208 @@ class _TelemetryPageState extends State<TelemetryPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Delay toggle button
                 ElevatedButton.icon(
-                  icon: Icon(_isConnected ? Icons.stop : Icons.play_arrow),
-                  label: Text(_isConnected ? 'Disconnect' : 'Connect'),
-                  onPressed:
-                      _isConnected ? _disconnectFromServer : _connectToServer,
+                  icon: Icon(
+                    _delayEnabled ? Icons.pause : Icons.play_arrow,
+                    color: Colors.white,
+                  ),
+                  label: Text(_delayEnabled ? 'Delay ON' : 'Delay OFF'),
+                  onPressed: _toggleDelay,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _isConnected ? Colors.red : Colors.green,
+                    backgroundColor:
+                        _delayEnabled ? Colors.orange : Colors.grey,
                     foregroundColor: Colors.white,
                   ),
                 ),
-                // ElevatedButton.icon(
-                //   icon:
-                //       Icon(_useSimulation ? Icons.toggle_on : Icons.toggle_off),
-                //   label: Text(_useSimulation ? 'Simulation' : 'Live Data'),
-                //   onPressed: _toggleSimulation,
-                //   style: ElevatedButton.styleFrom(
-                //     backgroundColor:
-                //         _useSimulation ? Colors.amber : Colors.blue,
-                //     foregroundColor: Colors.black,
-                //   ),
-                // ),
-                // // Add a button to toggle between SSE and WebSocket
-                // ElevatedButton.icon(
-                //   icon: Icon(_useSSE ? Icons.http : Icons.web),
-                //   label: Text(_useSSE ? 'SSE' : 'WS'),
-                //   onPressed: _toggleConnectionType,
-                //   style: ElevatedButton.styleFrom(
-                //     backgroundColor: _useSSE ? Colors.purple : Colors.teal,
-                //     foregroundColor: Colors.white,
-                //   ),
-                // ),
+                const SizedBox(width: 8),
+                // Delay controls with +/- buttons and text input
+                if (_delayEnabled) ...[
+                  Column(
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Decrease button
+                          IconButton(
+                            onPressed: _delaySeconds > 0
+                                ? () => _updateDelay(_delaySeconds - 5)
+                                : null,
+                            icon: const Icon(Icons.remove),
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.orange.withOpacity(0.2),
+                              foregroundColor: Colors.orange,
+                              padding: const EdgeInsets.all(8),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Text input field
+                          Container(
+                            width: 60,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Center(
+                              child: TextField(
+                                controller: TextEditingController(
+                                    text: _delaySeconds.toString()),
+                                textAlign: TextAlign.center,
+                                keyboardType: TextInputType.number,
+                                style: const TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                ),
+                                onSubmitted: (value) {
+                                  final newDelay =
+                                      int.tryParse(value) ?? _delaySeconds;
+                                  _updateDelay(
+                                      newDelay.clamp(0, 300)); // Max 5 minutes
+                                },
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(width: 8),
+                          // Increase button
+                          IconButton(
+                            onPressed: _delaySeconds < 300
+                                ? () => _updateDelay(_delaySeconds + 5)
+                                : null,
+                            icon: const Icon(Icons.add),
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.orange.withOpacity(0.2),
+                              foregroundColor: Colors.orange,
+                              padding: const EdgeInsets.all(8),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      // Preset buttons
+                    ],
+                  ),
+                ],
               ],
             ),
 
-            if (_errorMessage.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Text(
-                  'Error: $_errorMessage',
-                  style: const TextStyle(color: Colors.red),
+            // if (_errorMessage.isNotEmpty)
+            //   Padding(
+            //     padding: const EdgeInsets.only(top: 8.0),
+            //     child: Text(
+            //       'Error: $_errorMessage',
+            //       style: const TextStyle(color: Colors.red),
+            //     ),
+            //   ),
+
+            const SizedBox(height: 10),
+
+            // Messages received counter and delay info
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Messages received: $_messageCount',
+                  style: const TextStyle(
+                      fontSize: 14, fontStyle: FontStyle.italic),
                 ),
-              ),
+                if (_delayEnabled) ...[
+                  Text(
+                    'Queued messages: ${_messageQueue.length}',
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.orange),
+                  ),
+                  Text(
+                    'Delay: ${_delaySeconds}s',
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.orange),
+                  ),
+                ],
+                // Lap count display
+                // FutureBuilder<List<LiveData>>(
+                //   future: _liveDataFuture,
+                //   builder: (context, snapshot) {
+                //     if (snapshot.hasData &&
+                //         snapshot.data!.isNotEmpty &&
+                //         snapshot.data![0].lapCount != null &&
+                //         snapshot.data![0].sessionInfo != null) {
+                //       final liveData = snapshot.data![0];
+                //       final lapCount = liveData.lapCount!;
+                //       final sessionInfo = liveData.sessionInfo!;
 
-            const SizedBox(height: 16),
+                //       // Only show lap count for 'Sprint' or 'Race' sessions
+                //       final sessionType = sessionInfo.type.toLowerCase();
+                //       final sessionName = sessionInfo.name.toLowerCase();
 
-            // Messages received counter
-            Text(
-              'Messages received: $_messageCount',
-              style: const TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+                //       final isRaceOrSprint = sessionType == 'race' ||
+                //           sessionType == 'sprint' ||
+                //           sessionName.contains('race') ||
+                //           sessionName.contains('sprint');
+
+                //       if (isRaceOrSprint) {
+                //         return Padding(
+                //           padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                //           child: LapCountCard(
+                //             currentLap: lapCount.currentLap,
+                //             totalLaps: lapCount.totalLaps,
+                //             sessionType: sessionInfo.name,
+                //           ),
+                //         );
+                //       }
+                //     }
+                //     return const SizedBox.shrink();
+                //   },
+                // ),
+
+                // Compact Lap count display
+                FutureBuilder<List<LiveData>>(
+                  future: _liveDataFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData &&
+                        snapshot.data!.isNotEmpty &&
+                        snapshot.data![0].lapCount != null &&
+                        snapshot.data![0].sessionInfo != null) {
+                      final liveData = snapshot.data![0];
+                      final lapCount = liveData.lapCount!;
+                      final sessionInfo = liveData.sessionInfo!;
+
+                      // Only show lap count for 'Sprint' or 'Race' sessions
+                      final sessionType = sessionInfo.type.toLowerCase();
+                      final sessionName = sessionInfo.name.toLowerCase();
+
+                      final isRaceOrSprint = sessionType == 'race' ||
+                          sessionType == 'sprint' ||
+                          sessionName.contains('race') ||
+                          sessionName.contains('sprint');
+
+                      if (isRaceOrSprint) {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
+                          child: CompactLapCountCard(
+                            currentLap: lapCount.currentLap,
+                            totalLaps: lapCount.totalLaps,
+                            sessionType: sessionInfo.name,
+                          ),
+                        );
+                      }
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ],
             ),
-            Text(
-              'Note: Currently the data displayed is updated but it is unstable. (Live Data Fetching is only available on my local machine, the NodeJS API will be made public soon [stable])',
-              style: TextStyle(
-                  fontSize: 12,
-                  fontStyle: FontStyle.italic,
-                  color: Colors.grey),
-            ),
+            // Text(
+            //   'Note: Currently the data displayed is updated but it is unstable. (Live Data Fetching is only available on my local machine, the NodeJS API will be made public soon [stable])',
+            //   style: TextStyle(
+            //       fontSize: 12,
+            //       fontStyle: FontStyle.italic,
+            //       color: Colors.grey),
+            // ),
 
             const SizedBox(height: 16),
 
@@ -1044,58 +1331,37 @@ class _TelemetryPageState extends State<TelemetryPage> {
                                   snapshot.data!.isNotEmpty) {
                                 final liveData = snapshot.data!;
                                 return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
                                     // _buildExtrapolatedClock(liveData[0]
                                     //     .extrapolatedClock!
                                     //     .remaining),
+                                    SizedBox(height: 10),
+                                    // TrackMapWidget(
+                                    //   trackJsonAsset:
+                                    //       'assets/TrackMaps/Spielberg.json',
+                                    //   driverPositions: testDriverPositions,
+                                    //   width: 350,
+                                    //   height: 200,
+                                    // ),
+                                    SizedBox(height: 10),
                                     _buildSessionInfoCard(
                                         liveData[0].sessionInfo!),
                                     _buildTrackStatusCard(
                                         liveData[0].trackStatus!),
                                     _buildWeatherCard(liveData[0].weatherData!),
 
-                                    // SingleChildScrollView(
-                                    //   scrollDirection: Axis.horizontal,
-                                    //   child: Row(
-                                    //     children: [
-                                    //       Text('Pos',
-                                    //           style: TextStyle(
-                                    //               color: Colors.white,
-                                    //               fontWeight: FontWeight.bold)),
-                                    //       SizedBox(width: 30),
-                                    //       Text('Driver',
-                                    //           style: TextStyle(
-                                    //               color: Colors.white,
-                                    //               fontWeight: FontWeight.bold)),
-                                    //       SizedBox(
-                                    //           width:
-                                    //               50), // Match spacing in rows
-                                    //       Text('Fastest Lap',
-                                    //           style: TextStyle(
-                                    //               color: Colors.white,
-                                    //               fontWeight: FontWeight.bold)),
-                                    //       SizedBox(width: 20),
-                                    //       Text('Interval',
-                                    //           style: TextStyle(
-                                    //               color: Colors.white,
-                                    //               fontWeight: FontWeight.bold)),
-                                    //       SizedBox(width: 20),
-                                    //       Text('Tyres',
-                                    //           style: TextStyle(
-                                    //               color: Colors.white,
-                                    //               fontWeight: FontWeight.bold)),
-                                    //       SizedBox(width: 20),
-                                    //       Text('Pit',
-                                    //           style: TextStyle(
-                                    //               color: Colors.white,
-                                    //               fontWeight: FontWeight.bold)),
-                                    //     ],
-                                    //   ),
-                                    // ),
-                                    // _buildDriverList(
-                                    //     liveData[0].driverList!.drivers,
-                                    //     liveData[0].timingData!.lines,
-                                    //     liveData[0].timingAppData!.lines),
+                                    SizedBox(height: 10),
+                                    Text('Drivers',
+                                        style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold)),
+                                    SizedBox(height: 5),
+                                    _buildDriverList(
+                                        liveData[0].driverList!.drivers,
+                                        liveData[0].timingData!.lines,
+                                        liveData[0].timingAppData!.lines),
                                   ],
                                 );
                               } else if (snapshot.hasError) {
@@ -1141,6 +1407,13 @@ class _TelemetryPageState extends State<TelemetryPage> {
               //     ),
               //   ),
             ),
+            // TrackMapWidget(
+            //   trackImageAsset: 'assets/TrackMaps/your_track_map.png', // Replace with actual asset
+            //   drivers: liveData[0].driverList!.drivers,
+            //   width: 350,
+            //   height: 200,
+            //   coordinateMapper: _mapCoordinates,
+            // ),
           ],
         ),
       ),
@@ -1202,28 +1475,37 @@ class _TelemetryPageState extends State<TelemetryPage> {
   }
 
   Widget _buildWeatherCard(WeatherData weather) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Weather Conditions',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            _buildInfoRow('Air Temperature:', '${weather.airTemp}°C'),
-            _buildInfoRow('Track Temperature:', '${weather.trackTemp}°C'),
-            _buildInfoRow('Wind Speed:', '${(weather.windSpeed)} m/s'),
-            _buildInfoRow(
-                'Weather:', weather.rainfall == '0' ? 'Clear' : 'Rain'),
-            _buildInfoRow('Humidity:', '${weather.humidity}%'),
-            _buildInfoRow('Pressure:', '${weather.pressure} hPa'),
-          ],
-        ),
-      ),
+    // return Card(
+    //   margin: const EdgeInsets.only(bottom: 16),
+    //   child: Padding(
+    //     padding: const EdgeInsets.all(16.0),
+    //     child: Column(
+    //       crossAxisAlignment: CrossAxisAlignment.start,
+    //       children: [
+    //         const Text(
+    //           'Weather Conditions',
+    //           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    //         ),
+    //         const SizedBox(height: 8),
+    //         _buildInfoRow('Air Temperature:', '${weather.airTemp}°C'),
+    //         _buildInfoRow('Track Temperature:', '${weather.trackTemp}°C'),
+    //         _buildInfoRow('Wind Speed:', '${(weather.windSpeed)} m/s'),
+    //         _buildInfoRow(
+    //             'Weather:', weather.rainfall == '0' ? 'Clear' : 'Rain'),
+    //         _buildInfoRow('Humidity:', '${weather.humidity}%'),
+    //         _buildInfoRow('Pressure:', '${weather.pressure} hPa'),
+    //       ],
+    //     ),
+    //   ),
+    // );
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: WeatherInfoCard(
+          airTemp: weather.airTemp,
+          trackTemp: weather.trackTemp,
+          windSpeed: weather.windSpeed,
+          humidity: weather.humidity,
+          weatherCondition: weather.rainfall == '0' ? 'Clear' : 'Rain'),
     );
   }
 
@@ -1332,6 +1614,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
         final entry = sortedDrivers[index];
         final String racingNumber = entry.key;
         final Driver driver = entry.value;
+
         final TimingDataDriver timing = timingData[racingNumber]!;
         final TimingAppDataDriver timingApp = timingAppData[racingNumber]!;
 
@@ -1377,106 +1660,118 @@ class _TelemetryPageState extends State<TelemetryPage> {
           teamColor = Colors.grey;
         }
 
+        // return Padding(
+        //   padding: const EdgeInsets.symmetric(vertical: 5),
+        //   child: Container(
+        //     width: double.infinity,
+        //     height: 60,
+        //     decoration: BoxDecoration(
+        //       borderRadius: BorderRadius.circular(10),
+        //       border: timing.lastLapTime.overallFastest
+        //           ? Border.all(color: Colors.purple, width: 1)
+        //           : Border.all(color: Colors.white, width: 0.5),
+        //     ),
+        //     child: MaterialButton(
+        //       color: Color.fromRGBO(115, 115, 115, 1),
+        //       shape: RoundedRectangleBorder(
+        //         borderRadius: BorderRadius.circular(10),
+        //       ),
+        //       onPressed: () {
+        //         Navigator.push(
+        //             context,
+        //             MaterialPageRoute(
+        //               builder: (context) => LiveDetailsPage(
+        //                 racingNumber: racingNumber,
+        //               ),
+        //             ));
+        //       },
+        //       child: SingleChildScrollView(
+        //         scrollDirection: Axis.horizontal,
+        //         child: Row(
+        //           mainAxisAlignment: MainAxisAlignment.start,
+        //           crossAxisAlignment: CrossAxisAlignment.center,
+        //           children: [
+        //             Text(driver.line.toString(),
+        //                 style: TextStyle(
+        //                     color: Colors.white,
+        //                     fontSize: 25,
+        //                     fontWeight: FontWeight.w900)),
+        //             SizedBox(width: 20),
+        //             Container(
+        //               width: 5,
+        //               height: 25,
+        //               decoration: BoxDecoration(
+        //                 color: teamColor,
+        //                 borderRadius: BorderRadius.circular(10),
+        //               ),
+        //             ),
+        //             SizedBox(width: 5),
+        //             Text(
+        //               driver.tla.isNotEmpty ? driver.tla : '???',
+        //               style: TextStyle(
+        //                 color: Colors.white,
+        //                 fontSize: 20,
+        //                 fontFamily: 'formula-bold',
+        //               ),
+        //             ),
+        //             SizedBox(width: 50), // Add a minimum spacing
+        //             Text(timing.lastLapTime.value,
+        //                 style: TextStyle(
+        //                   color: Colors.white,
+        //                   fontWeight: FontWeight.w900,
+        //                   fontSize: 15,
+        //                 )),
+        //             SizedBox(width: 20),
+        //             Container(
+        //               width: 70,
+        //               height: 30,
+        //               decoration: BoxDecoration(
+        //                 color: intervalText == "Leader"
+        //                     ? Colors.red
+        //                     : Colors.green,
+        //                 borderRadius: BorderRadius.circular(40),
+        //               ),
+        //               child: Center(
+        //                 child: Padding(
+        //                   padding: const EdgeInsets.all(4.0),
+        //                   child: Text(intervalText,
+        //                       style: TextStyle(
+        //                         color: Colors.white,
+        //                         fontSize: 15,
+        //                         fontWeight: FontWeight.w900,
+        //                       )),
+        //                 ),
+        //               ),
+        //             ),
+        //             SizedBox(width: 20),
+        //             // SvgPicture.asset(
+        //             //   tyrePath(timingApp.stints[0].compound ?? 'Unknown'),
+        //             //   width: 30,
+        //             //   height: 30,
+        //             //   placeholderBuilder: (context) =>
+        //             //       CircularProgressIndicator(),
+        //             // ),
+        //             SizedBox(width: 20),
+        //             Text(timing.numberOfPitStops.toString(),
+        //                 style: TextStyle(
+        //                     color: Colors.white,
+        //                     fontSize: 25,
+        //                     fontWeight: FontWeight.w900)),
+        //           ],
+        //         ),
+        //       ),
+        //     ),
+        //   ),
+        // );
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 5),
-          child: Container(
-            width: double.infinity,
-            height: 60,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              border: timing.lastLapTime.overallFastest
-                  ? Border.all(color: Colors.purple, width: 1)
-                  : Border.all(color: Colors.white, width: 0.5),
-            ),
-            child: MaterialButton(
-              color: Color.fromRGBO(115, 115, 115, 1),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => LiveDetailsPage(
-                        racingNumber: racingNumber,
-                      ),
-                    ));
-              },
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(driver.line.toString(),
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 25,
-                            fontWeight: FontWeight.w900)),
-                    SizedBox(width: 20),
-                    Container(
-                      width: 5,
-                      height: 25,
-                      decoration: BoxDecoration(
-                        color: teamColor,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    SizedBox(width: 5),
-                    Text(driver.tla,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          // fontWeight: FontWeight.w900,
-                          fontFamily: 'formula-bold',
-                        )),
-                    SizedBox(width: 50), // Add a minimum spacing
-                    Text(timing.lastLapTime.value,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 15,
-                        )),
-                    SizedBox(width: 20),
-                    Container(
-                      width: 70,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        color: intervalText == "Leader"
-                            ? Colors.red
-                            : Colors.green,
-                        borderRadius: BorderRadius.circular(40),
-                      ),
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: Text(intervalText,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w900,
-                              )),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 20),
-                    // SvgPicture.asset(
-                    //   tyrePath(timingApp.stints[0].compound ?? 'Unknown'),
-                    //   width: 30,
-                    //   height: 30,
-                    //   placeholderBuilder: (context) =>
-                    //       CircularProgressIndicator(),
-                    // ),
-                    SizedBox(width: 20),
-                    Text(timing.numberOfPitStops.toString(),
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 25,
-                            fontWeight: FontWeight.w900)),
-                  ],
-                ),
-              ),
-            ),
+          child: DriverInfoCard(
+            position: driver.line,
+            teamColor: teamColor,
+            tla: driver.tla.isNotEmpty ? driver.tla : '???',
+            interval: intervalText,
+            currentLapTime: timing.lastLapTime.value,
+            pitStops: timing.numberOfPitStops,
           ),
         );
       },
@@ -1514,6 +1809,26 @@ class _TelemetryPageState extends State<TelemetryPage> {
   //         ),
   //       );
 
+  // Helper method to build preset delay buttons
+  Widget _buildPresetButton(int seconds) {
+    final isSelected = _delaySeconds == seconds;
+    return SizedBox(
+      width: 32,
+      height: 28,
+      child: ElevatedButton(
+        onPressed: () => _updateDelay(seconds),
+        style: ElevatedButton.styleFrom(
+          backgroundColor:
+              isSelected ? Colors.orange : Colors.orange.withOpacity(0.3),
+          foregroundColor: isSelected ? Colors.white : Colors.orange,
+          padding: EdgeInsets.zero,
+          textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+        ),
+        child: Text('$seconds'),
+      ),
+    );
+  }
+
   Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -1534,23 +1849,213 @@ class _TelemetryPageState extends State<TelemetryPage> {
   }
 }
 
-Widget _buildExtrapolatedClock(String remainingTime) {
-  // Convert the remaining time to a Duration object
-  Duration duration;
-  try {
-    final parts = remainingTime.split(':');
-    if (parts.length == 3) {
-      final hours = int.parse(parts[0]);
-      final minutes = int.parse(parts[1]);
-      final seconds = int.parse(parts[2]);
-      duration = Duration(hours: hours, minutes: minutes, seconds: seconds);
-    } else {
-      throw FormatException('Invalid time format');
-    }
-  } catch (e) {
-    duration = Duration.zero; // Default to zero if parsing fails
-    print('Error parsing remainingTime: $remainingTime - $e');
-  }
-  return Text(duration.toString(),
-      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold));
+// Add this widget class at the bottom of your file (or in a separate file if you prefer)
+class TrackMapWidget extends StatefulWidget {
+  final String trackJsonAsset;
+  final Map<String, dynamic> driverPositions; // Map of driverNo -> {X, Y, Z}
+  final double width;
+  final double height;
+
+  const TrackMapWidget({
+    super.key,
+    required this.trackJsonAsset,
+    required this.driverPositions,
+    required this.width,
+    required this.height,
+  });
+
+  @override
+  State<TrackMapWidget> createState() => _TrackMapWidgetState();
 }
+
+class _TrackMapWidgetState extends State<TrackMapWidget> {
+  List<Offset> _trackPoints = [];
+  double? minX, maxX, minY, maxY;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTrack();
+  }
+
+  Future<void> _loadTrack() async {
+    final jsonStr = await rootBundle.loadString(widget.trackJsonAsset);
+    final jsonData = jsonDecode(jsonStr);
+
+    // Parse x and y arrays
+    final List xList = jsonData['x'];
+    final List yList = jsonData['y'];
+    List<Offset> points = [];
+    for (int i = 0; i < xList.length && i < yList.length; i++) {
+      points.add(
+          Offset((xList[i] as num).toDouble(), (yList[i] as num).toDouble()));
+    }
+
+    // Find min/max for normalization
+    double minX = points.map((e) => e.dx).reduce((a, b) => a < b ? a : b);
+    double maxX = points.map((e) => e.dx).reduce((a, b) => a > b ? a : b);
+    double minY = points.map((e) => e.dy).reduce((a, b) => a < b ? a : b);
+    double maxY = points.map((e) => e.dy).reduce((a, b) => a > b ? a : b);
+
+    setState(() {
+      _trackPoints = points;
+      this.minX = minX;
+      this.maxX = maxX;
+      this.minY = minY;
+      this.maxY = maxY;
+    });
+  }
+
+  // Normalizes a point to widget size
+  Offset _normalize(Offset pt) {
+    if (minX == null || maxX == null || minY == null || maxY == null)
+      return Offset.zero;
+    double normX = (pt.dx - minX!) / (maxX! - minX!);
+    double normY = (pt.dy - minY!) / (maxY! - minY!);
+    // Flip Y axis for typical track orientation
+    // normY = 1.0 - normY;
+    return Offset(normX * widget.width, normY * widget.height);
+  }
+
+  // Normalizes driver coordinates
+  Offset _normalizeDriver(double x, double y) {
+    if (minX == null || maxX == null || minY == null || maxY == null)
+      return Offset.zero;
+    double normX = (x - minX!) / (maxX! - minX!);
+    double normY = (y - minY!) / (maxY! - minY!);
+    // normY = 1.0 - normY;
+    return Offset(normX * widget.width, normY * widget.height);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_trackPoints.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return SizedBox(
+      width: widget.width,
+      height: widget.height,
+      child: CustomPaint(
+        painter: _TrackPainter(
+          trackPoints: _trackPoints,
+          normalize: _normalize,
+          driverPositions: widget.driverPositions,
+          normalizeDriver: _normalizeDriver,
+        ),
+      ),
+    );
+  }
+}
+
+class _TrackPainter extends CustomPainter {
+  final List<Offset> trackPoints;
+  final Offset Function(Offset pt) normalize;
+  final Map<String, dynamic> driverPositions;
+  final Offset Function(double x, double y) normalizeDriver;
+
+  _TrackPainter({
+    required this.trackPoints,
+    required this.normalize,
+    required this.driverPositions,
+    required this.normalizeDriver,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Draw track path
+    if (trackPoints.isNotEmpty) {
+      final path = Path()
+        ..moveTo(
+          normalize(trackPoints[0]).dx,
+          normalize(trackPoints[0]).dy,
+        );
+      for (final pt in trackPoints.skip(1)) {
+        final npt = normalize(pt);
+        path.lineTo(npt.dx, npt.dy);
+      }
+      final paint = Paint()
+        ..color = Colors.grey.shade800
+        ..strokeWidth = 4
+        ..style = PaintingStyle.stroke;
+      canvas.drawPath(path, paint);
+    }
+
+    // Draw drivers with team colour
+    driverPositions.forEach((driverNo, entry) {
+      final double? x = (entry['X'] as num?)?.toDouble();
+      final double? y = (entry['Y'] as num?)?.toDouble();
+      if (x == null || y == null) return;
+      final Offset pos = normalizeDriver(x, y);
+
+      // Default to red if no teamColour
+      Color teamColor = Colors.red;
+      if (entry['teamColour'] != null &&
+          entry['teamColour'] is String &&
+          (entry['teamColour'] as String).length == 6) {
+        try {
+          teamColor = Color(int.parse('0xFF${entry['teamColour']}'));
+        } catch (_) {
+          teamColor = Colors.red;
+        }
+      }
+
+      final paint = Paint()
+        ..color = teamColor
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(pos, 8, paint);
+
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: driverNo,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      textPainter.paint(canvas, pos + const Offset(-10, -18));
+    });
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+// Example usage for testing (in your build method):
+// final testPositions = <String, dynamic>{
+//   "1": {"X": 1479, "Y": -940, "Z": 7312},
+//   "4": {"X": 1200, "Y": -1014, "Z": 7307},
+//   // ...etc
+// };
+// TrackMapWidget(
+//   trackJsonAsset: 'assets/TrackMaps/Spielberg.json',
+//   driverPositions: testPositions,
+//   width: 350,
+//   height: 200,
+// );
+
+// Example driver positions for testing
+final Map<String, dynamic> testDriverPositions = {
+  "1": {"Status": "OnTrack", "X": 1479, "Y": -940, "Z": 7312},
+  "4": {"Status": "OnTrack", "X": 1200, "Y": -1014, "Z": 7307},
+  "5": {"Status": "OnTrack", "X": 1489, "Y": -938, "Z": 7312},
+  "6": {"Status": "OnTrack", "X": -585, "Y": -1493, "Z": 7301},
+  "10": {"Status": "OnTrack", "X": 1452, "Y": -947, "Z": 7313},
+  "12": {"Status": "OnTrack", "X": 1426, "Y": -954, "Z": 7313},
+  "14": {"Status": "OnTrack", "X": 70, "Y": -1317, "Z": 7313},
+  "16": {"Status": "OnTrack", "X": 1136, "Y": -1031, "Z": 7312},
+  "18": {"Status": "OnTrack", "X": -40, "Y": -1347, "Z": 7312},
+  "22": {"Status": "OnTrack", "X": 292, "Y": -1258, "Z": 7312},
+  "23": {"Status": "OnTrack", "X": -860, "Y": -1567, "Z": 7312},
+  "27": {"Status": "OnTrack", "X": -981, "Y": -1598, "Z": 7312},
+  "30": {"Status": "OnTrack", "X": 1560, "Y": -920, "Z": 7313},
+  "31": {"Status": "OnTrack", "X": -484, "Y": -1466, "Z": 7311},
+  "43": {"Status": "OnTrack", "X": -204, "Y": -1391, "Z": 7307},
+  "44": {"Status": "OnTrack", "X": 1558, "Y": -920, "Z": 7312},
+  "55": {"Status": "OnTrack", "X": -898, "Y": -1577, "Z": 7312},
+  "63": {"Status": "OnTrack", "X": 1489, "Y": -938, "Z": 7312},
+  "81": {"Status": "OnTrack", "X": 1147, "Y": -1028, "Z": 7312},
+  "87": {"Status": "OnTrack", "X": -436, "Y": -1453, "Z": 7312},
+};
