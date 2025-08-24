@@ -70,12 +70,12 @@ class _ContructorsStandingsPageState extends State<ContructorsStandingsPage> {
           backgroundColor: Colors.black.withOpacity(0.8),
           child: Container(
             decoration: BoxDecoration(
-              boxShadow: const [
-                BoxShadow(
-                  color: Color.fromRGBO(128, 128, 128, 0.3),
-                  spreadRadius: 1,
-                ),
-              ],
+              // boxShadow: const [
+              //   BoxShadow(
+              //     color: Color.fromRGBO(128, 128, 128, 0.3),
+              //     spreadRadius: 1,
+              //   ),
+              // ],
               color: const Color.fromRGBO(255, 255, 255, 0.01),
             ),
             child: FutureBuilder<ConstructorStandingsResponse>(
@@ -127,8 +127,22 @@ class _ContructorsStandingsPageState extends State<ContructorsStandingsPage> {
                         height: 75,
                         width: double.infinity,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(50),
-                          color: teamColor.withOpacity(0.6),
+                          borderRadius: BorderRadius.circular(18),
+                          color: Colors.black
+                              .withOpacity(0.7), // Neutral background
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.15),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                          border: Border(
+                            left: BorderSide(
+                              color: teamColor, // Team color as accent
+                              width: 6,
+                            ),
+                          ),
                         ),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
