@@ -85,7 +85,9 @@ class _TestPageState extends State<TestPage> {
                   tla: 'HAM',
                   interval: '+0.243',
                   currentLapTime: '1:16.648',
+                  bestLapTime: '1:15.932',
                   pitStops: 1,
+                  sessionType: 'race', // or 'sprint', 'practice', etc.
                 ),
                 const SizedBox(height: 20),
 
