@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'dart:collection';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:formulavision/components/driver_tile.dart';
@@ -52,7 +53,7 @@ class TelemetryPage extends StatefulWidget {
 class _TelemetryPageState extends State<TelemetryPage> {
   WebSocketChannel? _channel;
   StreamSubscription? _sseSubscription;
-  Map<String, dynamic> _telemetryData = {};
+  final Map<String, dynamic> _telemetryData = {};
   Future<List<SessionInfo>>? _sessionInfoFuture;
   Future<List<WeatherData>>? _weatherDataFuture;
   Future<List<LiveData>>? _liveDataFuture;
@@ -60,8 +61,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
   String _connectionStatus = "Disconnected";
   String _errorMessage = "";
   int _messageCount = 0;
-  bool _useSimulation = false;
-  bool _useSSE = true; // Add flag to use SSE instead of WebSockets
+  final bool _useSimulation = false;
+  final bool _useSSE = true; // Add flag to use SSE instead of WebSockets
 
   // Delay-related variables
   int _delaySeconds = 0; // User-defined delay in seconds
@@ -160,7 +161,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
       // Negotiate connection with simulation parameter
       final response = await http.get(
         Uri.parse(
-            '${dotenv.env['API_URL']}/negotiate?simulation=${_useSimulation}'),
+            '${dotenv.env['API_URL']}/negotiate?simulation=$_useSimulation'),
       );
 
       if (response.statusCode == 200) {
@@ -431,6 +432,13 @@ class _TelemetryPageState extends State<TelemetryPage> {
                     print('LapCount Updated Successfully');
                     break;
 
+                  case 'PositionData':
+                    setState(() {
+                      _updatePositionData(updated);
+                    });
+                    print('PositionData Updated Successfully');
+                    break;
+
                   default:
                     print('No handler for message type: $messageType');
                 }
@@ -480,6 +488,12 @@ class _TelemetryPageState extends State<TelemetryPage> {
               currentLiveData.trackStatus = updatedTrackStatus;
 
               return liveDataList;
+            }
+            return liveDataList;
+          }).then((liveDataList) {
+            // Add updated data to stream
+            if (!_liveDataController.isClosed) {
+              _liveDataController.add(liveDataList);
             }
             return liveDataList;
           });
@@ -574,6 +588,12 @@ class _TelemetryPageState extends State<TelemetryPage> {
           // Update the driver list in the current live data object
           currentLiveData.driverList = updatedDriverList;
 
+          return liveDataList;
+        }).then((liveDataList) {
+          // Add updated data to stream
+          if (!_liveDataController.isClosed) {
+            _liveDataController.add(liveDataList);
+          }
           return liveDataList;
         });
       });
@@ -690,8 +710,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
                           overallFastest: i1Data['OverallFastest'] ?? false,
                           personalFastest: i1Data['PersonalFastest'] ?? false,
                         );
-                      } else if (currentDriverData?.speeds?.i1 != null) {
-                        i1 = currentDriverData!.speeds!.i1;
+                      } else if (currentDriverData?.speeds.i1 != null) {
+                        i1 = currentDriverData!.speeds.i1;
                       }
 
                       // Update I2 speed if available
@@ -704,8 +724,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
                           overallFastest: i2Data['OverallFastest'] ?? false,
                           personalFastest: i2Data['PersonalFastest'] ?? false,
                         );
-                      } else if (currentDriverData?.speeds?.i2 != null) {
-                        i2 = currentDriverData!.speeds!.i2;
+                      } else if (currentDriverData?.speeds.i2 != null) {
+                        i2 = currentDriverData!.speeds.i2;
                       }
 
                       // Update FL speed if available
@@ -718,8 +738,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
                           overallFastest: flData['OverallFastest'] ?? false,
                           personalFastest: flData['PersonalFastest'] ?? false,
                         );
-                      } else if (currentDriverData?.speeds?.fl != null) {
-                        fl = currentDriverData!.speeds!.fl;
+                      } else if (currentDriverData?.speeds.fl != null) {
+                        fl = currentDriverData!.speeds.fl;
                       }
 
                       // Update ST speed if available
@@ -732,13 +752,13 @@ class _TelemetryPageState extends State<TelemetryPage> {
                           overallFastest: stData['OverallFastest'] ?? false,
                           personalFastest: stData['PersonalFastest'] ?? false,
                         );
-                      } else if (currentDriverData?.speeds?.st != null) {
-                        st = currentDriverData!.speeds!.st;
+                      } else if (currentDriverData?.speeds.st != null) {
+                        st = currentDriverData!.speeds.st;
                       }
 
                       updatedSpeeds = Speeds(i1: i1, i2: i2, fl: fl, st: st);
                     } else if (currentDriverData?.speeds != null) {
-                      updatedSpeeds = currentDriverData!.speeds!;
+                      updatedSpeeds = currentDriverData!.speeds;
                     } else {
                       // Create empty speeds if no data available
                       updatedSpeeds = Speeds(
@@ -874,11 +894,11 @@ class _TelemetryPageState extends State<TelemetryPage> {
             }
             return liveDataList;
           }).then((liveDataList) {
-            if (liveDataList.isEmpty) {
-              throw Exception("Live data list is empty");
+            // Add updated data to stream
+            if (!_liveDataController.isClosed) {
+              _liveDataController.add(liveDataList);
             }
             return liveDataList;
-            // _liveDataController.add(liveDataList);
           });
         }
       });
@@ -904,25 +924,32 @@ class _TelemetryPageState extends State<TelemetryPage> {
               // Create a new WeatherData with updated values
               WeatherData updatedWeatherData = WeatherData(
                 airTemp: data.containsKey('AirTemp')
-                    ? data['AirTemp']
+                    ? data['AirTemp']?.toString() ??
+                        currentLiveData.weatherData!.airTemp
                     : currentLiveData.weatherData!.airTemp,
                 humidity: data.containsKey('Humidity')
-                    ? data['Humidity']
+                    ? data['Humidity']?.toString() ??
+                        currentLiveData.weatherData!.humidity
                     : currentLiveData.weatherData!.humidity,
                 pressure: data.containsKey('Pressure')
-                    ? data['Pressure']
+                    ? data['Pressure']?.toString() ??
+                        currentLiveData.weatherData!.pressure
                     : currentLiveData.weatherData!.pressure,
                 rainfall: data.containsKey('Rainfall')
-                    ? data['Rainfall']
+                    ? data['Rainfall']?.toString() ??
+                        currentLiveData.weatherData!.rainfall
                     : currentLiveData.weatherData!.rainfall,
                 trackTemp: data.containsKey('TrackTemp')
-                    ? data['TrackTemp']
+                    ? data['TrackTemp']?.toString() ??
+                        currentLiveData.weatherData!.trackTemp
                     : currentLiveData.weatherData!.trackTemp,
                 windDirection: data.containsKey('WindDirection')
-                    ? data['WindDirection']
+                    ? data['WindDirection']?.toString() ??
+                        currentLiveData.weatherData!.windDirection
                     : currentLiveData.weatherData!.windDirection,
                 windSpeed: data.containsKey('WindSpeed')
-                    ? data['WindSpeed']
+                    ? data['WindSpeed']?.toString() ??
+                        currentLiveData.weatherData!.windSpeed
                     : currentLiveData.weatherData!.windSpeed,
               );
 
@@ -930,6 +957,12 @@ class _TelemetryPageState extends State<TelemetryPage> {
               currentLiveData.weatherData = updatedWeatherData;
 
               return liveDataList;
+            }
+            return liveDataList;
+          }).then((liveDataList) {
+            // Add updated data to stream
+            if (!_liveDataController.isClosed) {
+              _liveDataController.add(liveDataList);
             }
             return liveDataList;
           });
@@ -979,20 +1012,20 @@ class _TelemetryPageState extends State<TelemetryPage> {
                         data['Meeting'].containsKey('Country')
                     ? Country(
                         key: data['Meeting']['Country']['Key'] ??
-                            currentSession.meeting.country?.key,
+                            currentSession.meeting.country.key,
                         code: data['Meeting']['Country']['Code'] ??
-                            currentSession.meeting.country?.code,
+                            currentSession.meeting.country.code,
                         name: data['Meeting']['Country']['Name'] ??
-                            currentSession.meeting.country?.name,
+                            currentSession.meeting.country.name,
                       )
                     : currentSession.meeting.country,
                 circuit: data.containsKey('Meeting') &&
                         data['Meeting'].containsKey('Circuit')
                     ? Circuit(
                         key: data['Meeting']['Circuit']['Key'] ??
-                            currentSession.meeting.circuit?.key,
+                            currentSession.meeting.circuit.key,
                         shortName: data['Meeting']['Circuit']['ShortName'] ??
-                            currentSession.meeting.circuit?.shortName,
+                            currentSession.meeting.circuit.shortName,
                       )
                     : currentSession.meeting.circuit,
               );
@@ -1037,6 +1070,12 @@ class _TelemetryPageState extends State<TelemetryPage> {
               return liveDataList;
             }
             return liveDataList;
+          }).then((liveDataList) {
+            // Add updated data to stream
+            if (!_liveDataController.isClosed) {
+              _liveDataController.add(liveDataList);
+            }
+            return liveDataList;
           });
         }
       });
@@ -1076,6 +1115,12 @@ class _TelemetryPageState extends State<TelemetryPage> {
               return liveDataList;
             }
             return liveDataList;
+          }).then((liveDataList) {
+            // Add updated data to stream
+            if (!_liveDataController.isClosed) {
+              _liveDataController.add(liveDataList);
+            }
+            return liveDataList;
           });
         }
       });
@@ -1094,43 +1139,89 @@ class _TelemetryPageState extends State<TelemetryPage> {
         return;
       }
 
-      if (_liveDataFuture != null) {
-        _liveDataFuture = _liveDataFuture!.then((liveDataList) {
-          if (liveDataList.isNotEmpty) {
-            final currentLiveData = liveDataList[0];
+      setState(() {
+        if (_liveDataFuture != null) {
+          _liveDataFuture = _liveDataFuture!.then((liveDataList) {
+            if (liveDataList.isNotEmpty) {
+              final currentLiveData = liveDataList[0];
 
-            // Log current values before update
-            print(
-                'Before update - Current extrapolated clock: ${currentLiveData.extrapolatedClock?.remaining}');
+              // Log current values before update
+              print(
+                  'Before update - Current extrapolated clock: ${currentLiveData.extrapolatedClock?.remaining}');
 
-            // Create a new ExtrapolatedClock with updated values
-            ExtrapolatedClock updatedExtrapolatedClock = ExtrapolatedClock(
-              utc: data.containsKey('Utc')
-                  ? data['Utc']
-                  : currentLiveData.extrapolatedClock?.utc ?? '',
-              remaining: data.containsKey('Remaining')
-                  ? data['Remaining']
-                  : currentLiveData.extrapolatedClock?.remaining ?? '',
-              extrapolating: data.containsKey('Extrapolating')
-                  ? data['Extrapolating']
-                  : currentLiveData.extrapolatedClock?.extrapolating ?? false,
-            );
+              // Create a new ExtrapolatedClock with updated values
+              ExtrapolatedClock updatedExtrapolatedClock = ExtrapolatedClock(
+                utc: data.containsKey('Utc')
+                    ? data['Utc']
+                    : currentLiveData.extrapolatedClock?.utc ?? '',
+                remaining: data.containsKey('Remaining')
+                    ? data['Remaining']
+                    : currentLiveData.extrapolatedClock?.remaining ?? '',
+                extrapolating: data.containsKey('Extrapolating')
+                    ? data['Extrapolating']
+                    : currentLiveData.extrapolatedClock?.extrapolating ?? false,
+              );
 
-            // Update the extrapolated clock in the current live data object
-            currentLiveData.extrapolatedClock = updatedExtrapolatedClock;
+              // Update the extrapolated clock in the current live data object
+              currentLiveData.extrapolatedClock = updatedExtrapolatedClock;
 
-            // Log new values after update
-            print(
-                'After update - New extrapolated clock: ${updatedExtrapolatedClock.remaining}');
+              // Log new values after update
+              print(
+                  'After update - New extrapolated clock: ${updatedExtrapolatedClock.remaining}');
 
+              return liveDataList;
+            }
             return liveDataList;
-          }
-          return liveDataList;
-        });
-      }
+          }).then((liveDataList) {
+            // Add updated data to stream
+            if (!_liveDataController.isClosed) {
+              _liveDataController.add(liveDataList);
+            }
+            return liveDataList;
+          });
+        }
+      });
     } else {
       print(
           'Received non-map extrapolated clock data: ${data.runtimeType}, cannot update');
+    }
+  }
+
+  void _updatePositionData(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      print('Updating position data with: ${data.keys.toList()}');
+      if (data.isEmpty) {
+        print('Received empty position data, skipping update');
+        return;
+      }
+
+      setState(() {
+        if (_liveDataFuture != null) {
+          _liveDataFuture = _liveDataFuture!.then((liveDataList) {
+            if (liveDataList.isNotEmpty) {
+              final currentLiveData = liveDataList[0];
+
+              // Create a new PositionData with updated values
+              PositionData updatedPositionData = PositionData.fromJson(data);
+
+              // Update the position data in the current live data object
+              currentLiveData.positionData = updatedPositionData;
+
+              return liveDataList;
+            }
+            return liveDataList;
+          }).then((liveDataList) {
+            // Add updated data to stream
+            if (!_liveDataController.isClosed) {
+              _liveDataController.add(liveDataList);
+            }
+            return liveDataList;
+          });
+        }
+      });
+    } else {
+      print(
+          'Received non-map position data: ${data.runtimeType}, cannot update');
     }
   }
 
@@ -1461,66 +1552,84 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
             // Main telemetry data display
             Expanded(
-              child: _liveDataFuture == null
-                  ? const Center(
+              child: StreamBuilder<List<LiveData>>(
+                stream: liveDataStream,
+                initialData: _liveDataFuture != null ? [] : null,
+                builder: (context, snapshot) {
+                  if (_liveDataFuture == null) {
+                    return const Center(
                       child: Text('No telemetry data received yet'),
-                    )
-                  : SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          StreamBuilder<List<LiveData>>(
-                            stream: liveDataStream,
-                            initialData: [], // Initial empty data
-                            builder: (context, snapshot) {
-                              if (snapshot.hasData &&
-                                  snapshot.data!.isNotEmpty) {
-                                final liveData = snapshot.data!;
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    // _buildExtrapolatedClock(liveData[0]
-                                    //     .extrapolatedClock!
-                                    //     .remaining),
-                                    SizedBox(height: 10),
-                                    // TrackMapWidget(
-                                    //   trackJsonAsset:
-                                    //       'assets/TrackMaps/Spielberg.json',
-                                    //   driverPositions: testDriverPositions,
-                                    //   width: 350,
-                                    //   height: 200,
-                                    // ),
-                                    SizedBox(height: 10),
-                                    _buildSessionInfoCard(
-                                        liveData[0].sessionInfo!),
-                                    _buildTrackStatusCard(
-                                        liveData[0].trackStatus!),
-                                    _buildWeatherCard(liveData[0].weatherData!),
+                    );
+                  }
 
-                                    SizedBox(height: 10),
-                                    Text('Drivers',
-                                        style: TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold)),
-                                    SizedBox(height: 5),
-                                    _buildDriverList(
-                                        liveData[0].driverList!.drivers,
-                                        liveData[0].timingData!.lines,
-                                        liveData[0].timingAppData!.lines,
-                                        liveData[0].sessionInfo?.type ??
-                                            'practice'),
-                                  ],
-                                );
-                              } else if (snapshot.hasError) {
-                                return Text('Error: ${snapshot.error}');
-                              } else {
-                                return const CircularProgressIndicator();
-                              }
-                            },
-                          ),
+                  if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                    final liveData = snapshot.data![0];
+                    return SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 10),
+                          // TrackMapWidget(
+                          //   trackJsonAsset:
+                          //       'assets/TrackMaps/Spielberg.json',
+                          //   driverPositions: testDriverPositions,
+                          //   width: 350,
+                          //   height: 200,
+                          // ),
+                          const SizedBox(height: 10),
+                          // Live Track Map showing driver positions
+                          if (liveData.positionData != null &&
+                              liveData.driverList != null &&
+                              liveData.sessionInfo != null)
+                            Container(
+                              width: double.infinity,
+                              height: 300,
+                              margin: const EdgeInsets.symmetric(vertical: 16),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[900],
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey[700]!),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: LiveTrackMapWidget(
+                                  positionData: liveData.positionData!,
+                                  drivers: liveData.driverList!.drivers,
+                                  circuitShortName: liveData
+                                      .sessionInfo!.meeting.circuit.shortName,
+                                ),
+                              ),
+                            ),
+                          if (liveData.sessionInfo != null)
+                            _buildSessionInfoCard(liveData.sessionInfo!),
+                          if (liveData.trackStatus != null)
+                            _buildTrackStatusCard(liveData.trackStatus!),
+                          if (liveData.weatherData != null)
+                            _buildWeatherCard(liveData.weatherData!),
+                          const SizedBox(height: 10),
+                          const Text('Drivers',
+                              style: TextStyle(
+                                  fontSize: 20, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 5),
+                          if (liveData.driverList != null &&
+                              liveData.timingData != null &&
+                              liveData.timingAppData != null)
+                            _buildDriverList(
+                                liveData.driverList!.drivers,
+                                liveData.timingData!.lines,
+                                liveData.timingAppData!.lines,
+                                liveData.sessionInfo?.type ?? 'practice'),
                         ],
                       ),
-                    ),
+                    );
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                },
+              ),
               // : SingleChildScrollView(
               //     child: Column(
               //       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1678,6 +1787,10 @@ class _TelemetryPageState extends State<TelemetryPage> {
               DataCell(Text('1:30.123')),
               DataCell(Center(
                 child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(5.0),
                     child: Text(
@@ -1687,10 +1800,6 @@ class _TelemetryPageState extends State<TelemetryPage> {
                           fontSize: 12,
                           fontFamily: 'formula-bold'),
                     ),
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    borderRadius: BorderRadius.circular(20),
                   ),
                 ),
               )),
@@ -2190,3 +2299,270 @@ final Map<String, dynamic> testDriverPositions = {
   "81": {"Status": "OnTrack", "X": 1147, "Y": -1028, "Z": 7312},
   "87": {"Status": "OnTrack", "X": -436, "Y": -1453, "Z": 7312},
 };
+
+// Live Track Map Widget that shows driver positions in real-time
+class LiveTrackMapWidget extends StatefulWidget {
+  final PositionData positionData;
+  final Map<String, Driver> drivers;
+  final String circuitShortName;
+
+  const LiveTrackMapWidget({
+    super.key,
+    required this.positionData,
+    required this.drivers,
+    required this.circuitShortName,
+  });
+
+  @override
+  State<LiveTrackMapWidget> createState() => _LiveTrackMapWidgetState();
+}
+
+class _LiveTrackMapWidgetState extends State<LiveTrackMapWidget> {
+  List<Offset> _trackPoints = [];
+  double? minX, maxX, minY, maxY;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTrack();
+  }
+
+  @override
+  void didUpdateWidget(LiveTrackMapWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reload track if circuit changes
+    if (oldWidget.circuitShortName != widget.circuitShortName) {
+      _loadTrack();
+    }
+  }
+
+  Future<void> _loadTrack() async {
+    try {
+      // Map circuit names to track files
+      final trackFile = _getTrackFile(widget.circuitShortName);
+      if (trackFile == null) {
+        print('Track file not found for circuit: ${widget.circuitShortName}');
+        return;
+      }
+
+      final jsonStr =
+          await rootBundle.loadString('assets/TrackMaps/$trackFile');
+      final jsonData = jsonDecode(jsonStr);
+
+      // Parse x and y arrays
+      final List xList = jsonData['x'];
+      final List yList = jsonData['y'];
+      List<Offset> points = [];
+
+      for (int i = 0; i < xList.length && i < yList.length; i++) {
+        points.add(
+            Offset((xList[i] as num).toDouble(), (yList[i] as num).toDouble()));
+      }
+
+      // Find min/max for normalization
+      if (points.isNotEmpty) {
+        double minX = points.map((e) => e.dx).reduce((a, b) => a < b ? a : b);
+        double maxX = points.map((e) => e.dx).reduce((a, b) => a > b ? a : b);
+        double minY = points.map((e) => e.dy).reduce((a, b) => a < b ? a : b);
+        double maxY = points.map((e) => e.dy).reduce((a, b) => a > b ? a : b);
+
+        setState(() {
+          _trackPoints = points;
+          this.minX = minX;
+          this.maxX = maxX;
+          this.minY = minY;
+          this.maxY = maxY;
+        });
+      }
+    } catch (e) {
+      print('Error loading track: $e');
+    }
+  }
+
+  String? _getTrackFile(String circuitShortName) {
+    // Map circuit short names to track JSON files
+    final Map<String, String> trackFiles = {
+      'Spielberg': 'Spielberg.json',
+      'Silverstone': 'Silverstone.json',
+      'Monaco': 'Monte-Carlo.json',
+      'Hungaroring': 'Hungaroring.json',
+      'Spa': 'Spa-Francorchamps.json',
+      'Zandvoort': 'Zandvoort.json',
+      'Monza': 'Monza.json',
+      'Marina Bay': 'Singapore.json',
+      'Suzuka': 'Suzuka.json',
+      'COTA': 'Austin.json',
+      'Mexico City': 'Mexico.json',
+      'Interlagos': 'Interlagos.json',
+      'Las Vegas': 'Las-Vegas.json',
+      'Qatar': 'Losail.json',
+      'Yas Marina': 'Yas-Marina.json',
+      'Bahrain': 'Sakhir.json',
+      'Jeddah': 'Jeddah.json',
+      'Melbourne': 'Melbourne.json',
+      'Imola': 'Imola.json',
+      'Miami': 'Miami.json',
+      'Barcelona': 'Catalunya.json',
+      'Montreal': 'Montreal.json',
+      'Baku': 'Baku.json',
+      'Azerbaijan': 'Baku.json', // Add Azerbaijan mapping
+      'Red Bull Ring': 'Spielberg.json',
+      'Circuit de Spa-Francorchamps': 'Spa-Francorchamps.json',
+      'Autodromo Nazionale di Monza': 'Monza.json',
+      // Add more mappings as needed
+    };
+
+    print('Looking for track file for circuit: "$circuitShortName"');
+    final trackFile = trackFiles[circuitShortName];
+    if (trackFile != null) {
+      print('Found track file: $trackFile');
+    } else {
+      print('No track file found for: "$circuitShortName"');
+      print('Available circuits: ${trackFiles.keys.toList()}');
+    }
+
+    return trackFile;
+  }
+
+  // Normalizes a point to widget size
+  Offset _normalize(Offset pt, double width, double height) {
+    if (minX == null || maxX == null || minY == null || maxY == null)
+      return Offset.zero;
+    double normX = (pt.dx - minX!) / (maxX! - minX!);
+    double normY = (pt.dy - minY!) / (maxY! - minY!);
+    return Offset(normX * width, normY * height);
+  }
+
+  // Normalizes driver coordinates
+  Offset _normalizeDriver(double x, double y, double width, double height) {
+    if (minX == null || maxX == null || minY == null || maxY == null)
+      return Offset.zero;
+    double normX = (x - minX!) / (maxX! - minX!);
+    double normY = (y - minY!) / (maxY! - minY!);
+    return Offset(normX * width, normY * height);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_trackPoints.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Loading track map...', style: TextStyle(color: Colors.white)),
+          ],
+        ),
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return CustomPaint(
+          size: Size(constraints.maxWidth, constraints.maxHeight),
+          painter: _LiveTrackPainter(
+            trackPoints: _trackPoints,
+            positionData: widget.positionData,
+            drivers: widget.drivers,
+            normalize: _normalize,
+            normalizeDriver: _normalizeDriver,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _LiveTrackPainter extends CustomPainter {
+  final List<Offset> trackPoints;
+  final PositionData positionData;
+  final Map<String, Driver> drivers;
+  final Offset Function(Offset pt, double width, double height) normalize;
+  final Offset Function(double x, double y, double width, double height)
+      normalizeDriver;
+
+  _LiveTrackPainter({
+    required this.trackPoints,
+    required this.positionData,
+    required this.drivers,
+    required this.normalize,
+    required this.normalizeDriver,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Draw track path
+    if (trackPoints.isNotEmpty) {
+      final path = Path()
+        ..moveTo(
+          normalize(trackPoints[0], size.width, size.height).dx,
+          normalize(trackPoints[0], size.width, size.height).dy,
+        );
+
+      for (final pt in trackPoints.skip(1)) {
+        final npt = normalize(pt, size.width, size.height);
+        path.lineTo(npt.dx, npt.dy);
+      }
+
+      final trackPaint = Paint()
+        ..color = Colors.grey.shade600
+        ..strokeWidth = 3
+        ..style = PaintingStyle.stroke;
+      canvas.drawPath(path, trackPaint);
+    }
+
+    // Draw drivers with team colours
+    positionData.cars.forEach((racingNumber, carPosition) {
+      final driver = drivers[racingNumber];
+      if (driver == null) return;
+
+      final Offset pos = normalizeDriver(
+          carPosition.x, carPosition.y, size.width, size.height);
+
+      // Parse team color
+      Color teamColor;
+      try {
+        if (driver.teamColour.isNotEmpty && driver.teamColour.length == 6) {
+          teamColor = Color(int.parse('0xFF${driver.teamColour}'));
+        } else {
+          teamColor = Colors.red;
+        }
+      } catch (e) {
+        teamColor = Colors.red;
+      }
+
+      // Draw driver circle
+      final paint = Paint()
+        ..color = teamColor
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(pos, 6, paint);
+
+      // Draw border
+      final borderPaint = Paint()
+        ..color = Colors.white
+        ..strokeWidth = 1
+        ..style = PaintingStyle.stroke;
+      canvas.drawCircle(pos, 6, borderPaint);
+
+      // Draw driver TLA/number
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: driver.tla.isNotEmpty ? driver.tla : racingNumber,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 8,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      // Position text above the driver circle
+      textPainter.paint(canvas, pos + Offset(-textPainter.width / 2, -18));
+    });
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
