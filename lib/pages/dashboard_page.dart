@@ -2,12 +2,15 @@ import 'dart:convert';
 import 'dart:async';
 import 'dart:collection';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:formulavision/components/animated_driver_tile.dart';
 import 'package:formulavision/components/race_timer_bar.dart';
 import 'package:formulavision/components/lap_count_card.dart';
 import 'package:formulavision/components/weather_info_card.dart';
+import 'package:formulavision/components/session_info_card.dart';
+import 'package:formulavision/components/track_status_card.dart';
 import 'package:formulavision/data/functions/cardata.function.dart';
 import 'package:formulavision/data/functions/live_data.function.dart';
 import 'package:formulavision/data/models/live_data.model.dart';
@@ -478,7 +481,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
                   print('No handler for message type: $messageType');
               }
             } else {
-              print('Message "$messageType" has no data payload');
+              print('Message data is not a Map:');
             }
           } else {
             print('Message does not contain valid "A" array structure');
@@ -570,6 +573,12 @@ class _TelemetryPageState extends State<TelemetryPage> {
               currentLiveData.trackStatus = updatedTrackStatus;
 
               return liveDataList;
+            }
+            return liveDataList;
+          }).then((liveDataList) {
+            // Add updated data to stream
+            if (!_liveDataController.isClosed) {
+              _liveDataController.add(liveDataList);
             }
             return liveDataList;
           });
@@ -673,6 +682,12 @@ class _TelemetryPageState extends State<TelemetryPage> {
           // Update the driver list in the current live data object
           currentLiveData.driverList = updatedDriverList;
 
+          return liveDataList;
+        }).then((liveDataList) {
+          // Add updated data to stream
+          if (!_liveDataController.isClosed) {
+            _liveDataController.add(liveDataList);
+          }
           return liveDataList;
         });
       });
@@ -1008,11 +1023,11 @@ class _TelemetryPageState extends State<TelemetryPage> {
             }
             return liveDataList;
           }).then((liveDataList) {
-            if (liveDataList.isEmpty) {
-              throw Exception("Live data list is empty");
+            // Add updated data to stream
+            if (!_liveDataController.isClosed) {
+              _liveDataController.add(liveDataList);
             }
             return liveDataList;
-            // _liveDataController.add(liveDataList);
           });
         }
       });
@@ -1038,25 +1053,32 @@ class _TelemetryPageState extends State<TelemetryPage> {
               // Create a new WeatherData with updated values
               WeatherData updatedWeatherData = WeatherData(
                 airTemp: data.containsKey('AirTemp')
-                    ? data['AirTemp']
+                    ? data['AirTemp']?.toString() ??
+                        currentLiveData.weatherData!.airTemp
                     : currentLiveData.weatherData!.airTemp,
                 humidity: data.containsKey('Humidity')
-                    ? data['Humidity']
+                    ? data['Humidity']?.toString() ??
+                        currentLiveData.weatherData!.humidity
                     : currentLiveData.weatherData!.humidity,
                 pressure: data.containsKey('Pressure')
-                    ? data['Pressure']
+                    ? data['Pressure']?.toString() ??
+                        currentLiveData.weatherData!.pressure
                     : currentLiveData.weatherData!.pressure,
                 rainfall: data.containsKey('Rainfall')
-                    ? data['Rainfall']
+                    ? data['Rainfall']?.toString() ??
+                        currentLiveData.weatherData!.rainfall
                     : currentLiveData.weatherData!.rainfall,
                 trackTemp: data.containsKey('TrackTemp')
-                    ? data['TrackTemp']
+                    ? data['TrackTemp']?.toString() ??
+                        currentLiveData.weatherData!.trackTemp
                     : currentLiveData.weatherData!.trackTemp,
                 windDirection: data.containsKey('WindDirection')
-                    ? data['WindDirection']
+                    ? data['WindDirection']?.toString() ??
+                        currentLiveData.weatherData!.windDirection
                     : currentLiveData.weatherData!.windDirection,
                 windSpeed: data.containsKey('WindSpeed')
-                    ? data['WindSpeed']
+                    ? data['WindSpeed']?.toString() ??
+                        currentLiveData.weatherData!.windSpeed
                     : currentLiveData.weatherData!.windSpeed,
               );
 
@@ -1064,6 +1086,12 @@ class _TelemetryPageState extends State<TelemetryPage> {
               currentLiveData.weatherData = updatedWeatherData;
 
               return liveDataList;
+            }
+            return liveDataList;
+          }).then((liveDataList) {
+            // Add updated data to stream
+            if (!_liveDataController.isClosed) {
+              _liveDataController.add(liveDataList);
             }
             return liveDataList;
           });
@@ -1171,6 +1199,12 @@ class _TelemetryPageState extends State<TelemetryPage> {
               return liveDataList;
             }
             return liveDataList;
+          }).then((liveDataList) {
+            // Add updated data to stream
+            if (!_liveDataController.isClosed) {
+              _liveDataController.add(liveDataList);
+            }
+            return liveDataList;
           });
         }
       });
@@ -1210,12 +1244,56 @@ class _TelemetryPageState extends State<TelemetryPage> {
               return liveDataList;
             }
             return liveDataList;
+          }).then((liveDataList) {
+            // Add updated data to stream
+            if (!_liveDataController.isClosed) {
+              _liveDataController.add(liveDataList);
+            }
+            return liveDataList;
           });
         }
       });
     } else {
       print(
           'Received non-map lap count data: ${data.runtimeType}, cannot update');
+    }
+  }
+
+  void _updatePositionData(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      print('Updating position data with: ${data.keys.toList()}');
+      if (data.isEmpty) {
+        print('Received empty position data, skipping update');
+        return;
+      }
+
+      setState(() {
+        if (_liveDataFuture != null) {
+          _liveDataFuture = _liveDataFuture!.then((liveDataList) {
+            if (liveDataList.isNotEmpty) {
+              final currentLiveData = liveDataList[0];
+
+              // Create a new PositionData with updated values
+              PositionData updatedPositionData = PositionData.fromJson(data);
+
+              // Update the position data in the current live data object
+              currentLiveData.positionData = updatedPositionData;
+
+              return liveDataList;
+            }
+            return liveDataList;
+          }).then((liveDataList) {
+            // Add updated data to stream
+            if (!_liveDataController.isClosed) {
+              _liveDataController.add(liveDataList);
+            }
+            return liveDataList;
+          });
+        }
+      });
+    } else {
+      print(
+          'Received non-map position data: ${data.runtimeType}, cannot update');
     }
   }
 
@@ -1404,40 +1482,134 @@ class _TelemetryPageState extends State<TelemetryPage> {
                 // ),
 
                 // Compact Lap count display
-                FutureBuilder<List<LiveData>>(
-                  future: _liveDataFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData &&
-                        snapshot.data!.isNotEmpty &&
-                        snapshot.data![0].lapCount != null &&
-                        snapshot.data![0].sessionInfo != null) {
-                      final liveData = snapshot.data![0];
-                      final lapCount = liveData.lapCount!;
-                      final sessionInfo = liveData.sessionInfo!;
+                // StreamBuilder<List<LiveData>>(
+                //   stream: liveDataStream,
+                //   initialData: _liveDataFuture != null ? [] : null,
+                //   builder: (context, snapshot) {
+                //     // Debug: Print what data we have
+                //     print('=== CompactLapCountCard Debug ===');
+                //     print(
+                //         '_liveDataFuture != null: ${_liveDataFuture != null}');
+                //     print(
+                //         'snapshot.connectionState: ${snapshot.connectionState}');
+                //     print('snapshot.hasData: ${snapshot.hasData}');
+                //     print('snapshot.hasError: ${snapshot.hasError}');
+                //     if (snapshot.hasError) {
+                //       print('snapshot.error: ${snapshot.error}');
+                //     }
+                //     if (snapshot.hasData) {
+                //       print(
+                //           'snapshot.data!.isNotEmpty: ${snapshot.data!.isNotEmpty}');
+                //       if (snapshot.data!.isNotEmpty) {
+                //         final liveData = snapshot.data![0];
+                //         print(
+                //             'liveData.lapCount != null: ${liveData.lapCount != null}');
+                //         print(
+                //             'liveData.sessionInfo != null: ${liveData.sessionInfo != null}');
+                //         print(
+                //             'liveData.extrapolatedClock != null: ${liveData.extrapolatedClock != null}');
+                //         if (liveData.extrapolatedClock != null) {
+                //           print(
+                //               'extrapolatedClock.remaining: "${liveData.extrapolatedClock!.remaining}"');
+                //           print(
+                //               'extrapolatedClock.extrapolating: ${liveData.extrapolatedClock!.extrapolating}');
+                //         }
+                //       }
+                //     }
 
-                      // Only show lap count for 'Sprint' or 'Race' sessions
-                      final sessionType = sessionInfo.type.toLowerCase();
-                      final sessionName = sessionInfo.name.toLowerCase();
+                //     if (snapshot.hasData &&
+                //         snapshot.data!.isNotEmpty &&
+                //         snapshot.data![0].sessionInfo != null) {
+                //       final liveData = snapshot.data![0];
+                //       final sessionInfo = liveData.sessionInfo!;
 
-                      final isRaceOrSprint = sessionType == 'race' ||
-                          sessionType == 'sprint' ||
-                          sessionName.contains('race') ||
-                          sessionName.contains('sprint');
+                //       // Use default values if lapCount is null
+                //       final lapCount = liveData.lapCount;
+                //       final currentLap = lapCount?.currentLap ?? 0;
+                //       final totalLaps = lapCount?.totalLaps ?? 0;
 
-                      if (isRaceOrSprint) {
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
-                          child: CompactLapCountCard(
-                            currentLap: lapCount.currentLap,
-                            totalLaps: lapCount.totalLaps,
-                            sessionType: sessionInfo.name,
-                          ),
-                        );
-                      }
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
+                //       // Check if it's a race or sprint session for lap count display
+                //       final sessionType = sessionInfo.type.toLowerCase();
+                //       final sessionName = sessionInfo.name.toLowerCase();
+
+                //       // Only show lap count for race and sprint sessions
+                //       // Explicitly exclude practice, qualifying, and other session types
+                //       // Handle all possible capitalizations: Practice/practice, Qualifying/qualifying, etc.
+                //       final isRaceOrSprint = (sessionType == 'race' ||
+                //               sessionType == 'sprint' ||
+                //               sessionName.contains('race') ||
+                //               sessionName.contains('sprint')) &&
+                //           !sessionType.contains('practice') &&
+                //           !sessionType.contains('qualifying') &&
+                //           !sessionType.contains('qual') &&
+                //           !sessionName.contains('practice') &&
+                //           !sessionName.contains('qualifying') &&
+                //           !sessionName.contains('qual');
+
+                //       // Debug: Print session info to help verify detection
+                //       print(
+                //           'Original - Session Type: "${sessionInfo.type}", Session Name: "${sessionInfo.name}"');
+                //       print(
+                //           'Lowercase - Session Type: "$sessionType", Session Name: "$sessionName"');
+
+                //       // Debug: Show evaluation steps
+                //       final hasRaceOrSprint = (sessionType == 'race' ||
+                //           sessionType == 'sprint' ||
+                //           sessionName.contains('race') ||
+                //           sessionName.contains('sprint'));
+                //       final hasPractice = sessionType.contains('practice') ||
+                //           sessionName.contains('practice');
+                //       final hasQualifying =
+                //           sessionType.contains('qualifying') ||
+                //               sessionType.contains('qual') ||
+                //               sessionName.contains('qualifying') ||
+                //               sessionName.contains('qual');
+
+                //       print(
+                //           'Evaluation: hasRaceOrSprint=$hasRaceOrSprint, hasPractice=$hasPractice, hasQualifying=$hasQualifying');
+                //       print('Final Result: Show Lap Count: $isRaceOrSprint');
+
+                //       // Always show the card, but conditionally show lap count
+                //       return Padding(
+                //         padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
+                //         child: CompactLapCountCard(
+                //           currentLap: currentLap,
+                //           totalLaps: totalLaps,
+                //           sessionType: sessionInfo.name,
+                //           extrapolatedClock:
+                //               liveData.extrapolatedClock?.remaining,
+                //           isClockExtrapolating:
+                //               liveData.extrapolatedClock?.extrapolating ??
+                //                   false,
+                //           showLapCount:
+                //               isRaceOrSprint, // Only show lap count for race/sprint
+                //         ),
+                //       );
+                //     }
+
+                //     // If we have any data at all, show the card with available information
+                //     if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                //       final liveData = snapshot.data![0];
+                //       print('=== Showing card with available data ===');
+
+                //       return CompactLapCountCard(
+                //         currentLap: 0,
+                //         totalLaps: 0,
+                //         sessionType: 'Session',
+                //         extrapolatedClock:
+                //             liveData.extrapolatedClock?.remaining,
+                //         isClockExtrapolating:
+                //             liveData.extrapolatedClock?.extrapolating ?? false,
+                //         showLapCount:
+                //             false, // Don't show lap count if no session info
+                //       );
+                //     }
+
+                //     print(
+                //         '=== No data available, showing SizedBox.shrink() ===');
+                //     return const SizedBox.shrink();
+                //   },
+                // ),
               ],
             ),
             // Text(
@@ -1452,12 +1624,22 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
             // Main telemetry data display
             Expanded(
-              child: _liveDataFuture == null
-                  ? const Center(
+              child: StreamBuilder<List<LiveData>>(
+                stream: liveDataStream,
+                initialData: _liveDataFuture != null ? [] : null,
+                builder: (context, snapshot) {
+                  if (_liveDataFuture == null) {
+                    return const Center(
                       child: Text('No telemetry data received yet'),
-                    )
-                  : SingleChildScrollView(
+                    );
+                  }
+
+                  if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                    final liveData = snapshot.data![0];
+                    return SingleChildScrollView(
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           FutureBuilder<List<LiveData>>(
                             future: _liveDataFuture,
@@ -1528,7 +1710,14 @@ class _TelemetryPageState extends State<TelemetryPage> {
                           ),
                         ],
                       ),
-                    ),
+                    );
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                },
+              ),
               // : SingleChildScrollView(
               //     child: Column(
               //       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1608,22 +1797,11 @@ class _TelemetryPageState extends State<TelemetryPage> {
   }
 
   Widget _buildTrackStatusCard(TrackStatus trackStatus) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Track Status',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            _buildInfoRow('Status:', trackStatus.status),
-            _buildInfoRow('Message:', trackStatus.message),
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TrackStatusCard(
+        status: trackStatus.status,
+        message: trackStatus.message,
       ),
     );
   }
@@ -2219,3 +2397,270 @@ final Map<String, dynamic> testDriverPositions = {
   "81": {"Status": "OnTrack", "X": 1147, "Y": -1028, "Z": 7312},
   "87": {"Status": "OnTrack", "X": -436, "Y": -1453, "Z": 7312},
 };
+
+// Live Track Map Widget that shows driver positions in real-time
+class LiveTrackMapWidget extends StatefulWidget {
+  final PositionData positionData;
+  final Map<String, Driver> drivers;
+  final String circuitShortName;
+
+  const LiveTrackMapWidget({
+    super.key,
+    required this.positionData,
+    required this.drivers,
+    required this.circuitShortName,
+  });
+
+  @override
+  State<LiveTrackMapWidget> createState() => _LiveTrackMapWidgetState();
+}
+
+class _LiveTrackMapWidgetState extends State<LiveTrackMapWidget> {
+  List<Offset> _trackPoints = [];
+  double? minX, maxX, minY, maxY;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTrack();
+  }
+
+  @override
+  void didUpdateWidget(LiveTrackMapWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reload track if circuit changes
+    if (oldWidget.circuitShortName != widget.circuitShortName) {
+      _loadTrack();
+    }
+  }
+
+  Future<void> _loadTrack() async {
+    try {
+      // Map circuit names to track files
+      final trackFile = _getTrackFile(widget.circuitShortName);
+      if (trackFile == null) {
+        print('Track file not found for circuit: ${widget.circuitShortName}');
+        return;
+      }
+
+      final jsonStr =
+          await rootBundle.loadString('assets/TrackMaps/$trackFile');
+      final jsonData = jsonDecode(jsonStr);
+
+      // Parse x and y arrays
+      final List xList = jsonData['x'];
+      final List yList = jsonData['y'];
+      List<Offset> points = [];
+
+      for (int i = 0; i < xList.length && i < yList.length; i++) {
+        points.add(
+            Offset((xList[i] as num).toDouble(), (yList[i] as num).toDouble()));
+      }
+
+      // Find min/max for normalization
+      if (points.isNotEmpty) {
+        double minX = points.map((e) => e.dx).reduce((a, b) => a < b ? a : b);
+        double maxX = points.map((e) => e.dx).reduce((a, b) => a > b ? a : b);
+        double minY = points.map((e) => e.dy).reduce((a, b) => a < b ? a : b);
+        double maxY = points.map((e) => e.dy).reduce((a, b) => a > b ? a : b);
+
+        setState(() {
+          _trackPoints = points;
+          this.minX = minX;
+          this.maxX = maxX;
+          this.minY = minY;
+          this.maxY = maxY;
+        });
+      }
+    } catch (e) {
+      print('Error loading track: $e');
+    }
+  }
+
+  String? _getTrackFile(String circuitShortName) {
+    // Map circuit short names to track JSON files
+    final Map<String, String> trackFiles = {
+      'Spielberg': 'Spielberg.json',
+      'Silverstone': 'Silverstone.json',
+      'Monaco': 'Monte-Carlo.json',
+      'Hungaroring': 'Hungaroring.json',
+      'Spa': 'Spa-Francorchamps.json',
+      'Zandvoort': 'Zandvoort.json',
+      'Monza': 'Monza.json',
+      'Marina Bay': 'Singapore.json',
+      'Suzuka': 'Suzuka.json',
+      'COTA': 'Austin.json',
+      'Mexico City': 'Mexico.json',
+      'Interlagos': 'Interlagos.json',
+      'Las Vegas': 'Las-Vegas.json',
+      'Qatar': 'Losail.json',
+      'Yas Marina': 'Yas-Marina.json',
+      'Bahrain': 'Sakhir.json',
+      'Jeddah': 'Jeddah.json',
+      'Melbourne': 'Melbourne.json',
+      'Imola': 'Imola.json',
+      'Miami': 'Miami.json',
+      'Barcelona': 'Catalunya.json',
+      'Montreal': 'Montreal.json',
+      'Baku': 'Baku.json',
+      'Azerbaijan': 'Baku.json', // Add Azerbaijan mapping
+      'Red Bull Ring': 'Spielberg.json',
+      'Circuit de Spa-Francorchamps': 'Spa-Francorchamps.json',
+      'Autodromo Nazionale di Monza': 'Monza.json',
+      // Add more mappings as needed
+    };
+
+    print('Looking for track file for circuit: "$circuitShortName"');
+    final trackFile = trackFiles[circuitShortName];
+    if (trackFile != null) {
+      print('Found track file: $trackFile');
+    } else {
+      print('No track file found for: "$circuitShortName"');
+      print('Available circuits: ${trackFiles.keys.toList()}');
+    }
+
+    return trackFile;
+  }
+
+  // Normalizes a point to widget size
+  Offset _normalize(Offset pt, double width, double height) {
+    if (minX == null || maxX == null || minY == null || maxY == null)
+      return Offset.zero;
+    double normX = (pt.dx - minX!) / (maxX! - minX!);
+    double normY = (pt.dy - minY!) / (maxY! - minY!);
+    return Offset(normX * width, normY * height);
+  }
+
+  // Normalizes driver coordinates
+  Offset _normalizeDriver(double x, double y, double width, double height) {
+    if (minX == null || maxX == null || minY == null || maxY == null)
+      return Offset.zero;
+    double normX = (x - minX!) / (maxX! - minX!);
+    double normY = (y - minY!) / (maxY! - minY!);
+    return Offset(normX * width, normY * height);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_trackPoints.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Loading track map...', style: TextStyle(color: Colors.white)),
+          ],
+        ),
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return CustomPaint(
+          size: Size(constraints.maxWidth, constraints.maxHeight),
+          painter: _LiveTrackPainter(
+            trackPoints: _trackPoints,
+            positionData: widget.positionData,
+            drivers: widget.drivers,
+            normalize: _normalize,
+            normalizeDriver: _normalizeDriver,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _LiveTrackPainter extends CustomPainter {
+  final List<Offset> trackPoints;
+  final PositionData positionData;
+  final Map<String, Driver> drivers;
+  final Offset Function(Offset pt, double width, double height) normalize;
+  final Offset Function(double x, double y, double width, double height)
+      normalizeDriver;
+
+  _LiveTrackPainter({
+    required this.trackPoints,
+    required this.positionData,
+    required this.drivers,
+    required this.normalize,
+    required this.normalizeDriver,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Draw track path
+    if (trackPoints.isNotEmpty) {
+      final path = Path()
+        ..moveTo(
+          normalize(trackPoints[0], size.width, size.height).dx,
+          normalize(trackPoints[0], size.width, size.height).dy,
+        );
+
+      for (final pt in trackPoints.skip(1)) {
+        final npt = normalize(pt, size.width, size.height);
+        path.lineTo(npt.dx, npt.dy);
+      }
+
+      final trackPaint = Paint()
+        ..color = Colors.grey.shade600
+        ..strokeWidth = 3
+        ..style = PaintingStyle.stroke;
+      canvas.drawPath(path, trackPaint);
+    }
+
+    // Draw drivers with team colours
+    positionData.cars.forEach((racingNumber, carPosition) {
+      final driver = drivers[racingNumber];
+      if (driver == null) return;
+
+      final Offset pos = normalizeDriver(
+          carPosition.x, carPosition.y, size.width, size.height);
+
+      // Parse team color
+      Color teamColor;
+      try {
+        if (driver.teamColour.isNotEmpty && driver.teamColour.length == 6) {
+          teamColor = Color(int.parse('0xFF${driver.teamColour}'));
+        } else {
+          teamColor = Colors.red;
+        }
+      } catch (e) {
+        teamColor = Colors.red;
+      }
+
+      // Draw driver circle
+      final paint = Paint()
+        ..color = teamColor
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(pos, 6, paint);
+
+      // Draw border
+      final borderPaint = Paint()
+        ..color = Colors.white
+        ..strokeWidth = 1
+        ..style = PaintingStyle.stroke;
+      canvas.drawCircle(pos, 6, borderPaint);
+
+      // Draw driver TLA/number
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: driver.tla.isNotEmpty ? driver.tla : racingNumber,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 8,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      // Position text above the driver circle
+      textPainter.paint(canvas, pos + Offset(-textPainter.width / 2, -18));
+    });
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}

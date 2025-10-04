@@ -3,7 +3,7 @@
 import 'package:flutter/foundation.dart';
 
 class F1DataModel extends ChangeNotifier {
-  LiveData _state = LiveData();
+  final LiveData _state = LiveData();
 
   LiveData get state => _state;
 
@@ -80,6 +80,10 @@ class F1DataModel extends ChangeNotifier {
               _state.championshipPrediction = ChampionshipPrediction.fromJson(
                   telemetryUpdate["ChampionshipPrediction"]);
             }
+            if (telemetryUpdate["PositionData"] != null) {
+              _state.positionData =
+                  PositionData.fromJson(telemetryUpdate["PositionData"]);
+            }
             if (telemetryUpdate["Position"] != null) {
               // Process position data
               // Note: Position data might need special handling
@@ -115,6 +119,7 @@ class LiveData {
   TimingData? timingData;
   TeamRadio? teamRadio;
   ChampionshipPrediction? championshipPrediction;
+  PositionData? positionData;
 
   LiveData({
     this.heartbeat,
@@ -133,6 +138,7 @@ class LiveData {
     this.timingData,
     this.teamRadio,
     this.championshipPrediction,
+    this.positionData,
   });
 }
 
@@ -530,13 +536,14 @@ class WeatherData {
 
   factory WeatherData.fromJson(Map<String, dynamic> json) {
     return WeatherData(
-      airTemp: json['airTemp']?.toString() ?? '',
-      humidity: json['humidity']?.toString() ?? '',
-      pressure: json['pressure']?.toString() ?? '',
-      rainfall: json['rainfall']?.toString() ?? '',
-      trackTemp: json['trackTemp']?.toString() ?? '',
-      windDirection: json['windDirection']?.toString() ?? '',
-      windSpeed: json['windSpeed']?.toString() ?? '',
+      airTemp: (json['airTemp'] ?? json['AirTemp'])?.toString() ?? '',
+      humidity: (json['humidity'] ?? json['Humidity'])?.toString() ?? '',
+      pressure: (json['pressure'] ?? json['Pressure'])?.toString() ?? '',
+      rainfall: (json['rainfall'] ?? json['Rainfall'])?.toString() ?? '',
+      trackTemp: (json['trackTemp'] ?? json['TrackTemp'])?.toString() ?? '',
+      windDirection:
+          (json['windDirection'] ?? json['WindDirection'])?.toString() ?? '',
+      windSpeed: (json['windSpeed'] ?? json['WindSpeed'])?.toString() ?? '',
     );
   }
 
@@ -1808,5 +1815,65 @@ class CarDataChannels {
         '4': throttle,
         '5': brake,
         '45': drs,
+      };
+}
+
+class PositionData {
+  final String timestamp;
+  final Map<String, PositionDataCar> cars;
+
+  PositionData({
+    required this.timestamp,
+    required this.cars,
+  });
+
+  factory PositionData.fromJson(Map<String, dynamic> json) {
+    Map<String, PositionDataCar> carsMap = {};
+    if (json['Cars'] != null) {
+      json['Cars'].forEach((key, value) {
+        carsMap[key] = PositionDataCar.fromJson(value);
+      });
+    }
+
+    return PositionData(
+      timestamp: json['Timestamp'] ?? '',
+      cars: carsMap,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'Timestamp': timestamp,
+        'Cars': Map.fromEntries(
+            cars.entries.map((e) => MapEntry(e.key, e.value.toJson()))),
+      };
+}
+
+class PositionDataCar {
+  final double x;
+  final double y;
+  final double z;
+  final int status;
+
+  PositionDataCar({
+    required this.x,
+    required this.y,
+    required this.z,
+    required this.status,
+  });
+
+  factory PositionDataCar.fromJson(Map<String, dynamic> json) {
+    return PositionDataCar(
+      x: (json['X'] ?? 0).toDouble(),
+      y: (json['Y'] ?? 0).toDouble(),
+      z: (json['Z'] ?? 0).toDouble(),
+      status: json['Status'] ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'X': x,
+        'Y': y,
+        'Z': z,
+        'Status': status,
       };
 }

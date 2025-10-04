@@ -85,15 +85,15 @@ class DriverInfoCard extends StatelessWidget {
               height: double.infinity,
               color: teamColor,
             ),
-            // Driver info (scrollable)
+            // Driver info with left-right layout
             Expanded(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      // TLA
+                      // TLA (now included in scrollable content)
                       Text(
                         tla,
                         style: const TextStyle(
@@ -143,6 +143,15 @@ class DriverInfoCard extends StatelessWidget {
                               fontWeight: FontWeight.w600,
                               fontFamily: 'Roboto Mono',
                               letterSpacing: 0.3,
+                            ),
+                          ),
+                          Text(
+                            bestLapTime,
+                            style: const TextStyle(
+                              color: Colors.greenAccent,
+                              fontSize: 12,
+                              // fontWeight: FontWeight.w600,
+                              fontFamily: 'Roboto Mono',
                             ),
                           ),
                         ],
