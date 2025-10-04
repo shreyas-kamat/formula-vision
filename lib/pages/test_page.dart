@@ -86,6 +86,7 @@ class _TestPageState extends State<TestPage> {
                   interval: '+0.243',
                   bestLapTime: '1:15.123',
                   currentLapTime: '1:16.648',
+                  bestLapTime: '1:15.932',
                   pitStops: 1,
                   sessionType: 'Race', // Race session - will show interval
                 ),

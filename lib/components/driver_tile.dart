@@ -7,6 +7,7 @@ class DriverInfoCard extends StatelessWidget {
   final String interval;
   final String bestLapTime;
   final String currentLapTime;
+  final String bestLapTime;
   final int pitStops;
   final String sessionType; // Add session type parameter
 
@@ -18,6 +19,7 @@ class DriverInfoCard extends StatelessWidget {
     required this.interval,
     required this.bestLapTime,
     required this.currentLapTime,
+    required this.bestLapTime,
     required this.pitStops,
     required this.sessionType,
   });
@@ -85,15 +87,15 @@ class DriverInfoCard extends StatelessWidget {
               height: double.infinity,
               color: teamColor,
             ),
-            // Driver info (scrollable)
+            // Driver info with left-right layout
             Expanded(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      // TLA
+                      // TLA (now included in scrollable content)
                       Text(
                         tla,
                         style: const TextStyle(
@@ -143,6 +145,15 @@ class DriverInfoCard extends StatelessWidget {
                               fontWeight: FontWeight.w600,
                               fontFamily: 'Roboto Mono',
                               letterSpacing: 0.3,
+                            ),
+                          ),
+                          Text(
+                            bestLapTime,
+                            style: const TextStyle(
+                              color: Colors.greenAccent,
+                              fontSize: 12,
+                              // fontWeight: FontWeight.w600,
+                              fontFamily: 'Roboto Mono',
                             ),
                           ),
                         ],

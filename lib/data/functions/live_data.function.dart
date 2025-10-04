@@ -122,6 +122,9 @@ Future<List<LiveData>> fetchLiveData(dynamic response) async {
               totalLaps: response['LapCount']['TotalLaps'] ?? 0,
             )
           : null,
+      positionData: response['PositionData'] is Map
+          ? PositionData.fromJson(response['PositionData'])
+          : null,
     );
     fetchedData.add(data);
   }
