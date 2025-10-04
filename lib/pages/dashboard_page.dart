@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:formulavision/components/driver_tile.dart';
+import 'package:formulavision/components/animated_driver_tile.dart';
+import 'package:formulavision/components/race_timer_bar.dart';
 import 'package:formulavision/components/lap_count_card.dart';
 import 'package:formulavision/components/weather_info_card.dart';
 import 'package:formulavision/components/session_info_card.dart';
@@ -73,6 +74,11 @@ class _TelemetryPageState extends State<TelemetryPage> {
   final _liveDataController = StreamController<List<LiveData>>.broadcast();
   Stream<List<LiveData>> get liveDataStream => _liveDataController.stream;
 
+  // Position tracking for animations
+  Map<String, int> _previousPositions = {};
+  final Map<String, int> _currentPositions = {};
+  final Map<String, String> _positionChanges = {}; // 'up', 'down', or 'same'
+
   @override
   void initState() {
     super.initState();
@@ -127,12 +133,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
           _liveDataFuture = fetchLiveData(data['R']);
         });
 
-        // Also add initial data to the stream
-        _liveDataFuture!.then((liveDataList) {
-          if (!_liveDataController.isClosed) {
-            _liveDataController.add(liveDataList);
-          }
-        });
+        // Initialize position tracking with initial data
+        _initializePositionTracking();
 
         setState(() {
           _connectionStatus = "Initial data loaded";
@@ -147,6 +149,23 @@ class _TelemetryPageState extends State<TelemetryPage> {
       setState(() {
         _connectionStatus = "Error fetching initial data";
         _errorMessage = e.toString();
+      });
+    }
+  }
+
+  void _initializePositionTracking() {
+    if (_liveDataFuture != null) {
+      _liveDataFuture!.then((liveDataList) {
+        if (liveDataList.isNotEmpty) {
+          final liveData = liveDataList[0];
+          if (liveData.driverList?.drivers != null) {
+            liveData.driverList!.drivers.forEach((racingNumber, driver) {
+              _currentPositions[racingNumber] = driver.line;
+              _previousPositions[racingNumber] = driver.line;
+              _positionChanges[racingNumber] = 'same';
+            });
+          }
+        }
       });
     }
   }
@@ -370,79 +389,97 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
         // Process each message in the array
         for (var messageObject in messageArray) {
+          print('Processing message object: $messageObject');
           if (messageObject is Map &&
               messageObject.containsKey('A') &&
               messageObject['A'] is List &&
               messageObject['A'].isNotEmpty) {
-            // Handle the actual message format where A[0] contains nested objects
-            final messageData = messageObject['A'][0];
-            print('Processing message data: $messageData');
-
-            if (messageData is Map<String, dynamic>) {
-              // Iterate through each key-value pair in the message data
-              messageData.forEach((messageType, updated) {
-                print('Processing $messageType update with data: $updated');
-
-                // Handle each message type appropriately
-                switch (messageType) {
-                  case 'ExtrapolatedClock':
-                    _updateExtrapolatedClock(updated);
-                    print('ExtrapolatedClock Updated Successfully');
-                    break;
-
-                  case 'WeatherData':
-                    setState(() {
-                      _updateWeatherData(updated);
-                    });
-                    print('WeatherData Updated Successfully');
-                    break;
-
-                  case 'SessionInfo':
-                    setState(() {
-                      _updateSessionInfo(updated);
-                    });
-                    print('SessionInfo Updated Successfully');
-                    break;
-
-                  case 'TimingData':
-                    setState(() {
-                      _updateTimingData(updated);
-                    });
-                    print('TimingData Updated Successfully');
-                    break;
-
-                  case 'DriverList':
-                    setState(() {
-                      _updateDriverList(updated);
-                    });
-                    print('DriverList Updated Successfully');
-                    break;
-
-                  case 'TrackStatus':
-                    setState(() {
-                      _updateTrackStatus(updated);
-                    });
-                    print('TrackStatus Updated Successfully');
-                    break;
-
-                  case 'LapCount':
-                    setState(() {
-                      _updateLapCount(updated);
-                    });
-                    print('LapCount Updated Successfully');
-                    break;
-
-                  case 'PositionData':
-                    setState(() {
-                      _updatePositionData(updated);
-                    });
-                    print('PositionData Updated Successfully');
-                    break;
-
-                  default:
-                    print('No handler for message type: $messageType');
-                }
+            // Check if this is the new format with ExtrapolatedClock as an object
+            if (messageObject['A'][0] is Map &&
+                messageObject['A'][0].containsKey('ExtrapolatedClock')) {
+              print('Found ExtrapolatedClock in new format');
+              final clockData = messageObject['A'][0]['ExtrapolatedClock'];
+              setState(() {
+                _updateExtrapolatedClock(clockData);
               });
+              print('ExtrapolatedClock Updated Successfully from new format');
+              continue;
+            }
+
+            final messageType = messageObject['A'][0];
+            print('Message type: $messageType');
+
+            if (messageObject['A'].length > 1) {
+              final updated = messageObject['A'][1];
+              final timestamp =
+                  messageObject['A'].length > 2 ? messageObject['A'][2] : null;
+
+              print(
+                  'Processing $messageType update with timestamp: $timestamp');
+              print('Updated data: $updated');
+
+              // Handle each message type appropriately
+              switch (messageType) {
+                case 'ExtrapolatedClock':
+                  print('ExtrapolatedClock data received: $updated');
+                  setState(() {
+                    _updateExtrapolatedClock(updated);
+                  });
+                  print('ExtrapolatedClock Updated Successfully');
+                  break;
+
+                case 'WeatherData':
+                  setState(() {
+                    _updateWeatherData(updated);
+                  });
+                  print('WeatherData Updated Successfully');
+                  break;
+
+                case 'SessionInfo':
+                  setState(() {
+                    _updateSessionInfo(updated);
+                  });
+                  print('SessionInfo Updated Successfully');
+                  break;
+
+                case 'TimingData':
+                  setState(() {
+                    _updateTimingData(updated);
+                  });
+                  print('TimingData Updated Successfully');
+                  break;
+
+                // case 'TimingAppData':
+                //   setState(() {
+                //     _updateTimingAppData(updated);
+                //   });
+                //   print('TimingAppData Updated Successfully');
+                //   break;
+
+                case 'DriverList':
+                  setState(() {
+                    _updateDriverList(updated);
+                  });
+                  print('DriverList Updated Successfully');
+                  break;
+
+                case 'TrackStatus':
+                  setState(() {
+                    _updateTrackStatus(updated);
+                  });
+                  print('TrackStatus Updated Successfully');
+                  break;
+
+                case 'LapCount':
+                  setState(() {
+                    _updateLapCount(updated);
+                  });
+                  print('LapCount Updated Successfully');
+                  break;
+
+                default:
+                  print('No handler for message type: $messageType');
+              }
             } else {
               print('Message data is not a Map: ${messageData.runtimeType}');
             }
@@ -457,6 +494,54 @@ class _TelemetryPageState extends State<TelemetryPage> {
       _liveDataFuture!.then((liveDataList) {
         _liveDataController.add(liveDataList);
       });
+    }
+  }
+
+  void _updateExtrapolatedClock(dynamic data) {
+    print('_updateExtrapolatedClock called with data: $data');
+    if (data is Map<String, dynamic>) {
+      print('Updating extrapolated clock with: ${data.keys.toList()}');
+      if (data.isEmpty) {
+        print('Received empty extrapolated clock data, skipping update');
+        return;
+      }
+
+      setState(() {
+        if (_liveDataFuture != null) {
+          _liveDataFuture = _liveDataFuture!.then((liveDataList) {
+            print(
+                'Updating extrapolated clock in live data list of size: ${liveDataList.length}');
+            if (liveDataList.isNotEmpty) {
+              final currentLiveData = liveDataList[0];
+
+              // Create a new ExtrapolatedClock with updated values
+              ExtrapolatedClock updatedClock = ExtrapolatedClock(
+                utc: data.containsKey('Utc')
+                    ? data['Utc']
+                    : currentLiveData.extrapolatedClock?.utc ?? '',
+                remaining: data.containsKey('Remaining')
+                    ? data['Remaining']
+                    : currentLiveData.extrapolatedClock?.remaining ?? '',
+                extrapolating: data.containsKey('Extrapolating')
+                    ? data['Extrapolating']
+                    : currentLiveData.extrapolatedClock?.extrapolating ?? false,
+              );
+
+              print(
+                  'Created updated clock: UTC=${updatedClock.utc}, Remaining=${updatedClock.remaining}, Extrapolating=${updatedClock.extrapolating}');
+
+              // Update the extrapolated clock in the current live data object
+              currentLiveData.extrapolatedClock = updatedClock;
+
+              return liveDataList;
+            }
+            return liveDataList;
+          });
+        }
+      });
+    } else {
+      print(
+          'Received non-map extrapolated clock data: ${data.runtimeType}, cannot update');
     }
   }
 
@@ -519,6 +604,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
           Map<String, Driver> currentDrivers =
               currentLiveData.driverList?.drivers ?? {};
 
+          // Store current positions before updating
+          _previousPositions = Map.from(_currentPositions);
+
           // Remove '_kf' from keys to process since it's a special field
           final driverKeys = data.keys.where((key) => key != '_kf').toList();
 
@@ -578,7 +666,13 @@ class _TelemetryPageState extends State<TelemetryPage> {
             );
 
             currentDrivers[racingNumber] = updatedDriver;
+
+            // Update current position tracking
+            _currentPositions[racingNumber] = updatedDriver.line;
           }
+
+          // Calculate position changes
+          _updatePositionChanges();
 
           // Create a new DriverList
           DriverList updatedDriverList = DriverList(
@@ -601,6 +695,27 @@ class _TelemetryPageState extends State<TelemetryPage> {
       print(
           'Received non-map driver list data: ${data.runtimeType}, cannot update');
     }
+  }
+
+  void _updatePositionChanges() {
+    _positionChanges.clear();
+
+    for (var racingNumber in _currentPositions.keys) {
+      final currentPos = _currentPositions[racingNumber] ?? 0;
+      final previousPos = _previousPositions[racingNumber] ?? currentPos;
+
+      if (previousPos > currentPos) {
+        _positionChanges[racingNumber] =
+            'up'; // Lower number = higher position = moved up
+      } else if (previousPos < currentPos) {
+        _positionChanges[racingNumber] =
+            'down'; // Higher number = lower position = moved down
+      } else {
+        _positionChanges[racingNumber] = 'same';
+      }
+    }
+
+    print('Position changes: $_positionChanges');
   }
 
   void _updateTimingData(dynamic data) {
@@ -875,6 +990,17 @@ class _TelemetryPageState extends State<TelemetryPage> {
                           (currentDriverData?.numberOfPitStops ?? 0),
                     );
 
+                    // Track position changes for timing data updates
+                    final newLine =
+                        driverData['Line'] ?? (currentDriverData?.line ?? 0);
+                    final previousLine =
+                        _currentPositions[racingNumber] ?? newLine;
+
+                    if (previousLine != newLine) {
+                      _previousPositions[racingNumber] = previousLine;
+                      _currentPositions[racingNumber] = newLine;
+                    }
+
                     // Update the driver in our map
                     currentLines[racingNumber] = updatedDriver;
                   }
@@ -885,6 +1011,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
                   lines: currentLines,
                   withheld: data['Withheld'] ?? false,
                 );
+
+                // Update position changes after all timing data is processed
+                _updatePositionChanges();
 
                 // Update the timing data in the live data object
                 currentLiveData.timingData = updatedTimingData;
@@ -1569,57 +1698,73 @@ class _TelemetryPageState extends State<TelemetryPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          const SizedBox(height: 10),
-                          // TrackMapWidget(
-                          //   trackJsonAsset:
-                          //       'assets/TrackMaps/Spielberg.json',
-                          //   driverPositions: testDriverPositions,
-                          //   width: 350,
-                          //   height: 200,
-                          // ),
-                          const SizedBox(height: 10),
-                          // Live Track Map showing driver positions
-                          if (liveData.positionData != null &&
-                              liveData.driverList != null &&
-                              liveData.sessionInfo != null)
-                            Container(
-                              width: double.infinity,
-                              height: 300,
-                              margin: const EdgeInsets.symmetric(vertical: 16),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[900],
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.grey[700]!),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: LiveTrackMapWidget(
-                                  positionData: liveData.positionData!,
-                                  drivers: liveData.driverList!.drivers,
-                                  circuitShortName: liveData
-                                      .sessionInfo!.meeting.circuit.shortName,
-                                ),
-                              ),
-                            ),
-                          if (liveData.sessionInfo != null)
-                            _buildSessionInfoCard(liveData.sessionInfo!),
-                          if (liveData.trackStatus != null)
-                            _buildTrackStatusCard(liveData.trackStatus!),
-                          if (liveData.weatherData != null)
-                            _buildWeatherCard(liveData.weatherData!),
-                          const SizedBox(height: 10),
-                          const Text('Drivers',
-                              style: TextStyle(
-                                  fontSize: 20, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 5),
-                          if (liveData.driverList != null &&
-                              liveData.timingData != null &&
-                              liveData.timingAppData != null)
-                            _buildDriverList(
-                                liveData.driverList!.drivers,
-                                liveData.timingData!.lines,
-                                liveData.timingAppData!.lines,
-                                liveData.sessionInfo?.type ?? 'practice'),
+                          FutureBuilder<List<LiveData>>(
+                            future: _liveDataFuture,
+                            initialData: [], // Initial empty data
+                            builder: (context, snapshot) {
+                              if (snapshot.hasData &&
+                                  snapshot.data!.isNotEmpty) {
+                                final liveData = snapshot.data!;
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    // Race Timer Bar - shows for all session types
+                                    if (liveData[0].extrapolatedClock != null)
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 12.0),
+                                        child: RaceTimerBar(
+                                          remaining: liveData[0]
+                                              .extrapolatedClock!
+                                              .remaining,
+                                          currentLap:
+                                              liveData[0].lapCount?.currentLap,
+                                          totalLaps:
+                                              liveData[0].lapCount?.totalLaps,
+                                          sessionType:
+                                              liveData[0].sessionInfo!.name,
+                                        ),
+                                      ),
+
+                                    // _buildExtrapolatedClock(liveData[0]
+                                    //     .extrapolatedClock!
+                                    //     .remaining),
+                                    SizedBox(height: 10),
+                                    // TrackMapWidget(
+                                    //   trackJsonAsset:
+                                    //       'assets/TrackMaps/Spielberg.json',
+                                    //   driverPositions: testDriverPositions,
+                                    //   width: 350,
+                                    //   height: 200,
+                                    // ),
+                                    SizedBox(height: 10),
+                                    _buildSessionInfoCard(
+                                        liveData[0].sessionInfo!),
+                                    _buildTrackStatusCard(
+                                        liveData[0].trackStatus!),
+                                    _buildWeatherCard(liveData[0].weatherData!),
+
+                                    SizedBox(height: 10),
+                                    Text('Drivers',
+                                        style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold)),
+                                    SizedBox(height: 5),
+                                    _buildDriverList(
+                                        liveData[0].driverList!.drivers,
+                                        liveData[0].timingData!.lines,
+                                        liveData[0].timingAppData?.lines ?? {},
+                                        liveData[0].sessionInfo!),
+                                  ],
+                                );
+                              } else if (snapshot.hasError) {
+                                return Text('Error: ${snapshot.error}');
+                              } else {
+                                return const CircularProgressIndicator();
+                              }
+                            },
+                          ),
                         ],
                       ),
                     );
@@ -1687,16 +1832,23 @@ class _TelemetryPageState extends State<TelemetryPage> {
   }
 
   Widget _buildSessionInfoCard(SessionInfo session) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: SessionInfoCard(
-        raceName: session.meeting.name,
-        sessionName: session.name,
-        sessionType: session.type,
-        location: session.meeting.location,
-        country: session.meeting.country.name,
-        circuit: session.meeting.circuit.shortName,
-        status: session.archiveStatus.status,
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Session Information',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            _buildInfoRow('Name:', session.meeting.name),
+            _buildInfoRow('Type:', session.name),
+            _buildInfoRow('Status:', session.archiveStatus.status),
+          ],
+        ),
       ),
     );
   }
@@ -1832,7 +1984,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
       Map<String, Driver> drivers,
       Map<String, TimingDataDriver> timingData,
       Map<String, TimingAppDataDriver> timingAppData,
-      String sessionType) {
+      SessionInfo sessionInfo) {
     // Sort drivers by line number (current race position)
     List<MapEntry<String, Driver>> sortedDrivers = drivers.entries.toList()
       ..sort((a, b) => a.value.line.compareTo(b.value.line));
@@ -2001,17 +2153,21 @@ class _TelemetryPageState extends State<TelemetryPage> {
         //     ),
         //   ),
         // );
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5),
-          child: DriverInfoCard(
+        return Container(
+          margin: const EdgeInsets.symmetric(vertical: 5),
+          child: AnimatedDriverInfoCard(
+            key: ValueKey(
+                racingNumber), // Use racing number as key for stable identity
             position: driver.line,
             teamColor: teamColor,
             tla: driver.tla.isNotEmpty ? driver.tla : '???',
             interval: intervalText,
+            bestLapTime: timing.bestLapTime.value,
             currentLapTime: timing.lastLapTime.value,
             bestLapTime: timing.bestLapTime.value,
             pitStops: timing.numberOfPitStops,
-            sessionType: sessionType,
+            sessionType: sessionInfo.type,
+            positionChange: _positionChanges[racingNumber] ?? 'same',
           ),
         );
       },
