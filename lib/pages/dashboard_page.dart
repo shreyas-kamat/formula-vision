@@ -1481,7 +1481,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
                 //   },
                 // ),
 
-                // Compact Lap count display
+                // // Compact Lap count display
                 // StreamBuilder<List<LiveData>>(
                 //   stream: liveDataStream,
                 //   initialData: _liveDataFuture != null ? [] : null,
