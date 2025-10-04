@@ -69,9 +69,9 @@ class _TestPageState extends State<TestPage> {
                 ),
                 const SizedBox(height: 20),
 
-                // Driver card section
+                // Driver card section - Race session (shows interval)
                 const Text(
-                  'Drivers',
+                  'Race Session Driver',
                   style: TextStyle(
                     color: Colors.white70,
                     fontSize: 18,
@@ -84,8 +84,33 @@ class _TestPageState extends State<TestPage> {
                   teamColor: Colors.red,
                   tla: 'HAM',
                   interval: '+0.243',
+                  bestLapTime: '1:15.123',
                   currentLapTime: '1:16.648',
                   pitStops: 1,
+                  sessionType: 'Race', // Race session - will show interval
+                ),
+                const SizedBox(height: 20),
+
+                // Practice/Qualifying session (no interval)
+                const Text(
+                  'Practice Session Driver',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                DriverInfoCard(
+                  position: 1,
+                  teamColor: Colors.blue,
+                  tla: 'VER',
+                  interval: 'Leader',
+                  bestLapTime: '1:14.985',
+                  currentLapTime: '1:15.287',
+                  pitStops: 0,
+                  sessionType:
+                      'Practice 1', // Practice session - will NOT show interval
                 ),
                 const SizedBox(height: 20),
 

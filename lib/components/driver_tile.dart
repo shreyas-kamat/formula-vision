@@ -5,8 +5,10 @@ class DriverInfoCard extends StatelessWidget {
   final Color teamColor;
   final String tla;
   final String interval;
+  final String bestLapTime;
   final String currentLapTime;
   final int pitStops;
+  final String sessionType; // Add session type parameter
 
   const DriverInfoCard({
     super.key,
@@ -14,15 +16,21 @@ class DriverInfoCard extends StatelessWidget {
     required this.teamColor,
     required this.tla,
     required this.interval,
+    required this.bestLapTime,
     required this.currentLapTime,
     required this.pitStops,
+    required this.sessionType,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Determine if this is a race session where we should show interval
+    final bool isRaceSession = sessionType.toLowerCase().contains('race') ||
+        sessionType.toLowerCase().contains('sprint');
+
     return Container(
       width: double.infinity,
-      height: 80,
+      height: 90,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -47,7 +55,7 @@ class DriverInfoCard extends StatelessWidget {
           children: [
             // Position indicator with team color (fixed)
             Container(
-              width: 60,
+              width: 65,
               height: double.infinity,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -64,7 +72,7 @@ class DriverInfoCard extends StatelessWidget {
                   position.toString(),
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 32,
+                    fontSize: 34,
                     fontWeight: FontWeight.w900,
                     fontFamily: 'Formula1',
                   ),
@@ -97,7 +105,7 @@ class DriverInfoCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 24),
 
-                      // Lap time
+                      // Lap Times (Best and Current combined)
                       Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,57 +114,78 @@ class DriverInfoCard extends StatelessWidget {
                             'LAP TIME',
                             style: TextStyle(
                               color: Colors.grey,
-                              fontSize: 12,
+                              fontSize: 11,
                               fontWeight: FontWeight.w500,
+                              letterSpacing: 0.5,
                             ),
                           ),
                           const SizedBox(height: 4),
+                          // Best Lap Time (Bigger)
                           Text(
-                            currentLapTime,
+                            currentLapTime.isNotEmpty
+                                ? currentLapTime
+                                : '--:--.---',
                             style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
+                              color: Colors.white70,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
                               fontFamily: 'Roboto Mono',
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 0),
+                          // Current Lap Time  (Smaller)
+                          Text(
+                            bestLapTime.isNotEmpty ? bestLapTime : '--:--.---',
+                            style: const TextStyle(
+                              color: Colors.green,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Roboto Mono',
+                              letterSpacing: 0.3,
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(width: 24),
 
-                      // Interval
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'INTERVAL',
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.green[700],
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              interval,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
+                      // Interval (only for race sessions)
+                      if (isRaceSession) ...[
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'INTERVAL',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 24),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: interval == "Leader"
+                                    ? Colors.red[700]
+                                    : Colors.green[700],
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                interval,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 24),
+                      ],
 
                       // Pit stops
                       Column(
@@ -174,16 +203,20 @@ class DriverInfoCard extends StatelessWidget {
                           Container(
                             width: 32,
                             height: 32,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Color(0xFF333333),
+                              color: Colors.grey[850],
+                              border: Border.all(
+                                // color: Colors.orange[600]!,
+                                width: 1,
+                              ),
                             ),
                             child: Center(
                               child: Text(
                                 pitStops.toString(),
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 18,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),

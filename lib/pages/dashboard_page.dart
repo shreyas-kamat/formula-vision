@@ -4,7 +4,8 @@ import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:formulavision/components/driver_tile.dart';
+import 'package:formulavision/components/animated_driver_tile.dart';
+import 'package:formulavision/components/race_timer_bar.dart';
 import 'package:formulavision/components/lap_count_card.dart';
 import 'package:formulavision/components/weather_info_card.dart';
 import 'package:formulavision/data/functions/cardata.function.dart';
@@ -50,7 +51,7 @@ class TelemetryPage extends StatefulWidget {
 class _TelemetryPageState extends State<TelemetryPage> {
   WebSocketChannel? _channel;
   StreamSubscription? _sseSubscription;
-  Map<String, dynamic> _telemetryData = {};
+  final Map<String, dynamic> _telemetryData = {};
   Future<List<SessionInfo>>? _sessionInfoFuture;
   Future<List<WeatherData>>? _weatherDataFuture;
   Future<List<LiveData>>? _liveDataFuture;
@@ -58,8 +59,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
   String _connectionStatus = "Disconnected";
   String _errorMessage = "";
   int _messageCount = 0;
-  bool _useSimulation = false;
-  bool _useSSE = true; // Add flag to use SSE instead of WebSockets
+  final bool _useSimulation = false;
+  final bool _useSSE = true; // Add flag to use SSE instead of WebSockets
 
   // Delay-related variables
   int _delaySeconds = 0; // User-defined delay in seconds
@@ -69,6 +70,11 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
   final _liveDataController = StreamController<List<LiveData>>.broadcast();
   Stream<List<LiveData>> get liveDataStream => _liveDataController.stream;
+
+  // Position tracking for animations
+  Map<String, int> _previousPositions = {};
+  final Map<String, int> _currentPositions = {};
+  final Map<String, String> _positionChanges = {}; // 'up', 'down', or 'same'
 
   @override
   void initState() {
@@ -124,6 +130,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
           _liveDataFuture = fetchLiveData(data['R']);
         });
 
+        // Initialize position tracking with initial data
+        _initializePositionTracking();
+
         setState(() {
           _connectionStatus = "Initial data loaded";
         });
@@ -141,6 +150,23 @@ class _TelemetryPageState extends State<TelemetryPage> {
     }
   }
 
+  void _initializePositionTracking() {
+    if (_liveDataFuture != null) {
+      _liveDataFuture!.then((liveDataList) {
+        if (liveDataList.isNotEmpty) {
+          final liveData = liveDataList[0];
+          if (liveData.driverList?.drivers != null) {
+            liveData.driverList!.drivers.forEach((racingNumber, driver) {
+              _currentPositions[racingNumber] = driver.line;
+              _previousPositions[racingNumber] = driver.line;
+              _positionChanges[racingNumber] = 'same';
+            });
+          }
+        }
+      });
+    }
+  }
+
   Future<void> _connectToServer() async {
     setState(() {
       _connectionStatus = " ...";
@@ -151,7 +177,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
       // Negotiate connection with simulation parameter
       final response = await http.get(
         Uri.parse(
-            '${dotenv.env['API_URL']}/negotiate?simulation=${_useSimulation}'),
+            '${dotenv.env['API_URL']}/negotiate?simulation=$_useSimulation'),
       );
 
       if (response.statusCode == 200) {
@@ -360,11 +386,25 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
         // Process each message in the array
         for (var messageObject in messageArray) {
+          print('Processing message object: $messageObject');
           if (messageObject is Map &&
               messageObject.containsKey('A') &&
               messageObject['A'] is List &&
               messageObject['A'].isNotEmpty) {
+            // Check if this is the new format with ExtrapolatedClock as an object
+            if (messageObject['A'][0] is Map &&
+                messageObject['A'][0].containsKey('ExtrapolatedClock')) {
+              print('Found ExtrapolatedClock in new format');
+              final clockData = messageObject['A'][0]['ExtrapolatedClock'];
+              setState(() {
+                _updateExtrapolatedClock(clockData);
+              });
+              print('ExtrapolatedClock Updated Successfully from new format');
+              continue;
+            }
+
             final messageType = messageObject['A'][0];
+            print('Message type: $messageType');
 
             if (messageObject['A'].length > 1) {
               final updated = messageObject['A'][1];
@@ -373,12 +413,16 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
               print(
                   'Processing $messageType update with timestamp: $timestamp');
+              print('Updated data: $updated');
 
               // Handle each message type appropriately
               switch (messageType) {
                 case 'ExtrapolatedClock':
-                  // Extrapolated clock implementation removed
-                  print('ExtrapolatedClock message received (but ignored)');
+                  print('ExtrapolatedClock data received: $updated');
+                  setState(() {
+                    _updateExtrapolatedClock(updated);
+                  });
+                  print('ExtrapolatedClock Updated Successfully');
                   break;
 
                 case 'WeatherData':
@@ -443,10 +487,58 @@ class _TelemetryPageState extends State<TelemetryPage> {
       }
     }
     // After processing all updates in a batch
-    if (_liveDataController != null && !_liveDataController.isClosed) {
+    if (!_liveDataController.isClosed) {
       _liveDataFuture!.then((liveDataList) {
         _liveDataController.add(liveDataList);
       });
+    }
+  }
+
+  void _updateExtrapolatedClock(dynamic data) {
+    print('_updateExtrapolatedClock called with data: $data');
+    if (data is Map<String, dynamic>) {
+      print('Updating extrapolated clock with: ${data.keys.toList()}');
+      if (data.isEmpty) {
+        print('Received empty extrapolated clock data, skipping update');
+        return;
+      }
+
+      setState(() {
+        if (_liveDataFuture != null) {
+          _liveDataFuture = _liveDataFuture!.then((liveDataList) {
+            print(
+                'Updating extrapolated clock in live data list of size: ${liveDataList.length}');
+            if (liveDataList.isNotEmpty) {
+              final currentLiveData = liveDataList[0];
+
+              // Create a new ExtrapolatedClock with updated values
+              ExtrapolatedClock updatedClock = ExtrapolatedClock(
+                utc: data.containsKey('Utc')
+                    ? data['Utc']
+                    : currentLiveData.extrapolatedClock?.utc ?? '',
+                remaining: data.containsKey('Remaining')
+                    ? data['Remaining']
+                    : currentLiveData.extrapolatedClock?.remaining ?? '',
+                extrapolating: data.containsKey('Extrapolating')
+                    ? data['Extrapolating']
+                    : currentLiveData.extrapolatedClock?.extrapolating ?? false,
+              );
+
+              print(
+                  'Created updated clock: UTC=${updatedClock.utc}, Remaining=${updatedClock.remaining}, Extrapolating=${updatedClock.extrapolating}');
+
+              // Update the extrapolated clock in the current live data object
+              currentLiveData.extrapolatedClock = updatedClock;
+
+              return liveDataList;
+            }
+            return liveDataList;
+          });
+        }
+      });
+    } else {
+      print(
+          'Received non-map extrapolated clock data: ${data.runtimeType}, cannot update');
     }
   }
 
@@ -502,6 +594,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
           final currentLiveData = liveDataList[0];
           Map<String, Driver> currentDrivers =
               currentLiveData.driverList?.drivers ?? {};
+
+          // Store current positions before updating
+          _previousPositions = Map.from(_currentPositions);
 
           // Remove '_kf' from keys to process since it's a special field
           final driverKeys = data.keys.where((key) => key != '_kf').toList();
@@ -562,7 +657,13 @@ class _TelemetryPageState extends State<TelemetryPage> {
             );
 
             currentDrivers[racingNumber] = updatedDriver;
+
+            // Update current position tracking
+            _currentPositions[racingNumber] = updatedDriver.line;
           }
+
+          // Calculate position changes
+          _updatePositionChanges();
 
           // Create a new DriverList
           DriverList updatedDriverList = DriverList(
@@ -579,6 +680,27 @@ class _TelemetryPageState extends State<TelemetryPage> {
       print(
           'Received non-map driver list data: ${data.runtimeType}, cannot update');
     }
+  }
+
+  void _updatePositionChanges() {
+    _positionChanges.clear();
+
+    for (var racingNumber in _currentPositions.keys) {
+      final currentPos = _currentPositions[racingNumber] ?? 0;
+      final previousPos = _previousPositions[racingNumber] ?? currentPos;
+
+      if (previousPos > currentPos) {
+        _positionChanges[racingNumber] =
+            'up'; // Lower number = higher position = moved up
+      } else if (previousPos < currentPos) {
+        _positionChanges[racingNumber] =
+            'down'; // Higher number = lower position = moved down
+      } else {
+        _positionChanges[racingNumber] = 'same';
+      }
+    }
+
+    print('Position changes: $_positionChanges');
   }
 
   void _updateTimingData(dynamic data) {
@@ -688,8 +810,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
                           overallFastest: i1Data['OverallFastest'] ?? false,
                           personalFastest: i1Data['PersonalFastest'] ?? false,
                         );
-                      } else if (currentDriverData?.speeds?.i1 != null) {
-                        i1 = currentDriverData!.speeds!.i1;
+                      } else if (currentDriverData?.speeds.i1 != null) {
+                        i1 = currentDriverData!.speeds.i1;
                       }
 
                       // Update I2 speed if available
@@ -702,8 +824,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
                           overallFastest: i2Data['OverallFastest'] ?? false,
                           personalFastest: i2Data['PersonalFastest'] ?? false,
                         );
-                      } else if (currentDriverData?.speeds?.i2 != null) {
-                        i2 = currentDriverData!.speeds!.i2;
+                      } else if (currentDriverData?.speeds.i2 != null) {
+                        i2 = currentDriverData!.speeds.i2;
                       }
 
                       // Update FL speed if available
@@ -716,8 +838,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
                           overallFastest: flData['OverallFastest'] ?? false,
                           personalFastest: flData['PersonalFastest'] ?? false,
                         );
-                      } else if (currentDriverData?.speeds?.fl != null) {
-                        fl = currentDriverData!.speeds!.fl;
+                      } else if (currentDriverData?.speeds.fl != null) {
+                        fl = currentDriverData!.speeds.fl;
                       }
 
                       // Update ST speed if available
@@ -730,13 +852,13 @@ class _TelemetryPageState extends State<TelemetryPage> {
                           overallFastest: stData['OverallFastest'] ?? false,
                           personalFastest: stData['PersonalFastest'] ?? false,
                         );
-                      } else if (currentDriverData?.speeds?.st != null) {
-                        st = currentDriverData!.speeds!.st;
+                      } else if (currentDriverData?.speeds.st != null) {
+                        st = currentDriverData!.speeds.st;
                       }
 
                       updatedSpeeds = Speeds(i1: i1, i2: i2, fl: fl, st: st);
                     } else if (currentDriverData?.speeds != null) {
-                      updatedSpeeds = currentDriverData!.speeds!;
+                      updatedSpeeds = currentDriverData!.speeds;
                     } else {
                       // Create empty speeds if no data available
                       updatedSpeeds = Speeds(
@@ -853,6 +975,17 @@ class _TelemetryPageState extends State<TelemetryPage> {
                           (currentDriverData?.numberOfPitStops ?? 0),
                     );
 
+                    // Track position changes for timing data updates
+                    final newLine =
+                        driverData['Line'] ?? (currentDriverData?.line ?? 0);
+                    final previousLine =
+                        _currentPositions[racingNumber] ?? newLine;
+
+                    if (previousLine != newLine) {
+                      _previousPositions[racingNumber] = previousLine;
+                      _currentPositions[racingNumber] = newLine;
+                    }
+
                     // Update the driver in our map
                     currentLines[racingNumber] = updatedDriver;
                   }
@@ -863,6 +996,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
                   lines: currentLines,
                   withheld: data['Withheld'] ?? false,
                 );
+
+                // Update position changes after all timing data is processed
+                _updatePositionChanges();
 
                 // Update the timing data in the live data object
                 currentLiveData.timingData = updatedTimingData;
@@ -977,20 +1113,20 @@ class _TelemetryPageState extends State<TelemetryPage> {
                         data['Meeting'].containsKey('Country')
                     ? Country(
                         key: data['Meeting']['Country']['Key'] ??
-                            currentSession.meeting.country?.key,
+                            currentSession.meeting.country.key,
                         code: data['Meeting']['Country']['Code'] ??
-                            currentSession.meeting.country?.code,
+                            currentSession.meeting.country.code,
                         name: data['Meeting']['Country']['Name'] ??
-                            currentSession.meeting.country?.name,
+                            currentSession.meeting.country.name,
                       )
                     : currentSession.meeting.country,
                 circuit: data.containsKey('Meeting') &&
                         data['Meeting'].containsKey('Circuit')
                     ? Circuit(
                         key: data['Meeting']['Circuit']['Key'] ??
-                            currentSession.meeting.circuit?.key,
+                            currentSession.meeting.circuit.key,
                         shortName: data['Meeting']['Circuit']['ShortName'] ??
-                            currentSession.meeting.circuit?.shortName,
+                            currentSession.meeting.circuit.shortName,
                       )
                     : currentSession.meeting.circuit,
               );
@@ -1334,6 +1470,24 @@ class _TelemetryPageState extends State<TelemetryPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
+                                    // Race Timer Bar - shows for all session types
+                                    if (liveData[0].extrapolatedClock != null)
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 12.0),
+                                        child: RaceTimerBar(
+                                          remaining: liveData[0]
+                                              .extrapolatedClock!
+                                              .remaining,
+                                          currentLap:
+                                              liveData[0].lapCount?.currentLap,
+                                          totalLaps:
+                                              liveData[0].lapCount?.totalLaps,
+                                          sessionType:
+                                              liveData[0].sessionInfo!.name,
+                                        ),
+                                      ),
+
                                     // _buildExtrapolatedClock(liveData[0]
                                     //     .extrapolatedClock!
                                     //     .remaining),
@@ -1361,7 +1515,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
                                     _buildDriverList(
                                         liveData[0].driverList!.drivers,
                                         liveData[0].timingData!.lines,
-                                        liveData[0].timingAppData!.lines),
+                                        liveData[0].timingAppData?.lines ?? {},
+                                        liveData[0].sessionInfo!),
                                   ],
                                 );
                               } else if (snapshot.hasError) {
@@ -1431,7 +1586,6 @@ class _TelemetryPageState extends State<TelemetryPage> {
   }
 
   Widget _buildSessionInfoCard(SessionInfo session) {
-    final sessionInfo = _telemetryData['SessionInfo'];
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
@@ -1444,9 +1598,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            _buildInfoRow('Name:', session.meeting.name ?? 'Unknown'),
-            _buildInfoRow('Type:', '${session.name}' ?? 'Unknown'),
-            _buildInfoRow('Status:', session.archiveStatus.status ?? 'Unknown'),
+            _buildInfoRow('Name:', session.meeting.name),
+            _buildInfoRow('Type:', session.name),
+            _buildInfoRow('Status:', session.archiveStatus.status),
           ],
         ),
       ),
@@ -1550,6 +1704,10 @@ class _TelemetryPageState extends State<TelemetryPage> {
               DataCell(Text('1:30.123')),
               DataCell(Center(
                 child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(5.0),
                     child: Text(
@@ -1559,10 +1717,6 @@ class _TelemetryPageState extends State<TelemetryPage> {
                           fontSize: 12,
                           fontFamily: 'formula-bold'),
                     ),
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    borderRadius: BorderRadius.circular(20),
                   ),
                 ),
               )),
@@ -1594,7 +1748,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
   Widget _buildDriverList(
       Map<String, Driver> drivers,
       Map<String, TimingDataDriver> timingData,
-      Map<String, TimingAppDataDriver> timingAppData) {
+      Map<String, TimingAppDataDriver> timingAppData,
+      SessionInfo sessionInfo) {
     // Sort drivers by line number (current race position)
     List<MapEntry<String, Driver>> sortedDrivers = drivers.entries.toList()
       ..sort((a, b) => a.value.line.compareTo(b.value.line));
@@ -1763,15 +1918,20 @@ class _TelemetryPageState extends State<TelemetryPage> {
         //     ),
         //   ),
         // );
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5),
-          child: DriverInfoCard(
+        return Container(
+          margin: const EdgeInsets.symmetric(vertical: 5),
+          child: AnimatedDriverInfoCard(
+            key: ValueKey(
+                racingNumber), // Use racing number as key for stable identity
             position: driver.line,
             teamColor: teamColor,
             tla: driver.tla.isNotEmpty ? driver.tla : '???',
             interval: intervalText,
+            bestLapTime: timing.bestLapTime.value,
             currentLapTime: timing.lastLapTime.value,
             pitStops: timing.numberOfPitStops,
+            sessionType: sessionInfo.type,
+            positionChange: _positionChanges[racingNumber] ?? 'same',
           ),
         );
       },
