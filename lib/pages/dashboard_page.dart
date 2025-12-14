@@ -7,7 +7,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:formulavision/components/animated_driver_tile.dart';
 import 'package:formulavision/components/race_timer_bar.dart';
-import 'package:formulavision/components/lap_count_card.dart';
 import 'package:formulavision/components/weather_info_card.dart';
 import 'package:formulavision/components/session_info_card.dart';
 import 'package:formulavision/components/track_status_card.dart';
@@ -1636,80 +1635,132 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
                   if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                     final liveData = snapshot.data![0];
-                    return SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          FutureBuilder<List<LiveData>>(
-                            future: _liveDataFuture,
-                            initialData: [], // Initial empty data
-                            builder: (context, snapshot) {
-                              if (snapshot.hasData &&
-                                  snapshot.data!.isNotEmpty) {
-                                final liveData = snapshot.data!;
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    // Race Timer Bar - shows for all session types
-                                    if (liveData[0].extrapolatedClock != null)
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(bottom: 12.0),
-                                        child: RaceTimerBar(
-                                          remaining: liveData[0]
-                                              .extrapolatedClock!
-                                              .remaining,
-                                          currentLap:
-                                              liveData[0].lapCount?.currentLap,
-                                          totalLaps:
-                                              liveData[0].lapCount?.totalLaps,
-                                          sessionType:
-                                              liveData[0].sessionInfo!.name,
-                                        ),
-                                      ),
+                    return Column(
+                      children: [
+                        // Pinned RaceTimerBar at the top
+                        FutureBuilder<List<LiveData>>(
+                          future: _liveDataFuture,
+                          initialData: [],
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData &&
+                                snapshot.data!.isNotEmpty &&
+                                snapshot.data![0].extrapolatedClock != null) {
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12.0),
+                                child: RaceTimerBar(
+                                  remaining: snapshot
+                                      .data![0].extrapolatedClock!.remaining,
+                                  currentLap:
+                                      snapshot.data![0].lapCount?.currentLap,
+                                  totalLaps:
+                                      snapshot.data![0].lapCount?.totalLaps,
+                                  sessionType:
+                                      snapshot.data![0].sessionInfo!.name,
+                                ),
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          },
+                        ),
+                        // Scrollable content below
+                        Expanded(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                FutureBuilder<List<LiveData>>(
+                                  future: _liveDataFuture,
+                                  initialData: [], // Initial empty data
+                                  builder: (context, snapshot) {
+                                    if (snapshot.hasData &&
+                                        snapshot.data!.isNotEmpty) {
+                                      final liveData = snapshot.data!;
+                                      return Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          // RaceTimerBar removed from here as it's now pinned above
 
-                                    // _buildExtrapolatedClock(liveData[0]
-                                    //     .extrapolatedClock!
-                                    //     .remaining),
-                                    SizedBox(height: 10),
-                                    // TrackMapWidget(
-                                    //   trackJsonAsset:
-                                    //       'assets/TrackMaps/Spielberg.json',
-                                    //   driverPositions: testDriverPositions,
-                                    //   width: 350,
-                                    //   height: 200,
-                                    // ),
-                                    SizedBox(height: 10),
-                                    _buildSessionInfoCard(
-                                        liveData[0].sessionInfo!),
-                                    _buildTrackStatusCard(
-                                        liveData[0].trackStatus!),
-                                    _buildWeatherCard(liveData[0].weatherData!),
+                                          // _buildExtrapolatedClock(liveData[0]
+                                          //     .extrapolatedClock!
+                                          //     .remaining),
+                                          SizedBox(height: 10),
+                                          // TrackMapWidget(
+                                          //   trackJsonAsset:
+                                          //       'assets/TrackMaps/Spielberg.json',
+                                          //   driverPositions: testDriverPositions,
+                                          //   width: 350,
+                                          //   height: 200,
+                                          // ),
+                                          SizedBox(height: 10),
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 8.0),
+                                            child: SessionInfoCard(
+                                              raceName: liveData[0]
+                                                  .sessionInfo!
+                                                  .meeting
+                                                  .name,
+                                              sessionName:
+                                                  liveData[0].sessionInfo!.name,
+                                              sessionType:
+                                                  liveData[0].sessionInfo!.type,
+                                              location: liveData[0]
+                                                  .sessionInfo!
+                                                  .meeting
+                                                  .location,
+                                              country: liveData[0]
+                                                  .sessionInfo!
+                                                  .meeting
+                                                  .country
+                                                  .name,
+                                              circuit: liveData[0]
+                                                  .sessionInfo!
+                                                  .meeting
+                                                  .circuit
+                                                  .shortName,
+                                              status: liveData[0]
+                                                  .sessionInfo!
+                                                  .archiveStatus
+                                                  .status,
+                                            ),
+                                          ),
+                                          _buildTrackStatusCard(
+                                              liveData[0].trackStatus!),
+                                          _buildWeatherCard(
+                                              liveData[0].weatherData!),
 
-                                    SizedBox(height: 10),
-                                    Text('Drivers',
-                                        style: TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold)),
-                                    SizedBox(height: 5),
-                                    _buildDriverList(
-                                        liveData[0].driverList!.drivers,
-                                        liveData[0].timingData!.lines,
-                                        liveData[0].timingAppData?.lines ?? {},
-                                        liveData[0].sessionInfo!),
-                                  ],
-                                );
-                              } else if (snapshot.hasError) {
-                                return Text('Error: ${snapshot.error}');
-                              } else {
-                                return const CircularProgressIndicator();
-                              }
-                            },
+                                          SizedBox(height: 10),
+                                          Text('Drivers',
+                                              style: TextStyle(
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.bold)),
+                                          SizedBox(height: 5),
+                                          _buildDriverList(
+                                              liveData[0].driverList!.drivers,
+                                              liveData[0].timingData!.lines,
+                                              liveData[0]
+                                                      .timingAppData
+                                                      ?.lines ??
+                                                  {},
+                                              liveData[0].sessionInfo!),
+                                        ],
+                                      );
+                                    } else if (snapshot.hasError) {
+                                      return Text('Error: ${snapshot.error}');
+                                    } else {
+                                      return const CircularProgressIndicator();
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     );
                   } else if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
@@ -1771,28 +1822,6 @@ class _TelemetryPageState extends State<TelemetryPage> {
       //   tooltip: 'Clear data',
       //   child: const Icon(Icons.clear),
       // ),
-    );
-  }
-
-  Widget _buildSessionInfoCard(SessionInfo session) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Session Information',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            _buildInfoRow('Name:', session.meeting.name),
-            _buildInfoRow('Type:', session.name),
-            _buildInfoRow('Status:', session.archiveStatus.status),
-          ],
-        ),
-      ),
     );
   }
 
@@ -1949,7 +1978,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
         final Driver driver = entry.value;
 
         final TimingDataDriver timing = timingData[racingNumber]!;
-        final TimingAppDataDriver timingApp = timingAppData[racingNumber]!;
+        // final TimingAppDataDriver timingApp = timingAppData[racingNumber]!;
 
         // Get interval value with proper handling based on position, not index
         String intervalText = "";
@@ -2163,25 +2192,6 @@ class _TelemetryPageState extends State<TelemetryPage> {
           textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
         ),
         child: Text('$seconds'),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(value),
-          ),
-        ],
       ),
     );
   }

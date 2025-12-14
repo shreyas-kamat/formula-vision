@@ -44,6 +44,7 @@ class F1Event {
     final prefixes = ['🏎 FORMULA 1 ', '⏱️ FORMULA 1 ', '🏁 FORMULA 1 '];
     String name = summary;
 
+    // Handle 2025 format with emojis
     for (var prefix in prefixes) {
       if (name.startsWith(prefix)) {
         name = name.substring(prefix.length);
@@ -51,7 +52,14 @@ class F1Event {
       }
     }
 
-    // Get the grand prix name without the event type
+    // Handle 2026 format: "F1: FP1 (Australian Grand Prix)"
+    if (name.startsWith('F1: ') && name.contains(' (') && name.endsWith(')')) {
+      final start = name.indexOf('(') + 1;
+      final end = name.indexOf(')');
+      return name.substring(start, end);
+    }
+
+    // Get the grand prix name without the event type (2025 format)
     if (name.contains(' - ')) {
       final parts = name.split(' - ');
       return parts[0];
@@ -62,24 +70,37 @@ class F1Event {
 
   // Get session name (Practice 1, Qualifying, Race, etc)
   String get sessionName {
+    // Handle 2026 format: "F1: FP1 (Australian Grand Prix)"
+    if (summary.startsWith('F1: ')) {
+      final sessionPart = summary.substring(4); // Remove "F1: "
+      if (sessionPart.contains(' (')) {
+        return sessionPart.substring(0, sessionPart.indexOf(' ('));
+      }
+    }
+
+    // Handle 2025 format with " - "
     if (summary.contains(' - ')) {
       final parts = summary.split(' - ');
       return parts[1];
     }
+
     return "Unknown Session";
   }
 
   // Get type of event (Practice, Qualifying, Sprint, Race)
   String get eventType {
-    if (summary.contains('Practice')) {
+    final sessionName = this.sessionName.toLowerCase();
+
+    if (sessionName.contains('fp') || sessionName.contains('practice')) {
       return 'Practice';
-    } else if (summary.contains('Sprint Qualification')) {
+    } else if (sessionName.contains('sprint qualifying')) {
       return 'Sprint Qualifying';
-    } else if (summary.contains('Qualifying')) {
+    } else if (sessionName.contains('qualifying')) {
       return 'Qualifying';
-    } else if (summary.contains('Sprint')) {
+    } else if (sessionName.contains('sprint')) {
       return 'Sprint';
-    } else if (summary.contains('Race')) {
+    } else if (sessionName.contains('grand prix') ||
+        sessionName.contains('race')) {
       return 'Race';
     } else {
       return 'Unknown';
@@ -102,12 +123,12 @@ class F1Event {
   // Get formatted time range
   String get formattedStartTime {
     final startFormat = DateFormat('HH:mm');
-    return '${startFormat.format(startTime.toLocal())}';
+    return startFormat.format(startTime.toLocal());
   }
 
   String get formattedEndTime {
     final endFormat = DateFormat('HH:mm');
-    return '${endFormat.format(endTime.toLocal())}';
+    return endFormat.format(endTime.toLocal());
   }
 
   // Get duration in minutes
@@ -227,26 +248,33 @@ class _SchedulePageState extends State<SchedulePage> {
   Future<void> _loadCalendarData() async {
     try {
       final String jsonString =
-          await rootBundle.loadString('assets/Formula_1.json');
+          await rootBundle.loadString('assets/Formula_2026.json');
       final data = jsonDecode(jsonString);
 
       final List<dynamic> eventsList = data['VCALENDAR'][0]['VEVENT'];
 
       final events = eventsList
           .where((event) =>
+              event != null &&
+              event is Map<String, dynamic> &&
               event.containsKey('SUMMARY') &&
               event.containsKey('LOCATION') &&
               event.containsKey('DTSTART') &&
-              event.containsKey('DTEND'))
+              event.containsKey('DTEND') &&
+              event['SUMMARY'] != null &&
+              event['LOCATION'] != null &&
+              event['DTSTART'] != null &&
+              event['DTEND'] != null)
           .map((event) => F1Event.fromJson(event))
           .toList();
 
       // Sort events by start time
       events.sort((a, b) => a.startTime.compareTo(b.startTime));
 
-      // Group events by race (same location and grand prix name)
+      // Group events by race (same grand prix name and location)
       final groupedEvents = <String, List<F1Event>>{};
       for (var event in events) {
+        // Use only the grand prix name as the key (not individual session names)
         final key = '${event.cleanName}_${event.location}';
         if (!groupedEvents.containsKey(key)) {
           groupedEvents[key] = [];

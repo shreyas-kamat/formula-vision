@@ -79,7 +79,9 @@ class SessionInfoCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          raceName.toUpperCase(),
+                          raceName.isNotEmpty
+                              ? raceName.toUpperCase()
+                              : 'FORMULA 1',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -88,7 +90,9 @@ class SessionInfoCard extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          sessionName.toUpperCase(),
+                          sessionName.isNotEmpty
+                              ? sessionName.toUpperCase()
+                              : sessionType.toUpperCase(),
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 14,
@@ -132,7 +136,7 @@ class SessionInfoCard extends StatelessWidget {
                       Expanded(
                         child: _buildInfoSection(
                           'LOCATION',
-                          location,
+                          location.isNotEmpty ? location : 'Unknown',
                           Icons.location_on,
                           Colors.orange[300]!,
                         ),
@@ -142,7 +146,7 @@ class SessionInfoCard extends StatelessWidget {
                       Expanded(
                         child: _buildInfoSection(
                           'COUNTRY',
-                          country,
+                          country.isNotEmpty ? country : 'Unknown',
                           Icons.flag,
                           Colors.blue[300]!,
                         ),

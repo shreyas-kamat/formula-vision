@@ -80,7 +80,8 @@ flutter:
     - assets/logo/MainLogo.png
 
   # Maps to the assets directory: https://api.multiviewer.app/api/v1/circuits/${circuitKey}/${year}
-    - assets/Formula_1.json
+    - assets/Formula_2025.json
+    - assets/Formula_2026.json
     - assets/maps.json
     - assets/TrackMaps/Algarve.json
     - assets/TrackMaps/Austin.json
