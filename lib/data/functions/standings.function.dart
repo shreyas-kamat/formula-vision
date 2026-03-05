@@ -6,6 +6,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:formulavision/data/models/jolpica/constructors.model.dart';
 import 'package:formulavision/data/models/jolpica/drivers.model.dart';
 
+// Model to return standings with year information
+class StandingsWithYear<T> {
+  final T data;
+  final String year;
+  final bool isPreviousYear;
+
+  StandingsWithYear({
+    required this.data,
+    required this.year,
+    required this.isPreviousYear,
+  });
+}
+
 // Constants for cache keys
 const String _constructorStandingsCacheKey = 'constructor_standings_';
 const String _driverStandingsCacheKey = 'driver_standings_';
@@ -65,15 +78,23 @@ Future<void> _safeSetInt(String key, int value) async {
   }
 }
 
+/// Gets the current F1 season year from the current date
+String getCurrentSeasonYear() {
+  return DateTime.now().year.toString();
+}
+
 /// Fetches constructor standings data from the ergast API with caching
 ///
-/// @param year The F1 season year to get standings for (defaults to 2025)
+/// @param year The F1 season year to get standings for (defaults to current year)
 /// @param forceRefresh Whether to force a refresh from the API ignoring cache
-/// @returns A Future containing the ConstructorStandingsResponse with the standings data
-Future<ConstructorStandingsResponse> fetchConstructorStandings({
-  String year = '2025',
+/// @returns A Future containing StandingsWithYear with the standings data and year information
+Future<StandingsWithYear<ConstructorStandingsResponse>>
+    fetchConstructorStandings({
+  String? year,
   bool forceRefresh = false,
 }) async {
+  // Use current year if not provided
+  year ??= getCurrentSeasonYear();
   final cacheKey = _constructorStandingsCacheKey + year;
   final timestampKey = '${cacheKey}_timestamp';
 
@@ -88,7 +109,11 @@ Future<ConstructorStandingsResponse> fetchConstructorStandings({
         // Cache is valid, return cached data
         try {
           final jsonData = json.decode(cachedData);
-          return ConstructorStandingsResponse.fromJson(jsonData);
+          return StandingsWithYear(
+            data: ConstructorStandingsResponse.fromJson(jsonData),
+            year: year,
+            isPreviousYear: false,
+          );
         } catch (e) {
           debugPrint('Error parsing cached constructor data: $e');
           // Continue to fetch from API if parsing fails
@@ -105,12 +130,27 @@ Future<ConstructorStandingsResponse> fetchConstructorStandings({
 
     if (response.statusCode == 200) {
       final jsonData = json.decode(response.body);
+      final parsedResponse = ConstructorStandingsResponse.fromJson(jsonData);
+
+      // Check if standings data is empty/null
+      if (parsedResponse.mRData.standingsTable.standingsLists.isEmpty) {
+        // Try previous year
+        final previousYear = (int.parse(year) - 1).toString();
+        return _fetchConstructorStandingsPreviousYear(
+          previousYear,
+          forceRefresh,
+        );
+      }
 
       // Save the new data to cache
       await _safeSetString(cacheKey, response.body);
       await _safeSetInt(timestampKey, DateTime.now().millisecondsSinceEpoch);
 
-      return ConstructorStandingsResponse.fromJson(jsonData);
+      return StandingsWithYear(
+        data: parsedResponse,
+        year: year,
+        isPreviousYear: false,
+      );
     } else {
       throw Exception(
           'Failed to load constructor standings: HTTP ${response.statusCode}');
@@ -121,25 +161,91 @@ Future<ConstructorStandingsResponse> fetchConstructorStandings({
     if (cachedData != null) {
       try {
         final jsonData = json.decode(cachedData);
-        return ConstructorStandingsResponse.fromJson(jsonData);
+        return StandingsWithYear(
+          data: ConstructorStandingsResponse.fromJson(jsonData),
+          year: year,
+          isPreviousYear: false,
+        );
       } catch (parseError) {
         debugPrint('Error parsing cached constructor data: $parseError');
       }
     }
 
-    throw Exception('Failed to fetch constructor standings: $e');
+    // If current year fails, try previous year
+    final previousYear = (int.parse(year) - 1).toString();
+    try {
+      return await _fetchConstructorStandingsPreviousYear(
+        previousYear,
+        forceRefresh,
+      );
+    } catch (previousYearError) {
+      throw Exception('Failed to fetch constructor standings: $e');
+    }
+  }
+}
+
+/// Helper function to fetch constructor standings from previous year
+Future<StandingsWithYear<ConstructorStandingsResponse>>
+    _fetchConstructorStandingsPreviousYear(
+  String year,
+  bool forceRefresh,
+) async {
+  final cacheKey = _constructorStandingsCacheKey + year;
+  final timestampKey = '${cacheKey}_timestamp';
+
+  // Check cache first
+  if (!forceRefresh) {
+    final cachedData = await _safeGetString(cacheKey);
+    if (cachedData != null) {
+      try {
+        final jsonData = json.decode(cachedData);
+        return StandingsWithYear(
+          data: ConstructorStandingsResponse.fromJson(jsonData),
+          year: year,
+          isPreviousYear: true,
+        );
+      } catch (e) {
+        debugPrint(
+            'Error parsing cached constructor data for previous year: $e');
+      }
+    }
+  }
+
+  // Fetch from API
+  final response = await http.get(
+    Uri.parse('https://api.jolpi.ca/ergast/f1/$year/constructorstandings/'),
+  );
+
+  if (response.statusCode == 200) {
+    final jsonData = json.decode(response.body);
+    final parsedResponse = ConstructorStandingsResponse.fromJson(jsonData);
+
+    // Save to cache
+    await _safeSetString(cacheKey, response.body);
+    await _safeSetInt(timestampKey, DateTime.now().millisecondsSinceEpoch);
+
+    return StandingsWithYear(
+      data: parsedResponse,
+      year: year,
+      isPreviousYear: true,
+    );
+  } else {
+    throw Exception(
+        'Failed to load constructor standings for $year: HTTP ${response.statusCode}');
   }
 }
 
 /// Fetches driver standings data from the ergast API with caching
 ///
-/// @param year The F1 season year to get standings for (defaults to 2025)
+/// @param year The F1 season year to get standings for (defaults to current year)
 /// @param forceRefresh Whether to force a refresh from the API ignoring cache
-/// @returns A Future containing the DriverStandingsResponse with the standings data
-Future<DriverStandingsResponse> fetchDriverStandings({
-  String year = '2025',
+/// @returns A Future containing StandingsWithYear with the standings data and year information
+Future<StandingsWithYear<DriverStandingsResponse>> fetchDriverStandings({
+  String? year,
   bool forceRefresh = false,
 }) async {
+  // Use current year if not provided
+  year ??= getCurrentSeasonYear();
   final cacheKey = _driverStandingsCacheKey + year;
   final timestampKey = '${cacheKey}_timestamp';
 
@@ -154,7 +260,11 @@ Future<DriverStandingsResponse> fetchDriverStandings({
         // Cache is valid, return cached data
         try {
           final jsonData = json.decode(cachedData);
-          return DriverStandingsResponse.fromJson(jsonData);
+          return StandingsWithYear(
+            data: DriverStandingsResponse.fromJson(jsonData),
+            year: year,
+            isPreviousYear: false,
+          );
         } catch (e) {
           debugPrint('Error parsing cached driver data: $e');
           // Continue to fetch from API if parsing fails
@@ -171,12 +281,27 @@ Future<DriverStandingsResponse> fetchDriverStandings({
 
     if (response.statusCode == 200) {
       final jsonData = json.decode(response.body);
+      final parsedResponse = DriverStandingsResponse.fromJson(jsonData);
+
+      // Check if standings data is empty/null
+      if (parsedResponse.mRData.standingsTable.standingsLists.isEmpty) {
+        // Try previous year
+        final previousYear = (int.parse(year) - 1).toString();
+        return _fetchDriverStandingsPreviousYear(
+          previousYear,
+          forceRefresh,
+        );
+      }
 
       // Save the new data to cache
       await _safeSetString(cacheKey, response.body);
       await _safeSetInt(timestampKey, DateTime.now().millisecondsSinceEpoch);
 
-      return DriverStandingsResponse.fromJson(jsonData);
+      return StandingsWithYear(
+        data: parsedResponse,
+        year: year,
+        isPreviousYear: false,
+      );
     } else {
       throw Exception(
           'Failed to load driver standings: HTTP ${response.statusCode}');
@@ -187,13 +312,76 @@ Future<DriverStandingsResponse> fetchDriverStandings({
     if (cachedData != null) {
       try {
         final jsonData = json.decode(cachedData);
-        return DriverStandingsResponse.fromJson(jsonData);
+        return StandingsWithYear(
+          data: DriverStandingsResponse.fromJson(jsonData),
+          year: year,
+          isPreviousYear: false,
+        );
       } catch (parseError) {
         debugPrint('Error parsing cached driver data: $parseError');
       }
     }
 
-    throw Exception('Failed to fetch driver standings: $e');
+    // If current year fails, try previous year
+    final previousYear = (int.parse(year) - 1).toString();
+    try {
+      return await _fetchDriverStandingsPreviousYear(
+        previousYear,
+        forceRefresh,
+      );
+    } catch (previousYearError) {
+      throw Exception('Failed to fetch driver standings: $e');
+    }
+  }
+}
+
+/// Helper function to fetch driver standings from previous year
+Future<StandingsWithYear<DriverStandingsResponse>>
+    _fetchDriverStandingsPreviousYear(
+  String year,
+  bool forceRefresh,
+) async {
+  final cacheKey = _driverStandingsCacheKey + year;
+  final timestampKey = '${cacheKey}_timestamp';
+
+  // Check cache first
+  if (!forceRefresh) {
+    final cachedData = await _safeGetString(cacheKey);
+    if (cachedData != null) {
+      try {
+        final jsonData = json.decode(cachedData);
+        return StandingsWithYear(
+          data: DriverStandingsResponse.fromJson(jsonData),
+          year: year,
+          isPreviousYear: true,
+        );
+      } catch (e) {
+        debugPrint('Error parsing cached driver data for previous year: $e');
+      }
+    }
+  }
+
+  // Fetch from API
+  final response = await http.get(
+    Uri.parse('https://api.jolpi.ca/ergast/f1/$year/driverstandings/'),
+  );
+
+  if (response.statusCode == 200) {
+    final jsonData = json.decode(response.body);
+    final parsedResponse = DriverStandingsResponse.fromJson(jsonData);
+
+    // Save to cache
+    await _safeSetString(cacheKey, response.body);
+    await _safeSetInt(timestampKey, DateTime.now().millisecondsSinceEpoch);
+
+    return StandingsWithYear(
+      data: parsedResponse,
+      year: year,
+      isPreviousYear: true,
+    );
+  } else {
+    throw Exception(
+        'Failed to load driver standings for $year: HTTP ${response.statusCode}');
   }
 }
 

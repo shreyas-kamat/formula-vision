@@ -79,7 +79,7 @@ class CircuitList extends StatefulWidget {
 class _CircuitListState extends State<CircuitList> {
   List<CircuitInfo> _circuits = [];
   bool _isLoading = true;
-  bool _showOnlyCurrentSeason = false;
+  final bool _showOnlyCurrentSeason = false;
 
   @override
   void initState() {
@@ -173,7 +173,7 @@ class _CircuitListState extends State<CircuitList> {
             elevation: 0,
             iconTheme: IconThemeData(color: Colors.white),
             title: Text(
-              'Formula 1 Circuits',
+              'Circuit Viewer',
               style: TextStyle(
                 color: Colors.white,
                 fontFamily: 'formula-bold',
@@ -232,100 +232,94 @@ class _CircuitListState extends State<CircuitList> {
   }
 
   Widget _buildCircuitCard(CircuitInfo circuit, BuildContext context) {
-    return Card(
-      elevation: 4,
-      color: Colors.black.withOpacity(0.6),
+    return Container(
       margin: EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
+      height: 120,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            circuit.isInCurrentSeason
+                ? Colors.red.withOpacity(0.15)
+                : Colors.white.withOpacity(0.05),
+            Colors.black.withOpacity(0.3),
+          ],
+        ),
+        border: Border.all(
           color: circuit.isInCurrentSeason
-              ? Colors.red.withOpacity(0.8)
-              : Colors.white.withOpacity(0.3),
+              ? Colors.red.withOpacity(0.5)
+              : Colors.white.withOpacity(0.2),
           width: 1,
         ),
       ),
-      child: InkWell(
-        onTap: () => _navigateToCircuitViewer(context, circuit),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Circuit thumbnail
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: Colors.grey.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: Text(
-                    circuit.iocCountryCode,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _navigateToCircuitViewer(context, circuit),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Circuit thumbnail
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.1),
+                      width: 1,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      circuit.iocCountryCode,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              SizedBox(width: 16),
-              // Circuit details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      circuit.name,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                SizedBox(width: 16),
+                // Circuit details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        circuit.name,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      circuit.country,
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
+                      SizedBox(height: 4),
+                      Text(
+                        circuit.country,
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 8),
-                    // Recent years chip list
-                    Wrap(
-                      spacing: 6,
-                      children: circuit.years
-                          .take(3) // Take only the 3 most recent years
-                          .map((year) => Chip(
-                                backgroundColor: year == 2025
-                                    ? Colors.red.withOpacity(0.8)
-                                    : Colors.grey.withOpacity(0.3),
-                                label: Text(
-                                  year.toString(),
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                padding: EdgeInsets.all(0),
-                                materialTapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
-                              ))
-                          .toList(),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              // Arrow icon
-              Icon(
-                Icons.chevron_right,
-                color: Colors.white.withOpacity(0.7),
-              ),
-            ],
+                // Arrow icon
+                Icon(
+                  Icons.chevron_right,
+                  color: Colors.white.withOpacity(0.7),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -340,11 +334,11 @@ class CircuitViewerPage extends StatelessWidget {
   final String country;
 
   const CircuitViewerPage({
-    Key? key,
+    super.key,
     required this.circuitName,
     required this.jsonFilename,
     required this.country,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

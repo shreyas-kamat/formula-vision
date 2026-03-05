@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:formulavision/components/driver_tile.dart';
-import 'package:formulavision/components/weather_info_card.dart'; // Add this import
-import 'package:formulavision/components/race_info_card.dart';
 import 'package:formulavision/data/functions/auth.function.dart';
 
 class TestPage extends StatefulWidget {
@@ -14,119 +11,448 @@ class TestPage extends StatefulWidget {
 class _TestPageState extends State<TestPage> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 20),
-                const Center(
-                  child: Text(
-                    'Test Page',
-                    style: TextStyle(color: Colors.white, fontSize: 24),
-                  ),
-                ),
-                const SizedBox(height: 20),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.black,
+            Color.fromARGB(255, 87, 0, 0), // Dark red
+            const Color.fromARGB(190, 244, 67, 54),
+            Color.fromARGB(255, 80, 0, 0), // Dark red
+            const Color.fromARGB(255, 36, 16, 16),
+          ],
+        ),
+      ),
+      child: SafeArea(
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 16),
 
-                // Race information card
-                const Text(
-                  'Race',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                  // Header - Race Name
+                  const Text(
+                    'Monaco Grand Prix',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Formula1',
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                const RaceInfoCard(
-                  raceName: 'Canadian Grand Prix',
-                  sessionType: 'Qualifying',
-                  currentLap: 35,
-                  totalLaps: 70,
-                ),
-                const SizedBox(height: 20),
+                  const SizedBox(height: 8),
 
-                // Weather information card
-                const Text(
-                  'Weather',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                  // Session Type with Live Badge
+                  Row(
+                    children: [
+                      const Text(
+                        'Qualifying',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          'Live',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 8),
-                WeatherInfoCard(
-                  airTemp: (25.0).toString(),
-                  trackTemp: (50.0).toString(),
-                  windSpeed: (1.0).toString(),
-                  humidity: (28).toString(),
-                  weatherCondition: 'Clear',
-                ),
-                const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-                // Driver card section - Race session (shows interval)
-                const Text(
-                  'Race Session Driver',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                DriverInfoCard(
-                  position: 2,
-                  teamColor: Colors.red,
-                  tla: 'HAM',
-                  interval: '+0.243',
-                  bestLapTime: '1:15.123',
-                  currentLapTime: '1:16.648',
-                  // bestLapTime: '1:15.932',
-                  pitStops: 1,
-                  sessionType: 'Race', // Race session - will show interval
-                ),
-                const SizedBox(height: 20),
+                  // Race Timer and Flag Status
+                  Row(
+                    children: [
+                      // Timer
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color.fromARGB(255, 76, 120, 55),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Race Timer',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const Text(
+                                    '02:30:29',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Roboto Mono',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 14),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Icon(
+                                      Icons.flag,
+                                      color: Colors.green,
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Green Flag',
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
 
-                // Practice/Qualifying session (no interval)
-                const Text(
-                  'Practice Session Driver',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                      // Flag Status
+                    ],
                   ),
-                ),
-                const SizedBox(height: 8),
-                DriverInfoCard(
-                  position: 1,
-                  teamColor: Colors.blue,
-                  tla: 'VER',
-                  interval: 'Leader',
-                  bestLapTime: '1:14.985',
-                  currentLapTime: '1:15.287',
-                  pitStops: 0,
-                  sessionType:
-                      'Practice 1', // Practice session - will NOT show interval
-                ),
-                const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-                Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      logout(context);
-                    },
-                    child: const Text('Logout'),
+                  // Track Conditions Section
+                  const Text(
+                    'Track Conditions',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
-              ],
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(100, 150, 80, 80),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: const Color.fromARGB(100, 150, 100, 100),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Container(
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: const Color.fromARGB(100, 150, 100, 100),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Container(
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: const Color.fromARGB(100, 150, 100, 100),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Leaderboard Header
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 12),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 40,
+                          child: Text(
+                            'Pos',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            'Name',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 80,
+                          child: Text(
+                            'Fastest Lap',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.right,
+                          ),
+                        ),
+                        SizedBox(
+                          width: 60,
+                          child: Text(
+                            'Interval',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        SizedBox(
+                          width: 40,
+                          child: Text(
+                            'Type',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        SizedBox(
+                          width: 30,
+                          child: Text(
+                            'Pit',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Driver Rows
+                  _buildDriverRow(1, 'HAM', '1:31.052', 'Interval', Colors.red),
+                  const SizedBox(height: 10),
+                  _buildDriverRow(2, 'VER', '1:31.854', '+0.458', Colors.blue),
+                  const SizedBox(height: 10),
+                  _buildDriverRow(
+                      3, 'NOR', '1:32.960', '+1.108', Colors.orange),
+                  const SizedBox(height: 10),
+                  _buildDriverRow(
+                      4, 'PIA', '1:32.160', '+1.486', Colors.orange),
+                  const SizedBox(height: 20),
+
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        logout(context);
+                      },
+                      child: const Text('Logout'),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDriverRow(
+    int position,
+    String name,
+    String fastestLap,
+    String interval,
+    Color teamColor,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            teamColor.withOpacity(0.3),
+            teamColor.withOpacity(0.1),
+          ],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: teamColor.withOpacity(0.5), width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        child: Row(
+          children: [
+            // Position
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: teamColor,
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  position.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // Name
+            Expanded(
+              child: Text(
+                name,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
+
+            // Fastest Lap
+            SizedBox(
+              width: 80,
+              child: Text(
+                fastestLap,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontFamily: 'Roboto Mono',
+                ),
+                textAlign: TextAlign.right,
+              ),
+            ),
+            const SizedBox(width: 8),
+
+            // Interval
+            SizedBox(
+              width: 60,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: interval == 'Interval' ? Colors.green : Colors.blue,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  interval,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+
+            // Tire Type
+            SizedBox(
+              width: 40,
+              child: Center(
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[700],
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.circle,
+                      size: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Pit Stops
+            SizedBox(
+              width: 30,
+              child: Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: Colors.grey[800],
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Text(
+                    '1',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

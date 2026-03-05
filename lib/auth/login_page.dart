@@ -58,8 +58,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   Text(
                     'Hello Again!',
-                    style:
-                        GoogleFonts.pacifico(fontSize: 55, color: Colors.white),
+                    style: TextStyle(fontSize: 55, color: Colors.white),
                   ),
                   SizedBox(
                     height: 10,

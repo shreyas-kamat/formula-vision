@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:formulavision/auth/email_verification.dart';
 import 'package:formulavision/auth/login_page.dart';
-import 'package:formulavision/data/services/auth_service.dart';
+// import 'package:formulavision/data/services/auth_service.dart';
 import 'package:formulavision/pages/nav_page.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -42,8 +42,8 @@ Future<void> login(BuildContext context, String email, String password) async {
       await prefs.setString('username', username);
       await prefs.setString('user_id', userId);
 
-      // Initialize auth service after login
-      await AuthService().initialize();
+      // // Initialize auth service after login
+      // await AuthService().initialize();
 
       // Navigate to the home page or another page
       Navigator.pushReplacement(
@@ -357,15 +357,15 @@ Future<void> logout(BuildContext context) async {
 }
 
 // Use this wrapper for all your API calls that need authentication
-Future<http.Response> authenticatedRequest(BuildContext context,
-    Future<http.Response> Function(http.Client) requestFunc) async {
-  final authClient = AuthService().createAuthClient(context);
-  try {
-    return await requestFunc(authClient);
-  } finally {
-    authClient.close();
-  }
-}
+// Future<http.Response> authenticatedRequest(BuildContext context,
+//     Future<http.Response> Function(http.Client) requestFunc) async {
+//   final authClient = AuthService().createAuthClient(context);
+//   try {
+//     return await requestFunc(authClient);
+//   } finally {
+//     authClient.close();
+//   }
+// }
 
 // Example usage:
 // Future<void> fetchUserData(BuildContext context) async {

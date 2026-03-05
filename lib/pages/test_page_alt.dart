@@ -4,7 +4,7 @@ import 'package:formulavision/data/models/live_data.model.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class TestPage extends StatefulWidget {
-  const TestPage({Key? key}) : super(key: key);
+  const TestPage({super.key});
 
   @override
   _TestPageState createState() => _TestPageState();
@@ -553,8 +553,8 @@ class _TestPageState extends State<TestPage> {
           });
         },
         backgroundColor: Colors.red,
-        child: const Icon(Icons.clear),
         tooltip: 'Clear data',
+        child: const Icon(Icons.clear),
       ),
     );
   }
@@ -699,7 +699,7 @@ class _TestPageState extends State<TestPage> {
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),

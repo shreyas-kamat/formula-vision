@@ -13,7 +13,7 @@ import 'package:formulavision/components/track_status_card.dart';
 import 'package:formulavision/data/functions/cardata.function.dart';
 import 'package:formulavision/data/functions/live_data.function.dart';
 import 'package:formulavision/data/models/live_data.model.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart' show rootBundle;
@@ -114,13 +114,13 @@ class _TelemetryPageState extends State<TelemetryPage> {
     });
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final String? token = prefs.getString('jwt_token');
+      // final prefs = await SharedPreferences.getInstance();
+      // final String? token = prefs.getString('jwt_token');
       final response = await http.get(
         Uri.parse('${dotenv.env['API_URL']}/initialData'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $token',
+          // 'Authorization': 'Bearer $token',
         },
       );
 
@@ -208,16 +208,16 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
       // Create a client that doesn't automatically close the connection
       final client = http.Client();
-      final prefs = await SharedPreferences.getInstance();
-      final String? token = prefs.getString('jwt_token');
+      // final prefs = await SharedPreferences.getInstance();
+      // final String? token = prefs.getString('jwt_token');
       // Connect to the SSE endpoint with appropriate headers
       final request = http.Request('GET', Uri.parse(sseUrl));
       request.headers['Accept'] = 'text/event-stream';
       request.headers['Cache-Control'] = 'no-cache';
       request.headers['Content-Type'] = 'application/json; charset=UTF-8';
-      if (token != null) {
-        request.headers['Authorization'] = 'Bearer $token';
-      }
+      // if (token != null) {
+      //   request.headers['Authorization'] = 'Bearer $token';
+      // }
 
       // final response = await http.get(
       //   Uri.parse('${dotenv.env['API_URL']}/initialData'),

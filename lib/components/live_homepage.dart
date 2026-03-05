@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'package:formulavision/auth/login_page.dart';
-import 'package:formulavision/data/functions/auth.function.dart';
+// import 'package:formulavision/auth/login_page.dart';
+// import 'package:formulavision/data/functions/auth.function.dart';
 import 'package:formulavision/pages/circuit_list.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
@@ -8,6 +8,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:formulavision/data/functions/live_data.function.dart';
 import 'package:formulavision/data/models/live_data.model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class LiveHomePage extends StatefulWidget {
   const LiveHomePage({super.key});
@@ -75,15 +76,18 @@ class _LiveHomePageState extends State<LiveHomePage> {
 
   Future<void> fetchInitialData() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final String? token = prefs.getString('jwt_token');
+      // final prefs = await SharedPreferences.getInstance();
+      // final String? token = prefs.getString('jwt_token');
       final response = await http.get(
         Uri.parse('${dotenv.env['API_URL']}/initialData'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $token',
+          // 'Authorization': 'Bearer $token',
         },
       );
+
+      print('API Response Status: ${response.statusCode}');
+      print('API Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -95,9 +99,11 @@ class _LiveHomePageState extends State<LiveHomePage> {
         setState(() {
           _connectionStatus = "Initial data loaded";
         });
+      } else {
+        print('Failed to fetch initial data. Status: ${response.statusCode}');
       }
     } catch (e) {
-      print(e.toString());
+      print('Error fetching initial data: $e');
     }
   }
 
@@ -125,120 +131,127 @@ class _LiveHomePageState extends State<LiveHomePage> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Column(children: [
-                Row(
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text('Hello,',
+                // Modern Top Bar
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Logo and Title
+                      Row(
+                        children: [
+                          Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              color: Colors.white.withOpacity(0.15),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Image.asset(
+                              'assets/logo/MainLogo.png',
+                              fit: BoxFit.contain,
+                              scale: 1.2,
+                            ),
+                          ),
+                          SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'FormulaVision',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 25,
+                                  fontFamily: 'formula-bold',
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              Text(
+                                'The Ultimate Race Companion',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.6),
+                                  fontSize: 10,
                                   fontFamily: 'formula',
-                                )),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Text(
-                              username.length > 16
-                                  ? '${username.substring(0, 13)}...'
-                                  : username,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 25,
-                                fontFamily: 'formula-bold',
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      // Action Buttons
+                      Row(
+                        children: [
+                          // Notifications
+                          // Container(
+                          //   decoration: BoxDecoration(
+                          //     shape: BoxShape.circle,
+                          //     color: Colors.white.withOpacity(0.1),
+                          //   ),
+                          //   child: Material(
+                          //     color: Colors.transparent,
+                          //     child: InkWell(
+                          //       onTap: () {
+                          //         // TODO: Add notifications handler
+                          //       },
+                          //       customBorder: CircleBorder(),
+                          //       child: Padding(
+                          //         padding: EdgeInsets.all(10),
+                          //         child: Icon(
+                          //           Icons.notifications_outlined,
+                          //           color: Colors.white,
+                          //           size: 22,
+                          //         ),
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
+                          // SizedBox(width: 12),
+                          // GitHub Info Button
+                          Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withOpacity(0.1),
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () async {
+                                  try {
+                                    final Uri url = Uri.parse(
+                                        'https://github.com/shreyas-kamat/formula-vision');
+                                    await launchUrl(url,
+                                        mode: LaunchMode.externalApplication);
+                                  } catch (e) {
+                                    print('Error launching URL: $e');
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content: Text(
+                                              'Could not open GitHub link')),
+                                    );
+                                  }
+                                },
+                                customBorder: CircleBorder(),
+                                child: Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Image.asset(
+                                    'assets/logo/GitHub_Invertocat_White.png',
+                                    width: 26,
+                                    height: 26,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
                               ),
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    Spacer(),
-                    FutureBuilder<bool>(
-                      future: isLoggedIn(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return SizedBox(
-                            width: 120,
-                            height: 40,
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            ),
-                          );
-                        }
-                        final loggedIn = snapshot.data ?? false;
-                        return loggedIn
-                            ? ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                      Colors.white.withOpacity(0.1),
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
-                                    side: BorderSide(
-                                        color: Colors.white, width: 1),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 18, vertical: 10),
-                                ),
-                                icon: Icon(Icons.logout, color: Colors.white),
-                                label: Text(
-                                  'Logout',
-                                  style: TextStyle(
-                                    fontFamily: 'formula-bold',
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                onPressed: () async {
-                                  logout(context);
-                                },
-                              )
-                            : ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                      Colors.white.withOpacity(0.1),
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
-                                    side: BorderSide(
-                                        color: Colors.white, width: 1),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 18, vertical: 10),
-                                ),
-                                icon: Icon(Icons.login, color: Colors.white),
-                                label: Text(
-                                  'Log In',
-                                  style: TextStyle(
-                                    fontFamily: 'formula-bold',
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const LoginPage(),
-                                    ),
-                                  );
-                                },
-                              );
-                      },
-                    )
-                  ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                SizedBox(height: 40),
+                SizedBox(height: 24),
                 FutureBuilder(
                     future: _liveDataFuture,
                     builder: (context, snapshot) {
@@ -587,135 +600,188 @@ class _LiveHomePageState extends State<LiveHomePage> {
                       }
                     }),
                 SizedBox(height: 20),
-                ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const CircuitList()));
-                    },
-                    child: Text('Circuit Viewer')),
-                SizedBox(height: 40),
                 Container(
-                  // height: 80,
+                  height: 70,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.white.withValues(alpha: 0.5),
-                        blurRadius: 20,
-                        spreadRadius: 5,
-                      ),
-                    ],
+                    borderRadius: BorderRadius.circular(16),
                     gradient: LinearGradient(
-                      begin: Alignment.topRight,
-                      end: Alignment.bottomLeft,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                       colors: [
-                        Colors.white.withValues(alpha: 0.3),
-                        Colors.white.withValues(alpha: 0.5),
+                        Colors.white.withOpacity(0.05),
+                        Colors.black.withOpacity(0.3),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text('Feature Status',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 25,
-                              fontFamily: 'formula-bold',
-                            )),
-                        ListTile(
-                          leading: Icon(Icons.live_tv_rounded,
-                              color: Colors.white, size: 30),
-                          title: Text('Live Data',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  // fontFamily: 'formula-bold',
-                                  fontWeight: FontWeight.bold)),
-                          trailing: Icon(Icons.construction,
-                              color: Colors.blue, size: 40),
-                        ),
-                        ListTile(
-                          leading: Icon(Icons.newspaper,
-                              color: Colors.white, size: 30),
-                          title: Text('News Feed',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  // fontFamily: 'formula-bold',
-                                  fontWeight: FontWeight.bold)),
-                          trailing:
-                              Icon(Icons.error, color: Colors.red, size: 40),
-                        ),
-                        ListTile(
-                          leading:
-                              Icon(Icons.tv, color: Colors.white, size: 30),
-                          title: Text('Highlights',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  // fontFamily: 'formula-bold',
-                                  fontWeight: FontWeight.bold)),
-                          trailing:
-                              Icon(Icons.error, color: Colors.yellow, size: 40),
-                        ),
-                        ListTile(
-                          leading: Icon(Icons.calendar_month,
-                              color: Colors.white, size: 30),
-                          title: Text('Schedule',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  // fontFamily: 'formula-bold',
-                                  fontWeight: FontWeight.bold)),
-                          trailing: Icon(Icons.check_box_rounded,
-                              color: Colors.green, size: 40),
-                        ),
-                        ListTile(
-                          leading:
-                              Icon(Icons.map, color: Colors.white, size: 30),
-                          title: Text('Cicuit Viewer',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  // fontFamily: 'formula-bold',
-                                  fontWeight: FontWeight.bold)),
-                          trailing: Icon(Icons.check_box_rounded,
-                              color: Colors.green, size: 40),
-                        ),
-                        ListTile(
-                          leading: Icon(Icons.sports_motorsports,
-                              color: Colors.white, size: 30),
-                          title: Text('Driver Standings',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  // fontFamily: 'formula-bold',
-                                  fontWeight: FontWeight.bold)),
-                          trailing: Icon(Icons.check_box_rounded,
-                              color: Colors.green, size: 40),
-                        ),
-                        ListTile(
-                          leading:
-                              Icon(Icons.build, color: Colors.white, size: 30),
-                          title: Text('Constructor Standings',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  // fontFamily: 'formula-bold',
-                                  fontWeight: FontWeight.bold)),
-                          trailing: Icon(Icons.check_box_rounded,
-                              color: Colors.green, size: 40),
-                        ),
-                      ],
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.2),
+                      width: 1,
                     ),
                   ),
-                )
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const CircuitList()));
+                      },
+                      borderRadius: BorderRadius.circular(16),
+                      child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Icon(
+                              Icons.map,
+                              color: Colors.white.withOpacity(0.8),
+                              size: 32,
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                'Circuit Viewer',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'formula-bold',
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.chevron_right,
+                              color: Colors.white.withOpacity(0.7),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 40),
+                // Container(
+                //   // height: 80,
+                //   width: double.infinity,
+                //   decoration: BoxDecoration(
+                //     boxShadow: [
+                //       BoxShadow(
+                //         color: Colors.white.withValues(alpha: 0.5),
+                //         blurRadius: 20,
+                //         spreadRadius: 5,
+                //       ),
+                //     ],
+                //     gradient: LinearGradient(
+                //       begin: Alignment.topRight,
+                //       end: Alignment.bottomLeft,
+                //       colors: [
+                //         Colors.white.withValues(alpha: 0.3),
+                //         Colors.white.withValues(alpha: 0.5),
+                //       ],
+                //     ),
+                //     borderRadius: BorderRadius.circular(20),
+                //   ),
+                //   child: Padding(
+                //     padding: const EdgeInsets.all(10.0),
+                //     child: Column(
+                //       mainAxisAlignment: MainAxisAlignment.center,
+                //       children: [
+                //         Text('Feature Status',
+                //             style: TextStyle(
+                //               color: Colors.white,
+                //               fontSize: 25,
+                //               fontFamily: 'formula-bold',
+                //             )),
+                //         ListTile(
+                //           leading: Icon(Icons.live_tv_rounded,
+                //               color: Colors.white, size: 30),
+                //           title: Text('Live Data',
+                //               style: TextStyle(
+                //                   color: Colors.white,
+                //                   fontSize: 20,
+                //                   // fontFamily: 'formula-bold',
+                //                   fontWeight: FontWeight.bold)),
+                //           trailing: Icon(Icons.construction,
+                //               color: Colors.blue, size: 40),
+                //         ),
+                //         ListTile(
+                //           leading: Icon(Icons.newspaper,
+                //               color: Colors.white, size: 30),
+                //           title: Text('News Feed',
+                //               style: TextStyle(
+                //                   color: Colors.white,
+                //                   fontSize: 20,
+                //                   // fontFamily: 'formula-bold',
+                //                   fontWeight: FontWeight.bold)),
+                //           trailing:
+                //               Icon(Icons.error, color: Colors.red, size: 40),
+                //         ),
+                //         ListTile(
+                //           leading:
+                //               Icon(Icons.tv, color: Colors.white, size: 30),
+                //           title: Text('Highlights',
+                //               style: TextStyle(
+                //                   color: Colors.white,
+                //                   fontSize: 20,
+                //                   // fontFamily: 'formula-bold',
+                //                   fontWeight: FontWeight.bold)),
+                //           trailing:
+                //               Icon(Icons.error, color: Colors.yellow, size: 40),
+                //         ),
+                //         ListTile(
+                //           leading: Icon(Icons.calendar_month,
+                //               color: Colors.white, size: 30),
+                //           title: Text('Schedule',
+                //               style: TextStyle(
+                //                   color: Colors.white,
+                //                   fontSize: 20,
+                //                   // fontFamily: 'formula-bold',
+                //                   fontWeight: FontWeight.bold)),
+                //           trailing: Icon(Icons.check_box_rounded,
+                //               color: Colors.green, size: 40),
+                //         ),
+                //         ListTile(
+                //           leading:
+                //               Icon(Icons.map, color: Colors.white, size: 30),
+                //           title: Text('Cicuit Viewer',
+                //               style: TextStyle(
+                //                   color: Colors.white,
+                //                   fontSize: 20,
+                //                   // fontFamily: 'formula-bold',
+                //                   fontWeight: FontWeight.bold)),
+                //           trailing: Icon(Icons.check_box_rounded,
+                //               color: Colors.green, size: 40),
+                //         ),
+                //         ListTile(
+                //           leading: Icon(Icons.sports_motorsports,
+                //               color: Colors.white, size: 30),
+                //           title: Text('Driver Standings',
+                //               style: TextStyle(
+                //                   color: Colors.white,
+                //                   fontSize: 20,
+                //                   // fontFamily: 'formula-bold',
+                //                   fontWeight: FontWeight.bold)),
+                //           trailing: Icon(Icons.check_box_rounded,
+                //               color: Colors.green, size: 40),
+                //         ),
+                //         ListTile(
+                //           leading:
+                //               Icon(Icons.build, color: Colors.white, size: 30),
+                //           title: Text('Constructor Standings',
+                //               style: TextStyle(
+                //                   color: Colors.white,
+                //                   fontSize: 20,
+                //                   // fontFamily: 'formula-bold',
+                //                   fontWeight: FontWeight.bold)),
+                //           trailing: Icon(Icons.check_box_rounded,
+                //               color: Colors.green, size: 40),
+                //         ),
+                //       ],
+                //     ),
+                //   ),
+                // )
               ]),
             ),
           ),

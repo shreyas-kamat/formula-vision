@@ -4,14 +4,16 @@ import 'package:formulavision/data/models/jolpica/drivers.model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class DriversStandingsPage extends StatefulWidget {
-  const DriversStandingsPage({super.key});
+  final Function(String year, bool isPreviousYear)? onYearChanged;
+
+  const DriversStandingsPage({super.key, this.onYearChanged});
 
   @override
   State<DriversStandingsPage> createState() => _DriversStandingsPageState();
 }
 
 class _DriversStandingsPageState extends State<DriversStandingsPage> {
-  late Future<DriverStandingsResponse> _standingsFuture;
+  late Future<StandingsWithYear<DriverStandingsResponse>> _standingsFuture;
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       GlobalKey<RefreshIndicatorState>();
 
@@ -23,7 +25,6 @@ class _DriversStandingsPageState extends State<DriversStandingsPage> {
 
   // Helper function to get correct driver image ID format
   String getDriverImageId(String driverId, String familyName) {
-    List driverParts = driverId.split('_');
     // F1 typically uses lowercase last name for image URLs
     if (driverId.contains('_')) {
       return driverId.split('_')[1].toLowerCase();
@@ -65,7 +66,7 @@ class _DriversStandingsPageState extends State<DriversStandingsPage> {
               // ],
               color: const Color.fromRGBO(255, 255, 255, 0.01),
             ),
-            child: FutureBuilder<DriverStandingsResponse>(
+            child: FutureBuilder<StandingsWithYear<DriverStandingsResponse>>(
               future: _standingsFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -97,9 +98,18 @@ class _DriversStandingsPageState extends State<DriversStandingsPage> {
                   );
                 }
 
+                final standingsWithYear = snapshot.data!;
                 final driverStandings =
-                    getSortedDriverStandings(snapshot.data!);
+                    getSortedDriverStandings(standingsWithYear.data);
                 final constructorColors = getConstructorColors();
+
+                // Call the callback to update parent with year info
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  widget.onYearChanged?.call(
+                    standingsWithYear.year,
+                    standingsWithYear.isPreviousYear,
+                  );
+                });
 
                 return ListView.builder(
                   padding: const EdgeInsets.symmetric(vertical: 12.0),

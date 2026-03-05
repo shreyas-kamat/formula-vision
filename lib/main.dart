@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:formulavision/auth/login_page.dart';
-import 'package:formulavision/data/functions/auth.function.dart';
-import 'package:formulavision/data/services/auth_service.dart';
+// import 'package:formulavision/auth/login_page.dart';
+// import 'package:formulavision/data/functions/auth.function.dart';
+// import 'package:formulavision/data/services/auth_service.dart';
 import 'package:formulavision/pages/nav_page.dart';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
 
-  await AuthService().initialize();
+  // await AuthService().initialize();
   runApp(const MyApp());
 }
 

@@ -53,6 +53,7 @@ dependencies:
   flutter_dotenv: ^5.2.1
   jwt_decoder: ^2.0.1
   archive: ^4.0.7
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
@@ -78,6 +79,7 @@ flutter:
     - .env
 
     - assets/logo/MainLogo.png
+    - assets/logo/GitHub_Invertocat_White.png
 
   # Maps to the assets directory: https://api.multiviewer.app/api/v1/circuits/${circuitKey}/${year}
     - assets/Formula_2025.json

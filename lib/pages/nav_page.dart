@@ -26,6 +26,7 @@ class _NavPageState extends State<NavPage> {
     DashAuth(),
     SchedulePage(),
     StandingsPage(),
+    // TestPage(),
   ];
 
   @override
@@ -73,6 +74,11 @@ class _NavPageState extends State<NavPage> {
                 title: Text('Standings'),
                 activeColor: Colors.redAccent,
                 inactiveColor: Colors.white),
+            // FlashyTabBarItem(
+            //     icon: Icon(Icons.bug_report),
+            //     title: Text('Testing'),
+            //     activeColor: Colors.redAccent,
+            //     inactiveColor: Colors.white),
           ],
         ),
       ),

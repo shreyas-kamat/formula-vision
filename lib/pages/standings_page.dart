@@ -10,6 +10,16 @@ class StandingsPage extends StatefulWidget {
 }
 
 class _StandingsPageState extends State<StandingsPage> {
+  String _displayYear = '';
+  bool _isPreviousYear = false;
+
+  void _updateYearInfo(String year, bool isPreviousYear) {
+    setState(() {
+      _displayYear = year;
+      _isPreviousYear = isPreviousYear;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -37,13 +47,39 @@ class _StandingsPageState extends State<StandingsPage> {
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text(
-                    'STANDINGS',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 30,
-                      fontFamily: 'formula-bold',
-                    ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'STANDINGS',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 30,
+                          fontFamily: 'formula-bold',
+                        ),
+                      ),
+                      if (_displayYear.isNotEmpty) ...[
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10.0, vertical: 4.0),
+                          decoration: BoxDecoration(
+                            color: _isPreviousYear
+                                ? Colors.amber.withOpacity(0.8)
+                                : Colors.green.withOpacity(0.8),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            _displayYear,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
                 const SizedBox(height: 30), // Add some spacing
@@ -123,8 +159,12 @@ class _StandingsPageState extends State<StandingsPage> {
                         Expanded(
                           child: TabBarView(
                             children: [
-                              DriversStandingsPage(),
-                              ContructorsStandingsPage(),
+                              DriversStandingsPage(
+                                onYearChanged: _updateYearInfo,
+                              ),
+                              ContructorsStandingsPage(
+                                onYearChanged: _updateYearInfo,
+                              ),
                             ],
                           ),
                         ),

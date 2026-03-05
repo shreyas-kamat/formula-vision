@@ -4,7 +4,9 @@ import 'package:formulavision/data/models/jolpica/constructors.model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class ContructorsStandingsPage extends StatefulWidget {
-  const ContructorsStandingsPage({super.key});
+  final Function(String year, bool isPreviousYear)? onYearChanged;
+
+  const ContructorsStandingsPage({super.key, this.onYearChanged});
 
   @override
   State<ContructorsStandingsPage> createState() =>
@@ -12,7 +14,7 @@ class ContructorsStandingsPage extends StatefulWidget {
 }
 
 class _ContructorsStandingsPageState extends State<ContructorsStandingsPage> {
-  late Future<ConstructorStandingsResponse> _standingsFuture;
+  late Future<StandingsWithYear<ConstructorStandingsResponse>> _standingsFuture;
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       GlobalKey<RefreshIndicatorState>();
 
@@ -78,7 +80,8 @@ class _ContructorsStandingsPageState extends State<ContructorsStandingsPage> {
               // ],
               color: const Color.fromRGBO(255, 255, 255, 0.01),
             ),
-            child: FutureBuilder<ConstructorStandingsResponse>(
+            child:
+                FutureBuilder<StandingsWithYear<ConstructorStandingsResponse>>(
               future: _standingsFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -107,9 +110,18 @@ class _ContructorsStandingsPageState extends State<ContructorsStandingsPage> {
                           style: TextStyle(color: Colors.white)));
                 }
 
+                final standingsWithYear = snapshot.data!;
                 final constructorStandings =
-                    getSortedConstructorStandings(snapshot.data!);
+                    getSortedConstructorStandings(standingsWithYear.data);
                 final constructorColors = getConstructorColors();
+
+                // Call the callback to update parent with year info
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  widget.onYearChanged?.call(
+                    standingsWithYear.year,
+                    standingsWithYear.isPreviousYear,
+                  );
+                });
 
                 return ListView.builder(
                   padding: const EdgeInsets.symmetric(vertical: 12.0),
