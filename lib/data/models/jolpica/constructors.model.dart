@@ -130,14 +130,14 @@ class StandingsList {
 }
 
 class ConstructorStanding {
-  final String position;
+  final String? position;
   final String positionText;
   final String points;
   final String wins;
   final Constructor constructor;
 
   ConstructorStanding({
-    required this.position,
+    this.position,
     required this.positionText,
     required this.points,
     required this.wins,

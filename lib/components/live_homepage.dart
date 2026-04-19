@@ -276,22 +276,19 @@ class _LiveHomePageState extends State<LiveHomePage> {
                               height: 430,
                               width: double.infinity,
                               decoration: BoxDecoration(
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withValues(alpha: 0.3),
-                                    blurRadius: 20,
-                                    spreadRadius: 5,
-                                  ),
-                                ],
+                                borderRadius: BorderRadius.circular(20),
                                 gradient: LinearGradient(
-                                  begin: Alignment.topRight,
-                                  end: Alignment.bottomLeft,
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
                                   colors: [
-                                    Colors.white.withValues(alpha: 0.4),
-                                    Colors.white.withValues(alpha: 0.8),
+                                    Colors.white.withOpacity(0.05),
+                                    Colors.black.withOpacity(0.3),
                                   ],
                                 ),
-                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.2),
+                                  width: 1,
+                                ),
                               ),
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(

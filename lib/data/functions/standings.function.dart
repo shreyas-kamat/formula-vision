@@ -416,9 +416,12 @@ List<ConstructorStanding> getSortedConstructorStandings(
   final standings = List<ConstructorStanding>.from(
       data.mRData.standingsTable.standingsLists[0].constructorStandings);
 
-  // Sort by position (numeric value)
-  standings
-      .sort((a, b) => int.parse(a.position).compareTo(int.parse(b.position)));
+  // Sort by position (numeric value), handling null positions (constructors with no points)
+  standings.sort((a, b) {
+    final posA = a.position != null ? int.parse(a.position!) : 999;
+    final posB = b.position != null ? int.parse(b.position!) : 999;
+    return posA.compareTo(posB);
+  });
 
   return standings;
 }
@@ -432,9 +435,12 @@ List<DriverStanding> getSortedDriverStandings(DriverStandingsResponse data) {
   final standings = List<DriverStanding>.from(
       data.mRData.standingsTable.standingsLists[0].driverStandings);
 
-  // Sort by position (numeric value)
-  standings
-      .sort((a, b) => int.parse(a.position).compareTo(int.parse(b.position)));
+  // Sort by position (numeric value), handling null positions (drivers with no points)
+  standings.sort((a, b) {
+    final posA = a.position != null ? int.parse(a.position!) : 999;
+    final posB = b.position != null ? int.parse(b.position!) : 999;
+    return posA.compareTo(posB);
+  });
 
   return standings;
 }

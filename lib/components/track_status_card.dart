@@ -12,81 +12,122 @@ class TrackStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final statusColor = _getStatusIndicatorColor(status);
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Colors.grey[900]!,
-            Colors.grey[800]!,
+            Colors.white.withOpacity(0.05),
+            Colors.white.withOpacity(0.02),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.5),
+            color: statusColor.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
             blurRadius: 10,
-            offset: const Offset(0, 5),
+            offset: const Offset(0, 4),
           ),
         ],
+        border: Border.all(
+          color: Colors.white.withOpacity(0.08),
+          width: 1,
+        ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Column(
           children: [
-            // Header with subtle accent
+            // Header with accent bar
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.grey[850]!,
-                    Colors.grey[800]!,
+                    statusColor.withOpacity(0.08),
+                    statusColor.withOpacity(0.04),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 border: Border(
+                  bottom: BorderSide(
+                    color: statusColor.withOpacity(0.2),
+                    width: 2,
+                  ),
                   left: BorderSide(
-                    color: _getStatusIndicatorColor(status).withOpacity(0.8),
-                    width: 4,
+                    color: statusColor.withOpacity(0.6),
+                    width: 5,
                   ),
                 ),
               ),
               child: Row(
                 children: [
-                  Icon(
-                    _getStatusIcon(status),
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'TRACK STATUS',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: statusColor.withOpacity(0.25),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Icon(
+                      _getStatusIcon(status),
+                      color: statusColor,
+                      size: 24,
                     ),
                   ),
-                  const Spacer(),
-                  // Live status indicator
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'TRACK STATUS',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          status.toUpperCase(),
+                          style: TextStyle(
+                            color: statusColor,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Live status indicator with pulse effect
                   Container(
-                    width: 8,
-                    height: 8,
+                    width: 12,
+                    height: 12,
                     decoration: BoxDecoration(
-                      color: _getStatusIndicatorColor(status),
+                      color: statusColor,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color:
-                              _getStatusIndicatorColor(status).withOpacity(0.5),
-                          blurRadius: 4,
-                          spreadRadius: 1,
+                          color: statusColor.withOpacity(0.4),
+                          blurRadius: 8,
+                          spreadRadius: 2,
                         ),
                       ],
                     ),
@@ -97,33 +138,25 @@ class TrackStatusCard extends StatelessWidget {
 
             // Track status details
             Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  // Current status section
-                  Expanded(
-                    child: _buildStatusSection(
-                      'CURRENT STATUS',
+              padding: const EdgeInsets.all(20.0),
+              child: message.isNotEmpty
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildStatusBadge(
+                          'STATUS',
+                          status.toUpperCase(),
+                          statusColor,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildMessageSection(message),
+                      ],
+                    )
+                  : _buildStatusBadge(
+                      'STATUS',
                       status.toUpperCase(),
-                      Icons.flag_circle,
-                      _getStatusIndicatorColor(status),
+                      statusColor,
                     ),
-                  ),
-                  if (message.isNotEmpty) ...[
-                    const SizedBox(width: 16),
-                    // Status message section
-                    Expanded(
-                      flex: 2,
-                      child: _buildStatusSection(
-                        'INFORMATION',
-                        message,
-                        Icons.info_outline,
-                        Colors.blue[300]!,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
             ),
           ],
         ),
@@ -131,50 +164,102 @@ class TrackStatusCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusSection(
-      String label, String value, IconData icon, Color iconColor) {
+  Widget _buildStatusBadge(String label, String value, Color statusColor) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.black26,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey[800]!, width: 1),
+        color: statusColor.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: statusColor.withOpacity(0.2),
+          width: 1.5,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(
-                icon,
-                color: iconColor,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-            ],
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.grey[400],
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.5,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             value,
             style: TextStyle(
-              color: label == 'CURRENT STATUS' ? iconColor : Colors.white,
-              fontSize: 14,
+              color: statusColor,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
-              height: 1.4,
+              letterSpacing: 0.5,
             ),
-            maxLines: label == 'INFORMATION' ? 3 : 1,
-            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageSection(String message) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.amber.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.amber.withOpacity(0.15),
+          width: 1.5,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.amber.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: Colors.amber.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: Icon(
+              Icons.info_outline,
+              color: Colors.amber[300],
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Additional Information',
+                  style: TextStyle(
+                    color: Colors.grey[300],
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  message,
+                  style: TextStyle(
+                    color: Colors.grey[100],
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    height: 1.5,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ],
       ),
