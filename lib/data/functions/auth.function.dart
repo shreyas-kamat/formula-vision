@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:formulavision/auth/email_verification.dart';
+import 'package:formulavision/data/services/app_settings_service.dart';
 import 'package:formulavision/auth/login_page.dart';
 // import 'package:formulavision/data/services/auth_service.dart';
 import 'package:formulavision/pages/nav_page.dart';
@@ -10,7 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jwt_decoder/jwt_decoder.dart'; // Add this dependency
 
 Future<void> login(BuildContext context, String email, String password) async {
-  var url = Uri.parse('${dotenv.env['API_URL']}/api/v1/auth/login-email');
+  final apiUrl = await AppSettings.getApiUrl();
+  var url = Uri.parse('$apiUrl/api/v1/auth/login-email');
   var response = await http.post(
     url,
     headers: <String, String>{
@@ -67,7 +68,8 @@ Future<void> login(BuildContext context, String email, String password) async {
 }
 
 Future<bool> checkTokenValidity(String token) async {
-  var url = Uri.parse('${dotenv.env['API_URL']}/api/v1/auth/validate');
+  final apiUrl = await AppSettings.getApiUrl();
+  var url = Uri.parse('$apiUrl/api/v1/auth/validate');
   var response = await http.get(
     url,
     headers: <String, String>{
@@ -101,7 +103,8 @@ Future<bool> isLoggedIn() async {
 }
 
 Future<void> forgotPassword(BuildContext context, String email) async {
-  var url = Uri.parse('${dotenv.env['API_URL']}/api/v1/auth/forgot-password');
+  final apiUrl = await AppSettings.getApiUrl();
+  var url = Uri.parse('$apiUrl/api/v1/auth/forgot-password');
   var response = await http.post(
     url,
     headers: <String, String>{
@@ -132,7 +135,8 @@ Future<void> forgotPassword(BuildContext context, String email) async {
 
 Future<void> resetPassword(
     BuildContext context, String email, String otp, String newPassword) async {
-  var url = Uri.parse('${dotenv.env['API_URL']}/api/v1/auth/reset-password');
+  final apiUrl = await AppSettings.getApiUrl();
+  var url = Uri.parse('$apiUrl/api/v1/auth/reset-password');
   var response = await http.post(
     url,
     headers: <String, String>{
@@ -172,7 +176,8 @@ Future<void> getCurrentUserData(BuildContext context) async {
     return;
   }
 
-  var url = Uri.parse('${dotenv.env['API_URL']}/api/v1/users/$userId');
+  final apiUrl = await AppSettings.getApiUrl();
+  var url = Uri.parse('$apiUrl/api/v1/users/$userId');
   var response = await http.get(
     url,
     headers: <String, String>{
@@ -207,7 +212,8 @@ Future<void> getCurrentUserData(BuildContext context) async {
 
 Future<void> register(BuildContext context, String firstName, String lastName,
     String username, String email, String password) async {
-  var url = Uri.parse('${dotenv.env['API_URL']}/api/v1/auth/register');
+  final apiUrl = await AppSettings.getApiUrl();
+  var url = Uri.parse('$apiUrl/api/v1/auth/register');
   var response = await http.post(
     url,
     headers: <String, String>{
@@ -243,8 +249,8 @@ Future<void> register(BuildContext context, String firstName, String lastName,
 }
 
 Future<void> verifyEmail(BuildContext context, String email) async {
-  var url =
-      Uri.parse('${dotenv.env['API_URL']}/api/v1/auth/send-verification-email');
+  final apiUrl = await AppSettings.getApiUrl();
+  var url = Uri.parse('$apiUrl/api/v1/auth/send-verification-email');
   var response = await http.post(
     url,
     headers: <String, String>{
@@ -283,7 +289,8 @@ Future<bool> refreshToken() async {
     return false;
   }
 
-  var url = Uri.parse('${dotenv.env['API_URL']}/api/v1/auth/refresh-token');
+  final apiUrl = await AppSettings.getApiUrl();
+  var url = Uri.parse('$apiUrl/api/v1/auth/refresh-token');
   var response = await http.post(
     url,
     headers: <String, String>{

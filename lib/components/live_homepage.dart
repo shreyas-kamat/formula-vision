@@ -2,13 +2,13 @@ import 'dart:convert';
 // import 'package:formulavision/auth/login_page.dart';
 // import 'package:formulavision/data/functions/auth.function.dart';
 import 'package:formulavision/pages/circuit_list.dart';
+import 'package:formulavision/pages/settings_page.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:formulavision/data/functions/live_data.function.dart';
 import 'package:formulavision/data/models/live_data.model.dart';
+import 'package:formulavision/data/services/app_settings_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class LiveHomePage extends StatefulWidget {
   const LiveHomePage({super.key});
@@ -78,8 +78,9 @@ class _LiveHomePageState extends State<LiveHomePage> {
     try {
       // final prefs = await SharedPreferences.getInstance();
       // final String? token = prefs.getString('jwt_token');
+      final apiUrl = await AppSettings.getApiUrl();
       final response = await http.get(
-        Uri.parse('${dotenv.env['API_URL']}/initialData'),
+        Uri.parse('$apiUrl/initialData'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
           // 'Authorization': 'Bearer $token',
@@ -184,63 +185,30 @@ class _LiveHomePageState extends State<LiveHomePage> {
                       // Action Buttons
                       Row(
                         children: [
-                          // Notifications
-                          // Container(
-                          //   decoration: BoxDecoration(
-                          //     shape: BoxShape.circle,
-                          //     color: Colors.white.withOpacity(0.1),
-                          //   ),
-                          //   child: Material(
-                          //     color: Colors.transparent,
-                          //     child: InkWell(
-                          //       onTap: () {
-                          //         // TODO: Add notifications handler
-                          //       },
-                          //       customBorder: CircleBorder(),
-                          //       child: Padding(
-                          //         padding: EdgeInsets.all(10),
-                          //         child: Icon(
-                          //           Icons.notifications_outlined,
-                          //           color: Colors.white,
-                          //           size: 22,
-                          //         ),
-                          //       ),
-                          //     ),
-                          //   ),
-                          // ),
-                          // SizedBox(width: 12),
-                          // GitHub Info Button
+                          // Settings Button
                           Container(
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Colors.white.withOpacity(0.1),
+                              color: Colors.white.withValues(alpha: 0.1),
                             ),
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                onTap: () async {
-                                  try {
-                                    final Uri url = Uri.parse(
-                                        'https://github.com/shreyas-kamat/formula-vision');
-                                    await launchUrl(url,
-                                        mode: LaunchMode.externalApplication);
-                                  } catch (e) {
-                                    print('Error launching URL: $e');
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(
-                                              'Could not open GitHub link')),
-                                    );
-                                  }
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const SettingsPage()),
+                                  );
                                 },
                                 customBorder: CircleBorder(),
                                 child: Padding(
-                                  padding: EdgeInsets.all(8),
-                                  child: Image.asset(
-                                    'assets/logo/GitHub_Invertocat_White.png',
-                                    width: 26,
-                                    height: 26,
-                                    fit: BoxFit.contain,
+                                  padding: EdgeInsets.all(10),
+                                  child: Icon(
+                                    Icons.settings_outlined,
+                                    color: Colors.white,
+                                    size: 22,
                                   ),
                                 ),
                               ),

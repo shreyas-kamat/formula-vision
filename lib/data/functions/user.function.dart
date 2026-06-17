@@ -1,6 +1,6 @@
 // All Imports
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:formulavision/data/services/app_settings_service.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -10,7 +10,8 @@ Future<int> setFieldValue(String field, double value) async {
   String? bearer = prefs.getString('jwt_token');
   String? userId = prefs.getString('user_id');
 
-  var url = Uri.parse('${dotenv.env['API_URL']}/api/v1/users/$userId/$field');
+  final apiUrl = await AppSettings.getApiUrl();
+  var url = Uri.parse('$apiUrl/api/v1/users/$userId/$field');
   var response = await http.put(
     url,
     headers: <String, String>{
@@ -37,8 +38,8 @@ Future<double> fetchCurrentBalance() async {
   String? bearer = prefs.getString('jwt_token');
   String? userId = prefs.getString('user_id');
 
-  var url = Uri.parse(
-      '${dotenv.env['API_URL']}/api/v1/users/$userId/current_balance');
+  final apiUrl = await AppSettings.getApiUrl();
+  var url = Uri.parse('$apiUrl/api/v1/users/$userId/current_balance');
   var response = await http.get(
     url,
     headers: <String, String>{
@@ -63,8 +64,8 @@ Future<double> fetchLastTransaction() async {
   String? bearer = prefs.getString('jwt_token');
   String? userId = prefs.getString('user_id');
 
-  var url = Uri.parse(
-      '${dotenv.env['API_URL']}/api/v1/transactions/last?userId=$userId');
+  final apiUrl = await AppSettings.getApiUrl();
+  var url = Uri.parse('$apiUrl/api/v1/transactions/last?userId=$userId');
   var response = await http.get(
     url,
     headers: <String, String>{
@@ -92,8 +93,8 @@ Future<void> updateBalance(String userId, double amount, bool isDebit) async {
       ? await fetchCurrentBalance() - amount
       : await fetchCurrentBalance() + amount;
 
-  var url =
-      Uri.parse('${dotenv.env['API_URL']}/api/v1/users/1/current_balance');
+  final apiUrl = await AppSettings.getApiUrl();
+  var url = Uri.parse('$apiUrl/api/v1/users/1/current_balance');
   var response = await http.put(
     url,
     headers: <String, String>{

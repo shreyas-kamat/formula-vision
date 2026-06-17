@@ -3,8 +3,8 @@ import 'dart:async';
 import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:formulavision/data/services/app_settings_service.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:formulavision/components/driver_row_card.dart';
 import 'package:formulavision/components/race_timer_bar.dart';
@@ -118,8 +118,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
     try {
       // final prefs = await SharedPreferences.getInstance();
       // final String? token = prefs.getString('jwt_token');
+      final apiUrl = await AppSettings.getApiUrl();
       final response = await http.get(
-        Uri.parse('${dotenv.env['API_URL']}/initialData'),
+        Uri.parse('$apiUrl/initialData'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
           // 'Authorization': 'Bearer $token',
@@ -179,9 +180,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
     try {
       // Negotiate connection with simulation parameter
+      final apiUrl = await AppSettings.getApiUrl();
       final response = await http.get(
-        Uri.parse(
-            '${dotenv.env['API_URL']}/negotiate?simulation=$_useSimulation'),
+        Uri.parse('$apiUrl/negotiate?simulation=$_useSimulation'),
       );
 
       if (response.statusCode == 200) {
@@ -204,8 +205,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
   // Custom SSE client implementation
   Future<void> _connectSSE() async {
     try {
+      final apiUrl = await AppSettings.getApiUrl();
       final sseUrl =
-          '${dotenv.env['API_URL']}/events${_useSimulation ? '?simulation=true' : ''}';
+          '$apiUrl/events${_useSimulation ? '?simulation=true' : ''}';
       print('Connecting to SSE endpoint: $sseUrl');
 
       // Create a client that doesn't automatically close the connection
