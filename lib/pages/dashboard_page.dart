@@ -3,10 +3,12 @@ import 'dart:async';
 import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:formulavision/data/services/app_settings_service.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:formulavision/components/driver_row_card.dart';
+import 'package:formulavision/components/race_control_toast.dart';
 import 'package:formulavision/components/race_timer_bar.dart';
 import 'package:formulavision/components/weather_info_card.dart';
 import 'package:formulavision/components/track_status_card.dart';
@@ -80,12 +82,26 @@ class _TelemetryPageState extends State<TelemetryPage> {
   bool _isHeaderPinned = true; // Track if header is pinned
   bool _isRaceTimerPinned = false; // Track if race timer bar is pinned
 
+  // Race control message alerts
+  final AudioPlayer _rcAudioPlayer = AudioPlayer();
+  int _lastSeenRaceControlCount = 0;
+  bool _raceControlSeeded = false;
+  bool _raceControlSoundEnabled = true;
+
   @override
   void initState() {
     super.initState();
     _initialize();
+    _loadRaceControlSoundSetting();
     final data = decompressCarData();
     print(data);
+  }
+
+  Future<void> _loadRaceControlSoundSetting() async {
+    final enabled = await AppSettings.isRaceControlSoundEnabled();
+    if (mounted) {
+      setState(() => _raceControlSoundEnabled = enabled);
+    }
   }
 
   Future<void> _initialize() async {
@@ -106,6 +122,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
     _delayTimer?.cancel(); // Clean up delay timer
     _messageQueue.clear(); // Clear any queued messages
     _liveDataController.close(); // Close the StreamController
+    _rcAudioPlayer.dispose(); // Release the alert audio player
     super.dispose();
   }
 
@@ -167,6 +184,10 @@ class _TelemetryPageState extends State<TelemetryPage> {
               _positionChanges[racingNumber] = 'same';
             });
           }
+          // Seed race control marker so historical messages don't toast.
+          _lastSeenRaceControlCount =
+              liveData.raceControlMessages?.messages.length ?? 0;
+          _raceControlSeeded = true;
         }
       });
     }
@@ -452,12 +473,19 @@ class _TelemetryPageState extends State<TelemetryPage> {
                   print('TimingData Updated Successfully');
                   break;
 
-                // case 'TimingAppData':
-                //   setState(() {
-                //     _updateTimingAppData(updated);
-                //   });
-                //   print('TimingAppData Updated Successfully');
-                //   break;
+                case 'TimingAppData':
+                  setState(() {
+                    _updateTimingAppData(updated);
+                  });
+                  print('TimingAppData Updated Successfully');
+                  break;
+
+                case 'RaceControlMessages':
+                  setState(() {
+                    _updateRaceControlMessages(updated);
+                  });
+                  print('RaceControlMessages Updated Successfully');
+                  break;
 
                 case 'DriverList':
                   setState(() {
@@ -721,6 +749,223 @@ class _TelemetryPageState extends State<TelemetryPage> {
     print('Position changes: $_positionChanges');
   }
 
+  /// Merges incoming sector data (List or index-keyed Map) into [sectors],
+  /// preserving fields and segments that aren't present in the delta.
+  void _mergeSectors(List<Sector> sectors, dynamic raw) {
+    void applySector(int index, Map<String, dynamic> sjson) {
+      final Sector? prev = index < sectors.length ? sectors[index] : null;
+      final List<Segment> segments =
+          prev != null ? List<Segment>.from(prev.segments) : <Segment>[];
+      if (sjson.containsKey('Segments')) {
+        _mergeSegments(segments, sjson['Segments']);
+      }
+      final merged = Sector(
+        stopped: sjson['Stopped'] ?? prev?.stopped ?? false,
+        value: sjson['Value'] ?? prev?.value ?? '',
+        status: sjson['Status'] ?? prev?.status ?? 0,
+        overallFastest: sjson['OverallFastest'] ?? prev?.overallFastest ?? false,
+        personalFastest:
+            sjson['PersonalFastest'] ?? prev?.personalFastest ?? false,
+        previousValue: sjson['PreviousValue'] ?? prev?.previousValue ?? '',
+        segments: segments,
+      );
+      if (index < sectors.length) {
+        sectors[index] = merged;
+      } else {
+        while (sectors.length < index) {
+          sectors.add(Sector(
+            stopped: false,
+            value: '',
+            status: 0,
+            overallFastest: false,
+            personalFastest: false,
+            segments: const [],
+          ));
+        }
+        sectors.add(merged);
+      }
+    }
+
+    if (raw is List) {
+      for (int i = 0; i < raw.length; i++) {
+        if (raw[i] is Map) applySector(i, Map<String, dynamic>.from(raw[i]));
+      }
+    } else if (raw is Map) {
+      raw.forEach((k, v) {
+        final idx = int.tryParse(k.toString());
+        if (idx != null && v is Map) {
+          applySector(idx, Map<String, dynamic>.from(v));
+        }
+      });
+    }
+  }
+
+  /// Merges incoming segment data (List or index-keyed Map) into [segments].
+  void _mergeSegments(List<Segment> segments, dynamic raw) {
+    void applySegment(int index, Map<String, dynamic> sjson) {
+      final status = sjson['Status'] ??
+          (index < segments.length ? segments[index].status : 0);
+      if (index < segments.length) {
+        segments[index] = Segment(status: status);
+      } else {
+        while (segments.length < index) {
+          segments.add(Segment(status: 0));
+        }
+        segments.add(Segment(status: status));
+      }
+    }
+
+    if (raw is List) {
+      for (int i = 0; i < raw.length; i++) {
+        if (raw[i] is Map) applySegment(i, Map<String, dynamic>.from(raw[i]));
+      }
+    } else if (raw is Map) {
+      raw.forEach((k, v) {
+        final idx = int.tryParse(k.toString());
+        if (idx != null && v is Map) {
+          applySegment(idx, Map<String, dynamic>.from(v));
+        }
+      });
+    }
+  }
+
+  /// Merges incoming TimingAppData (tyre stints) into the live data. The feed
+  /// sends stints either as a List (snapshot) or a Map keyed by stint index
+  /// (delta), so we merge by index to preserve prior stints.
+  void _updateTimingAppData(dynamic data) {
+    if (data is! Map<String, dynamic>) return;
+    if (data.isEmpty || data['Lines'] is! Map) return;
+    if (_liveDataFuture == null) return;
+
+    _liveDataFuture = _liveDataFuture!.then((liveDataList) {
+      if (liveDataList.isEmpty) return liveDataList;
+      final currentLiveData = liveDataList[0];
+      final Map<String, TimingAppDataDriver> currentLines =
+          Map<String, TimingAppDataDriver>.from(
+              currentLiveData.timingAppData?.lines ?? {});
+
+      final linesData = data['Lines'] as Map<String, dynamic>;
+      linesData.forEach((racingNumber, driverData) {
+        if (driverData is! Map<String, dynamic>) return;
+        final existing = currentLines[racingNumber];
+        final List<Stint> mergedStints =
+            existing != null ? List<Stint>.from(existing.stints) : <Stint>[];
+
+        void applyStint(int index, Map<String, dynamic> sjson) {
+          final prev = index < mergedStints.length ? mergedStints[index] : null;
+          final merged = Stint(
+            totalLaps: sjson['TotalLaps'] ?? prev?.totalLaps,
+            compound: sjson['Compound'] ?? prev?.compound,
+            isNew: sjson['New'] ?? prev?.isNew,
+          );
+          if (index < mergedStints.length) {
+            mergedStints[index] = merged;
+          } else {
+            while (mergedStints.length < index) {
+              mergedStints.add(Stint());
+            }
+            mergedStints.add(merged);
+          }
+        }
+
+        final stintsRaw = driverData['Stints'];
+        if (stintsRaw is List) {
+          for (int i = 0; i < stintsRaw.length; i++) {
+            if (stintsRaw[i] is Map) {
+              applyStint(i, Map<String, dynamic>.from(stintsRaw[i]));
+            }
+          }
+        } else if (stintsRaw is Map) {
+          stintsRaw.forEach((k, v) {
+            final idx = int.tryParse(k.toString());
+            if (idx != null && v is Map) {
+              applyStint(idx, Map<String, dynamic>.from(v));
+            }
+          });
+        }
+
+        currentLines[racingNumber] = TimingAppDataDriver(
+          racingNumber: driverData['RacingNumber'] ??
+              existing?.racingNumber ??
+              racingNumber,
+          stints: mergedStints,
+          line: driverData['Line'] ?? existing?.line ?? 0,
+          gridPos: driverData['GridPos'] ?? existing?.gridPos ?? '',
+        );
+      });
+
+      currentLiveData.timingAppData = TimingAppData(lines: currentLines);
+      return liveDataList;
+    }).then((liveDataList) {
+      if (!_liveDataController.isClosed) {
+        _liveDataController.add(liveDataList);
+      }
+      return liveDataList;
+    });
+  }
+
+  /// Merges incoming race control messages and triggers a toast (and, for
+  /// important categories, the alert sound) for any newly-arrived message.
+  void _updateRaceControlMessages(dynamic data) {
+    if (data is! Map<String, dynamic>) return;
+    final incoming = RaceControlMessages.fromJson(data);
+    if (incoming.messages.isEmpty) return;
+    if (_liveDataFuture == null) return;
+
+    _liveDataFuture = _liveDataFuture!.then((liveDataList) {
+      if (liveDataList.isEmpty) return liveDataList;
+      final currentLiveData = liveDataList[0];
+      final existing =
+          currentLiveData.raceControlMessages?.messages ?? <Message>[];
+
+      final List<Message> merged = List<Message>.from(existing);
+      for (final m in incoming.messages) {
+        final dup =
+            merged.any((e) => e.utc == m.utc && e.message == m.message);
+        if (!dup) merged.add(m);
+      }
+      currentLiveData.raceControlMessages =
+          RaceControlMessages(messages: merged);
+
+      if (!_raceControlSeeded) {
+        _lastSeenRaceControlCount = merged.length;
+        _raceControlSeeded = true;
+      } else if (merged.length > _lastSeenRaceControlCount) {
+        final newMessages = merged.sublist(_lastSeenRaceControlCount);
+        _lastSeenRaceControlCount = merged.length;
+        _alertRaceControl(newMessages);
+      }
+      return liveDataList;
+    }).then((liveDataList) {
+      if (!_liveDataController.isClosed) {
+        _liveDataController.add(liveDataList);
+      }
+      return liveDataList;
+    });
+  }
+
+  void _alertRaceControl(List<Message> messages) {
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    bool playSound = false;
+    for (final m in messages) {
+      messenger?.showSnackBar(RaceControlToast.buildSnackBar(m));
+      if (RaceControlToast.isImportant(m)) playSound = true;
+    }
+    if (playSound && _raceControlSoundEnabled) {
+      _playRaceControlSound();
+    }
+  }
+
+  Future<void> _playRaceControlSound() async {
+    try {
+      await _rcAudioPlayer.stop();
+      await _rcAudioPlayer.play(AssetSource('TeamRadioF1FX.wav'));
+    } catch (e) {
+      print('Error playing race control sound: $e');
+    }
+  }
+
   void _updateTimingData(dynamic data) {
     if (data is Map<String, dynamic>) {
       print('Updating timing data with: ${data.keys.toList()}');
@@ -742,6 +987,11 @@ class _TelemetryPageState extends State<TelemetryPage> {
                 Map<String, TimingDataDriver> currentLines =
                     currentLiveData.timingData?.lines ?? {};
 
+                // Snapshot positions from the previous update cycle so that
+                // _updatePositionChanges() compares this cycle against the last
+                // (single source of truth = live timing position).
+                _previousPositions = Map.from(_currentPositions);
+
                 // Process each driver's timing data
                 final linesData = data['Lines'] as Map<String, dynamic>;
                 linesData.forEach((racingNumber, driverData) {
@@ -749,44 +999,15 @@ class _TelemetryPageState extends State<TelemetryPage> {
                     // Create or update the driver's timing data
                     final currentDriverData = currentLines[racingNumber];
 
-                    // Process sectors if available
-                    List<Sector> updatedSectors = [];
-                    if (driverData.containsKey('Sectors') &&
-                        driverData['Sectors'] is List) {
-                      final sectorsData = driverData['Sectors'] as List;
-                      for (int i = 0; i < sectorsData.length; i++) {
-                        final sectorData = sectorsData[i];
-                        if (sectorData is Map<String, dynamic>) {
-                          // Create updated sector with segments if available
-                          List<Segment> updatedSegments = [];
-                          if (sectorData.containsKey('Segments') &&
-                              sectorData['Segments'] is List) {
-                            final segmentsData = sectorData['Segments'] as List;
-                            for (var segmentData in segmentsData) {
-                              if (segmentData is Map<String, dynamic>) {
-                                updatedSegments.add(Segment(
-                                  status: segmentData['Status'] ?? 0,
-                                ));
-                              }
-                            }
-                          }
-
-                          updatedSectors.add(Sector(
-                            stopped: sectorData['Stopped'] ?? false,
-                            value: sectorData['Value'] ?? '',
-                            status: sectorData['Status'] ?? 0,
-                            overallFastest:
-                                sectorData['OverallFastest'] ?? false,
-                            personalFastest:
-                                sectorData['PersonalFastest'] ?? false,
-                            previousValue: sectorData['PreviousValue'] ?? '',
-                            segments: updatedSegments,
-                          ));
-                        }
-                      }
-                    } else if (currentDriverData != null) {
-                      // Keep existing sectors if new data doesn't have them
-                      updatedSectors = currentDriverData.sectors;
+                    // Process sectors if available. The feed sends Sectors and
+                    // their Segments either as a List (snapshot) or a Map keyed
+                    // by index (delta), so we merge by index into the existing
+                    // sectors/segments to preserve mini-sector progress.
+                    List<Sector> updatedSectors = currentDriverData != null
+                        ? List<Sector>.from(currentDriverData.sectors)
+                        : <Sector>[];
+                    if (driverData.containsKey('Sectors')) {
+                      _mergeSectors(updatedSectors, driverData['Sectors']);
                     }
 
                     // Process speeds if available
@@ -993,16 +1214,12 @@ class _TelemetryPageState extends State<TelemetryPage> {
                           (currentDriverData?.numberOfPitStops ?? 0),
                     );
 
-                    // Track position changes for timing data updates
+                    // Live timing position is the single source of truth for
+                    // ordering. _previousPositions was snapshotted above, so we
+                    // only write the new current position here.
                     final newLine =
                         driverData['Line'] ?? (currentDriverData?.line ?? 0);
-                    final previousLine =
-                        _currentPositions[racingNumber] ?? newLine;
-
-                    if (previousLine != newLine) {
-                      _previousPositions[racingNumber] = previousLine;
-                      _currentPositions[racingNumber] = newLine;
-                    }
+                    _currentPositions[racingNumber] = newLine;
 
                     // Update the driver in our map
                     currentLines[racingNumber] = updatedDriver;
@@ -2135,7 +2352,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
       SessionInfo sessionInfo) {
     // Sort drivers by line number (current race position)
     List<MapEntry<String, Driver>> sortedDrivers = drivers.entries.toList()
-      ..sort((a, b) => a.value.line.compareTo(b.value.line));
+      ..sort((a, b) => (_currentPositions[a.key] ?? a.value.line)
+          .compareTo(_currentPositions[b.key] ?? b.value.line));
 
     // Debug log to verify sorting
     print("Sorted drivers by position:");
@@ -2155,18 +2373,23 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
         final TimingDataDriver timing = timingData[racingNumber]!;
 
+        // Live position is the single source of truth for ordering/labels.
+        final int livePos = _currentPositions[racingNumber] ?? driver.line;
+
         // Get interval value with proper handling based on position, not index
         String intervalText = "";
-        if (driver.line == 1) {
+        if (livePos == 1) {
           // Leader (show LEADER instead of interval)
           intervalText = "Leader";
         } else if (sessionInfo.type.toLowerCase() == 'qualifying') {
           // For qualifying: Calculate time difference from driver above
-          final driverAbovePosition = driver.line - 1;
+          final driverAbovePosition = livePos - 1;
           MapEntry<String, Driver>? driverAbove;
 
           for (var entry in sortedDrivers) {
-            if (entry.value.line == driverAbovePosition) {
+            final entryPos =
+                _currentPositions[entry.key] ?? entry.value.line;
+            if (entryPos == driverAbovePosition) {
               driverAbove = entry;
               break;
             }
@@ -2218,19 +2441,25 @@ class _TelemetryPageState extends State<TelemetryPage> {
           teamColor = Colors.grey;
         }
 
-        // Get tire compound from timing app data if available
+        // Get tyre/stint info from timing app data if available
         String tireCompound = '';
+        int stintLaps = 0;
+        bool isNewTyre = true;
+        List<Stint> stints = const [];
         if (timingAppData.containsKey(racingNumber) &&
             timingAppData[racingNumber]!.stints.isNotEmpty) {
-          tireCompound =
-              timingAppData[racingNumber]!.stints.last.compound ?? '';
+          stints = timingAppData[racingNumber]!.stints;
+          final currentStint = stints.last;
+          tireCompound = currentStint.compound ?? '';
+          stintLaps = currentStint.totalLaps ?? 0;
+          isNewTyre = (currentStint.isNew ?? 'true').toLowerCase() == 'true';
         }
 
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 5),
           child: DriverRowCard(
             key: ValueKey(racingNumber),
-            position: driver.line,
+            position: _currentPositions[racingNumber] ?? driver.line,
             name: driver.tla.isNotEmpty ? driver.tla : '???',
             currentLapTime: timing.lastLapTime.value,
             bestLapTime: timing.bestLapTime.value,
@@ -2240,6 +2469,10 @@ class _TelemetryPageState extends State<TelemetryPage> {
             pitStops: timing.numberOfPitStops,
             positionChange: _positionChanges[racingNumber] ?? 'same',
             sessionType: sessionInfo.type,
+            stintLaps: stintLaps,
+            isNewTyre: isNewTyre,
+            stints: stints,
+            sectors: timing.sectors,
           ),
         );
       },

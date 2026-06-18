@@ -125,6 +125,10 @@ Future<List<LiveData>> fetchLiveData(dynamic response) async {
       positionData: response['PositionData'] is Map
           ? PositionData.fromJson(response['PositionData'])
           : null,
+      raceControlMessages: response['RaceControlMessages'] is Map
+          ? RaceControlMessages.fromJson(
+              Map<String, dynamic>.from(response['RaceControlMessages']))
+          : null,
     );
     fetchedData.add(data);
   }

@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AppSettings {
   static const String _customApiUrlEnabledKey = 'custom_api_url_enabled';
   static const String _customApiUrlKey = 'custom_api_url';
+  static const String _raceControlSoundEnabledKey =
+      'race_control_sound_enabled';
 
   /// Returns the API URL to use.
   /// If the user has enabled a custom URL and provided one, that is returned.
@@ -53,5 +55,21 @@ class AppSettings {
 
   static String getDefaultApiUrl() {
     return dotenv.env['API_URL'] ?? '';
+  }
+
+  /// Whether the TeamRadio sound plays on important race control messages.
+  /// Defaults to true.
+  static Future<bool> isRaceControlSoundEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_raceControlSoundEnabledKey) ?? true;
+  }
+
+  static bool isRaceControlSoundEnabledSync(SharedPreferences prefs) {
+    return prefs.getBool(_raceControlSoundEnabledKey) ?? true;
+  }
+
+  static Future<void> setRaceControlSoundEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_raceControlSoundEnabledKey, enabled);
   }
 }

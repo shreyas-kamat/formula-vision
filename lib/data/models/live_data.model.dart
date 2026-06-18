@@ -695,11 +695,25 @@ class RaceControlMessages {
   });
 
   factory RaceControlMessages.fromJson(Map<String, dynamic> json) {
+    // The live feed uses 'Messages' (uppercase) and may deliver it either as a
+    // List (full snapshot) or as a Map keyed by index (delta updates). The
+    // legacy lowercase 'messages' List is also supported.
+    final raw = json['Messages'] ?? json['messages'];
+
     List<Message> messagesList = [];
-    if (json['messages'] != null) {
-      messagesList = List<Message>.from(
-        json['messages'].map((x) => Message.fromJson(x)),
-      );
+    if (raw is List) {
+      messagesList = raw
+          .map((x) => Message.fromJson(Map<String, dynamic>.from(x)))
+          .toList();
+    } else if (raw is Map) {
+      // Preserve index ordering when keyed by stringified integers.
+      final entries = raw.entries.toList()
+        ..sort((a, b) =>
+            (int.tryParse(a.key.toString()) ?? 0)
+                .compareTo(int.tryParse(b.key.toString()) ?? 0));
+      messagesList = entries
+          .map((e) => Message.fromJson(Map<String, dynamic>.from(e.value)))
+          .toList();
     }
 
     return RaceControlMessages(
@@ -735,14 +749,14 @@ class Message {
 
   factory Message.fromJson(Map<String, dynamic> json) {
     return Message(
-      utc: json['utc'] ?? '',
-      lap: json['lap'] ?? 0,
-      message: json['message'] ?? '',
-      category: json['category'] ?? '',
-      flag: json['flag'],
-      scope: json['scope'],
-      sector: json['sector'],
-      status: json['status'],
+      utc: json['Utc'] ?? json['utc'] ?? '',
+      lap: json['Lap'] ?? json['lap'] ?? 0,
+      message: json['Message'] ?? json['message'] ?? '',
+      category: json['Category'] ?? json['category'] ?? '',
+      flag: json['Flag'] ?? json['flag'],
+      scope: json['Scope'] ?? json['scope'],
+      sector: json['Sector'] ?? json['sector'],
+      status: json['Status'] ?? json['status'],
     );
   }
 

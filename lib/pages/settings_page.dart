@@ -14,6 +14,7 @@ class _SettingsPageState extends State<SettingsPage> {
   final TextEditingController _apiUrlController = TextEditingController();
   bool _isLoading = true;
   bool _isSaved = false;
+  bool _isRaceControlSoundEnabled = true;
 
   @override
   void initState() {
@@ -30,10 +31,12 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _loadSettings() async {
     final isEnabled = await AppSettings.isCustomApiUrlEnabled();
     final customUrl = await AppSettings.getCustomApiUrl();
+    final soundEnabled = await AppSettings.isRaceControlSoundEnabled();
 
     setState(() {
       _isCustomApiEnabled = isEnabled;
       _apiUrlController.text = customUrl;
+      _isRaceControlSoundEnabled = soundEnabled;
       _isLoading = false;
     });
   }
@@ -484,6 +487,114 @@ class _SettingsPageState extends State<SettingsPage> {
                               color: Colors.white.withValues(alpha: 0.35),
                               fontSize: 11,
                               fontFamily: 'formula',
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        // ── Notifications ────────────────────────────────────
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4, bottom: 12),
+                          child: Text(
+                            'NOTIFICATIONS',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.6),
+                              fontSize: 11,
+                              fontFamily: 'formula',
+                              letterSpacing: 1.4,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.white.withValues(alpha: 0.08),
+                                Colors.black.withValues(alpha: 0.35),
+                              ],
+                            ),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              width: 1,
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 16),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: _isRaceControlSoundEnabled
+                                        ? Colors.redAccent
+                                            .withValues(alpha: 0.2)
+                                        : Colors.white.withValues(alpha: 0.07),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(
+                                    _isRaceControlSoundEnabled
+                                        ? Icons.notifications_active_outlined
+                                        : Icons.notifications_off_outlined,
+                                    color: _isRaceControlSoundEnabled
+                                        ? Colors.redAccent
+                                        : Colors.white.withValues(alpha: 0.6),
+                                    size: 22,
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Race Control Sound',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 15,
+                                          fontFamily: 'formula-bold',
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        _isRaceControlSoundEnabled
+                                            ? 'Plays on flags, safety car & penalties'
+                                            : 'Muted — toasts still show',
+                                        style: TextStyle(
+                                          color:
+                                              Colors.white.withValues(alpha: 0.5),
+                                          fontSize: 11,
+                                          fontFamily: 'formula',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Switch(
+                                  value: _isRaceControlSoundEnabled,
+                                  onChanged: (val) async {
+                                    setState(() {
+                                      _isRaceControlSoundEnabled = val;
+                                    });
+                                    await AppSettings
+                                        .setRaceControlSoundEnabled(val);
+                                  },
+                                  activeColor: Colors.redAccent,
+                                  activeTrackColor:
+                                      Colors.redAccent.withValues(alpha: 0.3),
+                                  inactiveThumbColor:
+                                      Colors.white.withValues(alpha: 0.6),
+                                  inactiveTrackColor:
+                                      Colors.white.withValues(alpha: 0.1),
+                                ),
+                              ],
                             ),
                           ),
                         ),

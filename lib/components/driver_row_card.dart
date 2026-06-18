@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:formulavision/components/mini_sector_bar.dart';
+import 'package:formulavision/data/models/live_data.model.dart';
 
 class DriverRowCard extends StatefulWidget {
   final int position;
@@ -13,6 +15,10 @@ class DriverRowCard extends StatefulWidget {
   final String? positionChange; // 'up', 'down', or 'same'
   final String
       sessionType; // Session type: 'Race', 'Sprint', 'Qualifying', etc.
+  final int stintLaps; // Laps completed on the current tyre set
+  final bool isNewTyre; // Whether the current stint started on new tyres
+  final List<Stint> stints; // Full stint history for the expandable panel
+  final List<Sector> sectors; // Current lap sectors for the mini-sector bar
 
   const DriverRowCard({
     super.key,
@@ -26,6 +32,10 @@ class DriverRowCard extends StatefulWidget {
     required this.pitStops,
     this.positionChange,
     this.sessionType = '',
+    this.stintLaps = 0,
+    this.isNewTyre = true,
+    this.stints = const [],
+    this.sectors = const [],
   });
 
   @override
@@ -36,6 +46,7 @@ class _DriverRowCardState extends State<DriverRowCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<Offset> _positionAnimation;
+  bool _expanded = false;
 
   void _setupAnimation() {
     // Determine animation direction based on position change
@@ -100,8 +111,12 @@ class _DriverRowCardState extends State<DriverRowCard>
         return 'assets/tyres/medium.svg';
       case 'SOFT':
         return 'assets/tyres/soft.svg';
+      case 'INTER':
       case 'INTERMEDIATE':
         return 'assets/tyres/intermediate.svg';
+      case 'WET':
+        // No dedicated wet asset bundled; fall back to unknown.
+        return 'assets/tyres/unknown.svg';
       default:
         return 'assets/tyres/unknown.svg';
     }
@@ -129,19 +144,29 @@ class _DriverRowCardState extends State<DriverRowCard>
   Widget build(BuildContext context) {
     return SlideTransition(
       position: _positionAnimation,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.black26.withValues(alpha: 0.75),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.black, width: 1),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.black26.withValues(alpha: 0.75),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.black, width: 1),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Header row (tap to expand stint history) ────────────────────
+            InkWell(
+              onTap: widget.stints.isEmpty
+                  ? null
+                  : () => setState(() => _expanded = !_expanded),
+              borderRadius: BorderRadius.circular(16),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                 // Position Circle
                 Container(
                   width: 60,
@@ -261,20 +286,63 @@ class _DriverRowCardState extends State<DriverRowCard>
                   ),
                 const SizedBox(width: 12),
 
+                // Lap Coverage (mini-sectors)
+                if (widget.sectors.isNotEmpty) ...[
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'LAP COVERAGE',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      MiniSectorBar(sectors: widget.sectors),
+                    ],
+                  ),
+                  const SizedBox(width: 14),
+                ],
+
                 // Tire Type
-                // if (widget.tireCompound.isNotEmpty)
-                //   SizedBox(
-                //     width: 40,
-                //     height: 40,
-                //     child: SvgPicture.asset(
-                //       _getTirePath(widget.tireCompound),
-                //       placeholderBuilder: (context) =>
-                //           const CircularProgressIndicator(),
-                //     ),
-                //   )
-                // else
-                //   const SizedBox(width: 40, height: 40),
-                // const SizedBox(width: 10),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'TYRE',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    SizedBox(
+                      width: 36,
+                      height: 36,
+                      child: SvgPicture.asset(
+                        _getTirePath(widget.tireCompound),
+                        placeholderBuilder: (context) =>
+                            const SizedBox(width: 36, height: 36),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'L${widget.stintLaps}${widget.isNewTyre ? '' : '*'}',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Roboto Mono',
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 12),
 
                 // Pit Stops
                 Column(
@@ -312,10 +380,113 @@ class _DriverRowCardState extends State<DriverRowCard>
                     ),
                   ],
                 ),
-              ],
+                if (widget.stints.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Icon(
+                    _expanded
+                        ? Icons.expand_less_rounded
+                        : Icons.expand_more_rounded,
+                    color: Colors.white54,
+                    size: 22,
+                  ),
+                ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // ── Expandable stint history ────────────────────────────────────
+            AnimatedSize(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeInOut,
+              child: _expanded && widget.stints.isNotEmpty
+                  ? _buildStintHistory()
+                  : const SizedBox(width: double.infinity),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStintHistory() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Divider(color: Colors.white24, height: 16),
+          const Text(
+            'STINT HISTORY',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.5,
             ),
           ),
-        ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              for (int i = 0; i < widget.stints.length; i++)
+                _buildStintChip(widget.stints[i], i + 1),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStintChip(Stint stint, int stintNumber) {
+    final compound = stint.compound ?? '';
+    final isNew = (stint.isNew ?? 'true').toLowerCase() == 'true';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 26,
+            height: 26,
+            child: SvgPicture.asset(
+              _getTirePath(compound),
+              placeholderBuilder: (context) =>
+                  const SizedBox(width: 26, height: 26),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'S$stintNumber · ${compound.isNotEmpty ? compound : '—'}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'formula',
+                ),
+              ),
+              Text(
+                'L${stint.totalLaps ?? 0} · ${isNew ? 'New' : 'Used'}',
+                style: const TextStyle(
+                  color: Colors.white60,
+                  fontSize: 10,
+                  fontFamily: 'Roboto Mono',
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
