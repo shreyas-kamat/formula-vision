@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:formulavision/data/models/live_data.model.dart';
 
-/// A compact, F1-style "lap coverage" bar that renders the three sectors of a
-/// driver's current lap as rows of small mini-segment cells, coloured by the
-/// segment status pushed in the live timing feed.
+/// A compact, F1-style "lap coverage" bar that renders the sectors of a
+/// driver's current lap as groups of mini-segment cells which stretch to fill
+/// the available width — so the row reads as a true lap-coverage progress bar
+/// rather than a row of fixed dashes.
 ///
-/// Colour mapping is taken from the F1 SignalR mini-sector status codes
+/// When [showTimes] is true, each sector's completed time is shown beneath its
+/// group (used when the driver row is expanded).
+///
+/// Colour mapping follows the F1 SignalR mini-sector status codes
 /// (matching slowlydev/f1-dash):
 ///   0     -> not yet driven (grey)
 ///   2048  -> driven, not a best (yellow)
@@ -16,17 +20,17 @@ import 'package:formulavision/data/models/live_data.model.dart';
 class MiniSectorBar extends StatelessWidget {
   final List<Sector> sectors;
 
-  /// Width of each individual mini-segment cell.
-  final double segmentWidth;
+  /// When true, render the per-sector time labels beneath the segment groups.
+  final bool showTimes;
 
-  /// Height of each individual mini-segment cell.
+  /// Height of each mini-segment cell.
   final double segmentHeight;
 
   const MiniSectorBar({
     super.key,
     required this.sectors,
-    this.segmentWidth = 9,
-    this.segmentHeight = 5,
+    this.showTimes = false,
+    this.segmentHeight = 6,
   });
 
   static Color segmentColor(int status) {
@@ -54,69 +58,106 @@ class MiniSectorBar extends StatelessWidget {
     return const Color(0xFFFBBF24); // yellow (a completed, non-best sector)
   }
 
+  /// A sector's width weight is its segment count, so longer sectors render
+  /// wider — keeping the bar proportional to the real track layout.
+  int _flexFor(Sector sector) =>
+      sector.segments.isEmpty ? 1 : sector.segments.length;
+
   @override
   Widget build(BuildContext context) {
     if (sectors.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    return Row(
+    return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (int i = 0; i < sectors.length; i++) ...[
-          if (i > 0) const SizedBox(width: 8),
-          _buildSector(sectors[i]),
+        // Segment groups, stretched across the full width.
+        Row(
+          children: [
+            for (int i = 0; i < sectors.length; i++) ...[
+              if (i > 0) const SizedBox(width: 6),
+              Expanded(
+                flex: _flexFor(sectors[i]),
+                child: _segmentRow(sectors[i]),
+              ),
+            ],
+          ],
+        ),
+        if (showTimes) ...[
+          const SizedBox(height: 7),
+          Row(
+            children: [
+              for (int i = 0; i < sectors.length; i++) ...[
+                if (i > 0) const SizedBox(width: 6),
+                Expanded(
+                  flex: _flexFor(sectors[i]),
+                  child: _timeLabel(i, sectors[i]),
+                ),
+              ],
+            ],
+          ),
         ],
       ],
     );
   }
 
-  Widget _buildSector(Sector sector) {
+  Widget _segmentRow(Sector sector) {
     final segments = sector.segments;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
+    if (segments.isEmpty) {
+      // No segment detail yet — a single placeholder fills the group.
+      return _cell(MiniSectorBar.segmentColor(0));
+    }
+    return Row(
       children: [
-        // Mini-segment cells
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (segments.isEmpty)
-              // No segment detail yet — show a single placeholder cell.
-              _cell(MiniSectorBar.segmentColor(0))
-            else
-              for (int s = 0; s < segments.length; s++) ...[
-                if (s > 0) const SizedBox(width: 2),
-                _cell(MiniSectorBar.segmentColor(segments[s].status)),
-              ],
-          ],
-        ),
-        const SizedBox(height: 3),
-        // Sector time
-        Text(
-          sector.value.isNotEmpty ? sector.value : '--.---',
-          style: TextStyle(
-            color: sector.value.isNotEmpty
-                ? MiniSectorBar.sectorTimeColor(sector)
-                : Colors.white38,
-            fontSize: 10,
-            fontFamily: 'Roboto Mono',
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        for (int s = 0; s < segments.length; s++) ...[
+          if (s > 0) const SizedBox(width: 2),
+          Expanded(child: _cell(MiniSectorBar.segmentColor(segments[s].status))),
+        ],
       ],
     );
   }
 
   Widget _cell(Color color) {
     return Container(
-      width: segmentWidth,
       height: segmentHeight,
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(2),
+        borderRadius: BorderRadius.circular(3),
       ),
+    );
+  }
+
+  Widget _timeLabel(int index, Sector sector) {
+    final hasValue = sector.value.isNotEmpty;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'S${index + 1}',
+          style: const TextStyle(
+            color: Colors.white38,
+            fontSize: 9,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 1),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            hasValue ? sector.value : '--.---',
+            style: TextStyle(
+              color: hasValue
+                  ? MiniSectorBar.sectorTimeColor(sector)
+                  : Colors.white24,
+              fontSize: 12,
+              fontFamily: 'Roboto Mono',
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

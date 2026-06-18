@@ -122,6 +122,9 @@ flutter:
     - assets/TrackMaps/Yas-Marina.json
     - assets/TrackMaps/Zandvoort.json
 
+    # Recorded position sample for offline track-map verification
+    - assets/test/position_replay.json
+
     # Images
     - assets/tyres/
     

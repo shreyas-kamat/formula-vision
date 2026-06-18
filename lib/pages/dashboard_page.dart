@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:async';
 import 'dart:collection';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -88,19 +89,66 @@ class _TelemetryPageState extends State<TelemetryPage> {
   bool _raceControlSeeded = false;
   bool _raceControlSoundEnabled = true;
 
+  // Track map display settings
+  bool _trackMapEnabled = true;
+  String _trackMapDisplayMode = AppSettings.trackMapModeCard;
+  bool _trackMapExpanded = true; // Card-mode expand/collapse state
+
+  // Debug-only: replay a recorded Position.z sample so the track map can be
+  // verified offline. Overlays positions onto whatever base data is present
+  // (live or simulated). Flip to true to enable.
+  static const bool _debugTrackReplay = false;
+  Timer? _replayTimer;
+  List<dynamic> _replayFrames = [];
+  int _replayIndex = 0;
+
   @override
   void initState() {
     super.initState();
     _initialize();
     _loadRaceControlSoundSetting();
+    _loadTrackMapSettings();
+    _maybeStartTrackReplay();
     final data = decompressCarData();
     print(data);
+  }
+
+  Future<void> _maybeStartTrackReplay() async {
+    if (!_debugTrackReplay) return;
+    try {
+      final jsonStr =
+          await rootBundle.loadString('assets/test/position_replay.json');
+      final data = jsonDecode(jsonStr);
+      _replayFrames = (data['frames'] as List?) ?? [];
+      final intervalMs = (data['frameIntervalMs'] as num?)?.toInt() ?? 250;
+      if (_replayFrames.isEmpty) return;
+      _replayTimer?.cancel();
+      _replayTimer = Timer.periodic(Duration(milliseconds: intervalMs), (_) {
+        if (!mounted || _replayFrames.isEmpty) return;
+        final frame = _replayFrames[_replayIndex % _replayFrames.length];
+        _replayIndex++;
+        _updatePositionData(Map<String, dynamic>.from(frame as Map));
+      });
+    } catch (e) {
+      print('Track replay failed: $e');
+    }
   }
 
   Future<void> _loadRaceControlSoundSetting() async {
     final enabled = await AppSettings.isRaceControlSoundEnabled();
     if (mounted) {
       setState(() => _raceControlSoundEnabled = enabled);
+    }
+  }
+
+  Future<void> _loadTrackMapSettings() async {
+    final enabled = await AppSettings.isTrackMapEnabled();
+    final mode = await AppSettings.getTrackMapDisplayMode();
+    if (mounted) {
+      setState(() {
+        _trackMapEnabled = enabled;
+        _trackMapDisplayMode = mode;
+      });
     }
   }
 
@@ -120,6 +168,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
       _sseSubscription = null;
     }
     _delayTimer?.cancel(); // Clean up delay timer
+    _replayTimer?.cancel(); // Stop debug position replay if running
     _messageQueue.clear(); // Clear any queued messages
     _liveDataController.close(); // Close the StreamController
     _rcAudioPlayer.dispose(); // Release the alert audio player
@@ -430,6 +479,30 @@ class _TelemetryPageState extends State<TelemetryPage> {
               continue;
             }
 
+            // Position data arrives in object form:
+            //   A[0] == { PositionData: { Entries: [...] } }
+            if (messageObject['A'][0] is Map &&
+                messageObject['A'][0].containsKey('PositionData')) {
+              final positionData = messageObject['A'][0]['PositionData'];
+              setState(() {
+                _updatePositionData(positionData);
+              });
+              print('PositionData Updated Successfully from new format');
+              continue;
+            }
+
+            // Car telemetry arrives in object form:
+            //   A[0] == { CarData: { Timestamp, Cars: { "44": {...} } } }
+            if (messageObject['A'][0] is Map &&
+                messageObject['A'][0].containsKey('CarData')) {
+              final carData = messageObject['A'][0]['CarData'];
+              setState(() {
+                _updateCarData(carData);
+              });
+              print('CarData Updated Successfully from new format');
+              continue;
+            }
+
             final messageType = messageObject['A'][0];
             print('Message type: $messageType');
 
@@ -506,6 +579,14 @@ class _TelemetryPageState extends State<TelemetryPage> {
                     _updateLapCount(updated);
                   });
                   print('LapCount Updated Successfully');
+                  break;
+
+                case 'PositionData':
+                case 'Position.z':
+                  setState(() {
+                    _updatePositionData(updated);
+                  });
+                  print('PositionData Updated Successfully');
                   break;
 
                 default:
@@ -1479,6 +1560,42 @@ class _TelemetryPageState extends State<TelemetryPage> {
     }
   }
 
+  /// Merge incoming car telemetry into the live data object, keyed by racing
+  /// number, then re-emit so driver rows rebuild.
+  void _updateCarData(dynamic data) {
+    if (data is! Map) {
+      print('Received non-map car data: ${data.runtimeType}, cannot update');
+      return;
+    }
+    final cars = data['Cars'];
+    if (cars is! Map || cars.isEmpty) return;
+
+    setState(() {
+      if (_liveDataFuture != null) {
+        _liveDataFuture = _liveDataFuture!.then((liveDataList) {
+          if (liveDataList.isNotEmpty) {
+            final currentLiveData = liveDataList[0];
+            final updated =
+                Map<String, CarTelemetry>.from(currentLiveData.carData);
+            cars.forEach((racingNumber, channels) {
+              if (channels is Map) {
+                updated[racingNumber.toString()] = CarTelemetry.fromJson(
+                    Map<String, dynamic>.from(channels));
+              }
+            });
+            currentLiveData.carData = updated;
+          }
+          return liveDataList;
+        }).then((liveDataList) {
+          if (!_liveDataController.isClosed) {
+            _liveDataController.add(liveDataList);
+          }
+          return liveDataList;
+        });
+      }
+    });
+  }
+
   void _updatePositionData(dynamic data) {
     if (data is Map<String, dynamic>) {
       print('Updating position data with: ${data.keys.toList()}');
@@ -1933,6 +2050,241 @@ class _TelemetryPageState extends State<TelemetryPage> {
     );
   }
 
+  // Track outline colour: neutral grey when the track is clear, otherwise the
+  // status colour (yellow / safety car / red / VSC).
+  Color _trackLineColor(String? status) {
+    if (status == null ||
+        status == '1' ||
+        status.toLowerCase() == 'track clear') {
+      return Colors.grey.shade500;
+    }
+    return _getTrackStatusColor(status);
+  }
+
+  // The live track map, fed by its own stream subscription so high-frequency
+  // Position.z updates repaint just the map.
+  Widget _buildLiveMap(LiveData fallback) {
+    return StreamBuilder<List<LiveData>>(
+      stream: liveDataStream,
+      initialData: [fallback],
+      builder: (context, snapshot) {
+        final data = (snapshot.hasData && snapshot.data!.isNotEmpty)
+            ? snapshot.data![0]
+            : fallback;
+        final positionData = data.positionData;
+        if (positionData == null || positionData.cars.isEmpty) {
+          return const Center(
+            child: Text(
+              'Waiting for car positions…',
+              style: TextStyle(color: Colors.white70),
+            ),
+          );
+        }
+        return LiveTrackMapWidget(
+          positionData: positionData,
+          drivers: data.driverList?.drivers ?? {},
+          circuitShortName: data.sessionInfo?.meeting.circuit.shortName ?? '',
+          trackColor: _trackLineColor(data.trackStatus?.status),
+        );
+      },
+    );
+  }
+
+  // Collapsible inline track-map card (card display mode).
+  Widget _buildTrackMapCard(LiveData data) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.white.withOpacity(0.06),
+        border: Border.all(color: Colors.white.withOpacity(0.12)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () =>
+                setState(() => _trackMapExpanded = !_trackMapExpanded),
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                children: [
+                  const Icon(Icons.map_outlined,
+                      color: Colors.white70, size: 20),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'Track Map',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  const Spacer(),
+                  Icon(
+                    _trackMapExpanded
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
+                    color: Colors.white70,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            firstChild: const SizedBox(width: double.infinity, height: 0),
+            secondChild: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+              child: AspectRatio(
+                aspectRatio: 16 / 10,
+                child: _buildLiveMap(data),
+              ),
+            ),
+            crossFadeState: _trackMapExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 250),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Schedule-page-style pill tab bar used by the full-view track map mode.
+  Widget _buildTrackMapTabBar() {
+    return Center(
+      child: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withValues(alpha: 0.3),
+              blurRadius: 20,
+              spreadRadius: 5,
+            ),
+          ],
+          gradient: LinearGradient(
+            begin: Alignment.topRight,
+            end: Alignment.bottomLeft,
+            colors: [
+              Colors.white.withValues(alpha: 0.4),
+              Colors.white.withValues(alpha: 0.8),
+              Colors.white.withValues(alpha: 0.4),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(40),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+          child: TabBar(
+            labelColor: Colors.white,
+            dividerColor: Colors.transparent,
+            tabAlignment: TabAlignment.center,
+            padding: EdgeInsets.zero,
+            unselectedLabelColor: Colors.redAccent,
+            indicator: BoxDecoration(
+              color: Colors.redAccent,
+              borderRadius: BorderRadius.circular(30.0),
+            ),
+            labelPadding: EdgeInsets.zero,
+            tabs: const [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.0),
+                child: Tab(
+                  child: Text('DRIVERS',
+                      style: TextStyle(fontFamily: 'formula-bold')),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.0),
+                child: Tab(
+                  child: Text('TRACK MAP',
+                      style: TextStyle(fontFamily: 'formula-bold')),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Builds the weather + drivers list section reused by both display modes.
+  Widget _buildDriversSection(List<LiveData> liveData) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildWeatherCard(liveData[0].weatherData!),
+        const SizedBox(height: 10),
+        const Text('Drivers',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 5),
+        _buildDriverList(
+          liveData[0].driverList!.drivers,
+          liveData[0].timingData!.lines,
+          liveData[0].timingAppData?.lines ?? {},
+          liveData[0].sessionInfo!,
+          liveData[0].carData,
+        ),
+      ],
+    );
+  }
+
+  // Main dashboard content: switches between the inline card and the
+  // dedicated tabbed full-view based on the user's track-map settings.
+  Widget _buildDashboardMainContent(List<LiveData> liveData) {
+    final data = liveData[0];
+
+    if (_trackMapEnabled &&
+        _trackMapDisplayMode == AppSettings.trackMapModeFullView) {
+      final height = MediaQuery.of(context).size.height * 0.72;
+      return SizedBox(
+        height: height,
+        child: DefaultTabController(
+          length: 2,
+          child: Column(
+            children: [
+              _buildTrackMapTabBar(),
+              const SizedBox(height: 12),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    SingleChildScrollView(
+                      child: _buildDriversSection(liveData),
+                    ),
+                    _buildLiveMap(data),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Card mode (or map disabled).
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        _buildWeatherCard(data.weatherData!),
+        const SizedBox(height: 10),
+        if (_trackMapEnabled) ...[
+          _buildTrackMapCard(data),
+          const SizedBox(height: 10),
+        ],
+        const Text('Drivers',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 5),
+        _buildDriverList(
+          data.driverList!.drivers,
+          data.timingData!.lines,
+          data.timingAppData?.lines ?? {},
+          data.sessionInfo!,
+          data.carData,
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -2155,35 +2507,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
                                             if (snapshot.hasData &&
                                                 snapshot.data!.isNotEmpty) {
                                               final liveData = snapshot.data!;
-                                              return Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.start,
-                                                children: [
-                                                  _buildWeatherCard(
-                                                      liveData[0].weatherData!),
-                                                  SizedBox(height: 10),
-                                                  Text('Drivers',
-                                                      style: TextStyle(
-                                                          fontSize: 20,
-                                                          fontWeight:
-                                                              FontWeight.bold)),
-                                                  SizedBox(height: 5),
-                                                  _buildDriverList(
-                                                      liveData[0]
-                                                          .driverList!
-                                                          .drivers,
-                                                      liveData[0]
-                                                          .timingData!
-                                                          .lines,
-                                                      liveData[0]
-                                                              .timingAppData
-                                                              ?.lines ??
-                                                          {},
-                                                      liveData[0].sessionInfo!),
-                                                ],
-                                              );
+                                              return _buildDashboardMainContent(
+                                                  liveData);
                                             } else if (snapshot.hasError) {
                                               return Text(
                                                   'Error: ${snapshot.error}');
@@ -2349,7 +2674,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
       Map<String, Driver> drivers,
       Map<String, TimingDataDriver> timingData,
       Map<String, TimingAppDataDriver> timingAppData,
-      SessionInfo sessionInfo) {
+      SessionInfo sessionInfo,
+      Map<String, CarTelemetry> carData) {
     // Sort drivers by line number (current race position)
     List<MapEntry<String, Driver>> sortedDrivers = drivers.entries.toList()
       ..sort((a, b) => (_currentPositions[a.key] ?? a.value.line)
@@ -2473,6 +2799,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
             isNewTyre: isNewTyre,
             stints: stints,
             sectors: timing.sectors,
+            telemetry: carData[racingNumber],
           ),
         );
       },
@@ -2575,241 +2902,67 @@ class _TelemetryPageState extends State<TelemetryPage> {
   }
 }
 
-// Add this widget class at the bottom of your file (or in a separate file if you prefer)
-class TrackMapWidget extends StatefulWidget {
-  final String trackJsonAsset;
-  final Map<String, dynamic> driverPositions; // Map of driverNo -> {X, Y, Z}
-  final double width;
-  final double height;
-
-  const TrackMapWidget({
-    super.key,
-    required this.trackJsonAsset,
-    required this.driverPositions,
-    required this.width,
-    required this.height,
-  });
-
-  @override
-  State<TrackMapWidget> createState() => _TrackMapWidgetState();
-}
-
-class _TrackMapWidgetState extends State<TrackMapWidget> {
-  List<Offset> _trackPoints = [];
-  double? minX, maxX, minY, maxY;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadTrack();
-  }
-
-  Future<void> _loadTrack() async {
-    final jsonStr = await rootBundle.loadString(widget.trackJsonAsset);
-    final jsonData = jsonDecode(jsonStr);
-
-    // Parse x and y arrays
-    final List xList = jsonData['x'];
-    final List yList = jsonData['y'];
-    List<Offset> points = [];
-    for (int i = 0; i < xList.length && i < yList.length; i++) {
-      points.add(
-          Offset((xList[i] as num).toDouble(), (yList[i] as num).toDouble()));
-    }
-
-    // Find min/max for normalization
-    double minX = points.map((e) => e.dx).reduce((a, b) => a < b ? a : b);
-    double maxX = points.map((e) => e.dx).reduce((a, b) => a > b ? a : b);
-    double minY = points.map((e) => e.dy).reduce((a, b) => a < b ? a : b);
-    double maxY = points.map((e) => e.dy).reduce((a, b) => a > b ? a : b);
-
-    setState(() {
-      _trackPoints = points;
-      this.minX = minX;
-      this.maxX = maxX;
-      this.minY = minY;
-      this.maxY = maxY;
-    });
-  }
-
-  // Normalizes a point to widget size
-  Offset _normalize(Offset pt) {
-    if (minX == null || maxX == null || minY == null || maxY == null)
-      return Offset.zero;
-    double normX = (pt.dx - minX!) / (maxX! - minX!);
-    double normY = (pt.dy - minY!) / (maxY! - minY!);
-    // Flip Y axis for typical track orientation
-    // normY = 1.0 - normY;
-    return Offset(normX * widget.width, normY * widget.height);
-  }
-
-  // Normalizes driver coordinates
-  Offset _normalizeDriver(double x, double y) {
-    if (minX == null || maxX == null || minY == null || maxY == null)
-      return Offset.zero;
-    double normX = (x - minX!) / (maxX! - minX!);
-    double normY = (y - minY!) / (maxY! - minY!);
-    // normY = 1.0 - normY;
-    return Offset(normX * widget.width, normY * widget.height);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_trackPoints.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    return SizedBox(
-      width: widget.width,
-      height: widget.height,
-      child: CustomPaint(
-        painter: _TrackPainter(
-          trackPoints: _trackPoints,
-          normalize: _normalize,
-          driverPositions: widget.driverPositions,
-          normalizeDriver: _normalizeDriver,
-        ),
-      ),
-    );
-  }
-}
-
-class _TrackPainter extends CustomPainter {
-  final List<Offset> trackPoints;
-  final Offset Function(Offset pt) normalize;
-  final Map<String, dynamic> driverPositions;
-  final Offset Function(double x, double y) normalizeDriver;
-
-  _TrackPainter({
-    required this.trackPoints,
-    required this.normalize,
-    required this.driverPositions,
-    required this.normalizeDriver,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    // Draw track path
-    if (trackPoints.isNotEmpty) {
-      final path = Path()
-        ..moveTo(
-          normalize(trackPoints[0]).dx,
-          normalize(trackPoints[0]).dy,
-        );
-      for (final pt in trackPoints.skip(1)) {
-        final npt = normalize(pt);
-        path.lineTo(npt.dx, npt.dy);
-      }
-      final paint = Paint()
-        ..color = Colors.grey.shade800
-        ..strokeWidth = 4
-        ..style = PaintingStyle.stroke;
-      canvas.drawPath(path, paint);
-    }
-
-    // Draw drivers with team colour
-    driverPositions.forEach((driverNo, entry) {
-      final double? x = (entry['X'] as num?)?.toDouble();
-      final double? y = (entry['Y'] as num?)?.toDouble();
-      if (x == null || y == null) return;
-      final Offset pos = normalizeDriver(x, y);
-
-      // Default to red if no teamColour
-      Color teamColor = Colors.red;
-      if (entry['teamColour'] != null &&
-          entry['teamColour'] is String &&
-          (entry['teamColour'] as String).length == 6) {
-        try {
-          teamColor = Color(int.parse('0xFF${entry['teamColour']}'));
-        } catch (_) {
-          teamColor = Colors.red;
-        }
-      }
-
-      final paint = Paint()
-        ..color = teamColor
-        ..style = PaintingStyle.fill;
-      canvas.drawCircle(pos, 8, paint);
-
-      final textPainter = TextPainter(
-        text: TextSpan(
-          text: driverNo,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      textPainter.paint(canvas, pos + const Offset(-10, -18));
-    });
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
-
-// Example usage for testing (in your build method):
-// final testPositions = <String, dynamic>{
-//   "1": {"X": 1479, "Y": -940, "Z": 7312},
-//   "4": {"X": 1200, "Y": -1014, "Z": 7307},
-//   // ...etc
-// };
-// TrackMapWidget(
-//   trackJsonAsset: 'assets/TrackMaps/Spielberg.json',
-//   driverPositions: testPositions,
-//   width: 350,
-//   height: 200,
-// );
-
-// Example driver positions for testing
-final Map<String, dynamic> testDriverPositions = {
-  "1": {"Status": "OnTrack", "X": 1479, "Y": -940, "Z": 7312},
-  "4": {"Status": "OnTrack", "X": 1200, "Y": -1014, "Z": 7307},
-  "5": {"Status": "OnTrack", "X": 1489, "Y": -938, "Z": 7312},
-  "6": {"Status": "OnTrack", "X": -585, "Y": -1493, "Z": 7301},
-  "10": {"Status": "OnTrack", "X": 1452, "Y": -947, "Z": 7313},
-  "12": {"Status": "OnTrack", "X": 1426, "Y": -954, "Z": 7313},
-  "14": {"Status": "OnTrack", "X": 70, "Y": -1317, "Z": 7313},
-  "16": {"Status": "OnTrack", "X": 1136, "Y": -1031, "Z": 7312},
-  "18": {"Status": "OnTrack", "X": -40, "Y": -1347, "Z": 7312},
-  "22": {"Status": "OnTrack", "X": 292, "Y": -1258, "Z": 7312},
-  "23": {"Status": "OnTrack", "X": -860, "Y": -1567, "Z": 7312},
-  "27": {"Status": "OnTrack", "X": -981, "Y": -1598, "Z": 7312},
-  "30": {"Status": "OnTrack", "X": 1560, "Y": -920, "Z": 7313},
-  "31": {"Status": "OnTrack", "X": -484, "Y": -1466, "Z": 7311},
-  "43": {"Status": "OnTrack", "X": -204, "Y": -1391, "Z": 7307},
-  "44": {"Status": "OnTrack", "X": 1558, "Y": -920, "Z": 7312},
-  "55": {"Status": "OnTrack", "X": -898, "Y": -1577, "Z": 7312},
-  "63": {"Status": "OnTrack", "X": 1489, "Y": -938, "Z": 7312},
-  "81": {"Status": "OnTrack", "X": 1147, "Y": -1028, "Z": 7312},
-  "87": {"Status": "OnTrack", "X": -436, "Y": -1453, "Z": 7312},
-};
-
-// Live Track Map Widget that shows driver positions in real-time
+// Live Track Map Widget that shows driver positions in real-time.
+//
+// Cars are interpolated between successive Position.z updates so they glide
+// rather than jump, the track is drawn aspect-correct with the Y axis flipped
+// to a conventional orientation, the outline is tinted by track status, and
+// off-track / pitting cars are dimmed.
 class LiveTrackMapWidget extends StatefulWidget {
   final PositionData positionData;
   final Map<String, Driver> drivers;
   final String circuitShortName;
+  final Color trackColor;
 
   const LiveTrackMapWidget({
     super.key,
     required this.positionData,
     required this.drivers,
     required this.circuitShortName,
+    this.trackColor = const Color(0xFF9E9E9E),
   });
 
   @override
   State<LiveTrackMapWidget> createState() => _LiveTrackMapWidgetState();
 }
 
-class _LiveTrackMapWidgetState extends State<LiveTrackMapWidget> {
+class _LiveTrackMapWidgetState extends State<LiveTrackMapWidget>
+    with SingleTickerProviderStateMixin {
   List<Offset> _trackPoints = [];
   double? minX, maxX, minY, maxY;
+  // Rotation (from the track JSON) applied to both the outline and the cars so
+  // the circuit is shown in a conventional orientation.
+  double _rotationRad = 0;
+  Offset _rotCenter = Offset.zero;
+
+  late final AnimationController _controller;
+
+  // Rotates [p] around [center] by [rad] radians.
+  static Offset rotateAround(Offset p, Offset center, double rad) {
+    if (rad == 0) return p;
+    final dx = p.dx - center.dx;
+    final dy = p.dy - center.dy;
+    final cos = math.cos(rad);
+    final sin = math.sin(rad);
+    return Offset(
+      center.dx + dx * cos - dy * sin,
+      center.dy + dx * sin + dy * cos,
+    );
+  }
+  // Interpolation endpoints keyed by racing number.
+  Map<String, Offset> _fromPositions = {};
+  Map<String, Offset> _toPositions = {};
 
   @override
   void initState() {
     super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _toPositions = _extractPositions(widget.positionData);
+    _fromPositions = Map.of(_toPositions);
+    _controller.value = 1.0;
     _loadTrack();
   }
 
@@ -2820,6 +2973,58 @@ class _LiveTrackMapWidgetState extends State<LiveTrackMapWidget> {
     if (oldWidget.circuitShortName != widget.circuitShortName) {
       _loadTrack();
     }
+
+    final newPositions = _extractPositions(widget.positionData);
+    if (!_positionsEqual(newPositions, _toPositions)) {
+      // Whatever is currently on screen becomes the start of the next tween.
+      _fromPositions = _currentPositions();
+      _toPositions = newPositions;
+      _controller.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Map<String, Offset> _extractPositions(PositionData data) {
+    final Map<String, Offset> result = {};
+    data.cars.forEach((number, car) {
+      result[number] = Offset(car.x, car.y);
+    });
+    return result;
+  }
+
+  bool _positionsEqual(Map<String, Offset> a, Map<String, Offset> b) {
+    if (a.length != b.length) return false;
+    for (final entry in a.entries) {
+      final other = b[entry.key];
+      if (other == null) return false;
+      if ((other.dx - entry.value.dx).abs() > 0.5 ||
+          (other.dy - entry.value.dy).abs() > 0.5) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Positions as currently rendered (lerp at the controller's current value).
+  Map<String, Offset> _currentPositions() {
+    final t = _controller.value;
+    final Map<String, Offset> result = {};
+    final keys = {..._fromPositions.keys, ..._toPositions.keys};
+    for (final key in keys) {
+      final from = _fromPositions[key];
+      final to = _toPositions[key];
+      if (from != null && to != null) {
+        result[key] = Offset.lerp(from, to, t)!;
+      } else {
+        result[key] = (to ?? from)!;
+      }
+    }
+    return result;
   }
 
   Future<void> _loadTrack() async {
@@ -2835,30 +3040,48 @@ class _LiveTrackMapWidgetState extends State<LiveTrackMapWidget> {
           await rootBundle.loadString('assets/TrackMaps/$trackFile');
       final jsonData = jsonDecode(jsonStr);
 
-      // Parse x and y arrays
+      // Parse x and y arrays plus the circuit's rotation (degrees).
       final List xList = jsonData['x'];
       final List yList = jsonData['y'];
-      List<Offset> points = [];
+      final double rotationDeg =
+          (jsonData['rotation'] as num?)?.toDouble() ?? 0.0;
 
+      List<Offset> rawPoints = [];
       for (int i = 0; i < xList.length && i < yList.length; i++) {
-        points.add(
+        rawPoints.add(
             Offset((xList[i] as num).toDouble(), (yList[i] as num).toDouble()));
       }
 
-      // Find min/max for normalization
-      if (points.isNotEmpty) {
-        double minX = points.map((e) => e.dx).reduce((a, b) => a < b ? a : b);
-        double maxX = points.map((e) => e.dx).reduce((a, b) => a > b ? a : b);
-        double minY = points.map((e) => e.dy).reduce((a, b) => a < b ? a : b);
-        double maxY = points.map((e) => e.dy).reduce((a, b) => a > b ? a : b);
+      if (rawPoints.isNotEmpty) {
+        final double rotationRad = rotationDeg * math.pi / 180.0;
+        // Rotate around the raw centre; the cars are later rotated about the
+        // same point so they stay aligned with the outline.
+        final rMinX = rawPoints.map((e) => e.dx).reduce((a, b) => math.min(a, b));
+        final rMaxX = rawPoints.map((e) => e.dx).reduce((a, b) => math.max(a, b));
+        final rMinY = rawPoints.map((e) => e.dy).reduce((a, b) => math.min(a, b));
+        final rMaxY = rawPoints.map((e) => e.dy).reduce((a, b) => math.max(a, b));
+        final center = Offset((rMinX + rMaxX) / 2, (rMinY + rMaxY) / 2);
 
-        setState(() {
-          _trackPoints = points;
-          this.minX = minX;
-          this.maxX = maxX;
-          this.minY = minY;
-          this.maxY = maxY;
-        });
+        final rotated = rawPoints
+            .map((p) => rotateAround(p, center, rotationRad))
+            .toList();
+
+        double minX = rotated.map((e) => e.dx).reduce((a, b) => math.min(a, b));
+        double maxX = rotated.map((e) => e.dx).reduce((a, b) => math.max(a, b));
+        double minY = rotated.map((e) => e.dy).reduce((a, b) => math.min(a, b));
+        double maxY = rotated.map((e) => e.dy).reduce((a, b) => math.max(a, b));
+
+        if (mounted) {
+          setState(() {
+            _trackPoints = rotated;
+            _rotationRad = rotationRad;
+            _rotCenter = center;
+            this.minX = minX;
+            this.maxX = maxX;
+            this.minY = minY;
+            this.maxY = maxY;
+          });
+        }
       }
     } catch (e) {
       print('Error loading track: $e');
@@ -2910,24 +3133,6 @@ class _LiveTrackMapWidgetState extends State<LiveTrackMapWidget> {
     return trackFile;
   }
 
-  // Normalizes a point to widget size
-  Offset _normalize(Offset pt, double width, double height) {
-    if (minX == null || maxX == null || minY == null || maxY == null)
-      return Offset.zero;
-    double normX = (pt.dx - minX!) / (maxX! - minX!);
-    double normY = (pt.dy - minY!) / (maxY! - minY!);
-    return Offset(normX * width, normY * height);
-  }
-
-  // Normalizes driver coordinates
-  Offset _normalizeDriver(double x, double y, double width, double height) {
-    if (minX == null || maxX == null || minY == null || maxY == null)
-      return Offset.zero;
-    double normX = (x - minX!) / (maxX! - minX!);
-    double normY = (y - minY!) / (maxY! - minY!);
-    return Offset(normX * width, normY * height);
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_trackPoints.isEmpty) {
@@ -2949,10 +3154,18 @@ class _LiveTrackMapWidgetState extends State<LiveTrackMapWidget> {
           size: Size(constraints.maxWidth, constraints.maxHeight),
           painter: _LiveTrackPainter(
             trackPoints: _trackPoints,
-            positionData: widget.positionData,
+            bounds: Rect.fromLTRB(minX!, minY!, maxX!, maxY!),
+            rotationRad: _rotationRad,
+            rotCenter: _rotCenter,
             drivers: widget.drivers,
-            normalize: _normalize,
-            normalizeDriver: _normalizeDriver,
+            statuses: {
+              for (final e in widget.positionData.cars.entries)
+                e.key: e.value.status,
+            },
+            fromPositions: _fromPositions,
+            toPositions: _toPositions,
+            trackColor: widget.trackColor,
+            animation: _controller,
           ),
         );
       },
@@ -2962,93 +3175,151 @@ class _LiveTrackMapWidgetState extends State<LiveTrackMapWidget> {
 
 class _LiveTrackPainter extends CustomPainter {
   final List<Offset> trackPoints;
-  final PositionData positionData;
+  final Rect bounds;
+  final double rotationRad;
+  final Offset rotCenter;
   final Map<String, Driver> drivers;
-  final Offset Function(Offset pt, double width, double height) normalize;
-  final Offset Function(double x, double y, double width, double height)
-      normalizeDriver;
+  final Map<String, String> statuses;
+  final Map<String, Offset> fromPositions;
+  final Map<String, Offset> toPositions;
+  final Color trackColor;
+  final Animation<double> animation;
 
   _LiveTrackPainter({
     required this.trackPoints,
-    required this.positionData,
+    required this.bounds,
+    required this.rotationRad,
+    required this.rotCenter,
     required this.drivers,
-    required this.normalize,
-    required this.normalizeDriver,
-  });
+    required this.statuses,
+    required this.fromPositions,
+    required this.toPositions,
+    required this.trackColor,
+    required this.animation,
+  }) : super(repaint: animation);
+
+  static const double _pad = 18.0;
+
+  // Projects a track-space point into canvas space: uniform scale to preserve
+  // aspect ratio, centered, with the Y axis flipped (track is y-up, canvas is
+  // y-down). The same transform is applied to the outline and the cars so they
+  // stay aligned.
+  Offset _project(Offset p, Size size) {
+    final spanX = bounds.width.abs() < 1e-6 ? 1.0 : bounds.width;
+    final spanY = bounds.height.abs() < 1e-6 ? 1.0 : bounds.height;
+    final availW = math.max(1.0, size.width - _pad * 2);
+    final availH = math.max(1.0, size.height - _pad * 2);
+    final scale = math.min(availW / spanX, availH / spanY);
+    final drawnW = spanX * scale;
+    final drawnH = spanY * scale;
+    final originX = _pad + (availW - drawnW) / 2;
+    final originY = _pad + (availH - drawnH) / 2;
+    final x = originX + (p.dx - bounds.left) * scale;
+    final y = originY + (bounds.bottom - p.dy) * scale;
+    return Offset(x, y);
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Draw track path
+    // Track outline: dark base stroke + status-tinted line on top.
     if (trackPoints.isNotEmpty) {
-      final path = Path()
-        ..moveTo(
-          normalize(trackPoints[0], size.width, size.height).dx,
-          normalize(trackPoints[0], size.width, size.height).dy,
-        );
-
+      final path = Path();
+      final first = _project(trackPoints.first, size);
+      path.moveTo(first.dx, first.dy);
       for (final pt in trackPoints.skip(1)) {
-        final npt = normalize(pt, size.width, size.height);
-        path.lineTo(npt.dx, npt.dy);
+        final p = _project(pt, size);
+        path.lineTo(p.dx, p.dy);
       }
+      path.close();
 
-      final trackPaint = Paint()
-        ..color = Colors.grey.shade600
-        ..strokeWidth = 3
-        ..style = PaintingStyle.stroke;
-      canvas.drawPath(path, trackPaint);
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = Colors.black.withOpacity(0.45)
+          ..strokeWidth = 7
+          ..style = PaintingStyle.stroke
+          ..strokeJoin = StrokeJoin.round
+          ..strokeCap = StrokeCap.round,
+      );
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = trackColor
+          ..strokeWidth = 4
+          ..style = PaintingStyle.stroke
+          ..strokeJoin = StrokeJoin.round
+          ..strokeCap = StrokeCap.round,
+      );
     }
 
-    // Draw drivers with team colours
-    positionData.cars.forEach((racingNumber, carPosition) {
-      final driver = drivers[racingNumber];
-      if (driver == null) return;
+    // Cars, interpolated between the previous and latest positions.
+    final t = animation.value;
+    final keys = {...fromPositions.keys, ...toPositions.keys};
+    for (final number in keys) {
+      final from = fromPositions[number];
+      final to = toPositions[number];
+      final Offset? raw = (from != null && to != null)
+          ? Offset.lerp(from, to, t)
+          : (to ?? from);
+      if (raw == null) continue;
 
-      final Offset pos = normalizeDriver(
-          carPosition.x, carPosition.y, size.width, size.height);
+      final driver = drivers[number];
+      final pos = _project(
+        _LiveTrackMapWidgetState.rotateAround(raw, rotCenter, rotationRad),
+        size,
+      );
 
-      // Parse team color
-      Color teamColor;
-      try {
-        if (driver.teamColour.isNotEmpty && driver.teamColour.length == 6) {
-          teamColor = Color(int.parse('0xFF${driver.teamColour}'));
-        } else {
+      Color teamColor = Colors.red;
+      final tc = driver?.teamColour;
+      if (tc != null && tc.isNotEmpty && tc.length == 6) {
+        try {
+          teamColor = Color(int.parse('0xFF$tc'));
+        } catch (_) {
           teamColor = Colors.red;
         }
-      } catch (e) {
-        teamColor = Colors.red;
       }
 
-      // Draw driver circle
-      final paint = Paint()
-        ..color = teamColor
-        ..style = PaintingStyle.fill;
-      canvas.drawCircle(pos, 6, paint);
+      // Dim cars that are not actively on track (pits, retired, off track).
+      final onTrack = (statuses[number] ?? 'OnTrack') == 'OnTrack';
+      final opacity = onTrack ? 1.0 : 0.3;
 
-      // Draw border
-      final borderPaint = Paint()
-        ..color = Colors.white
-        ..strokeWidth = 1
-        ..style = PaintingStyle.stroke;
-      canvas.drawCircle(pos, 6, borderPaint);
+      canvas.drawCircle(
+        pos,
+        6,
+        Paint()
+          ..color = teamColor.withOpacity(opacity)
+          ..style = PaintingStyle.fill,
+      );
+      canvas.drawCircle(
+        pos,
+        6,
+        Paint()
+          ..color = Colors.white.withOpacity(opacity)
+          ..strokeWidth = 1.2
+          ..style = PaintingStyle.stroke,
+      );
 
-      // Draw driver TLA/number
+      final label = (driver?.tla.isNotEmpty ?? false) ? driver!.tla : number;
       final textPainter = TextPainter(
         text: TextSpan(
-          text: driver.tla.isNotEmpty ? driver.tla : racingNumber,
-          style: const TextStyle(
-            color: Colors.white,
+          text: label,
+          style: TextStyle(
+            color: Colors.white.withOpacity(opacity),
             fontSize: 8,
             fontWeight: FontWeight.bold,
           ),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
-
-      // Position text above the driver circle
       textPainter.paint(canvas, pos + Offset(-textPainter.width / 2, -18));
-    });
+    }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _LiveTrackPainter oldDelegate) {
+    return oldDelegate.trackPoints != trackPoints ||
+        oldDelegate.toPositions != toPositions ||
+        oldDelegate.trackColor != trackColor ||
+        oldDelegate.bounds != bounds;
+  }
 }

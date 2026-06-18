@@ -1,16 +1,16 @@
 # Graph Report - formulavision  (2026-06-18)
 
 ## Corpus Check
-- 189 files · ~194,862 words
+- 156 files · ~181,779 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2408 nodes · 2327 edges · 228 communities (163 shown, 65 thin omitted)
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 59 edges (avg confidence: 0.89)
+- 2512 nodes · 2424 edges · 235 communities (170 shown, 65 thin omitted)
+- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 59 edges (avg confidence: 0.89)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `0088fbb2`
+- Built from commit: `822ff526`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -228,13 +228,20 @@
 - [[_COMMUNITY_Community 220|Community 220]]
 - [[_COMMUNITY_Community 221|Community 221]]
 - [[_COMMUNITY_Community 222|Community 222]]
+- [[_COMMUNITY_Community 228|Community 228]]
+- [[_COMMUNITY_Community 229|Community 229]]
+- [[_COMMUNITY_Community 230|Community 230]]
+- [[_COMMUNITY_Community 231|Community 231]]
+- [[_COMMUNITY_Community 232|Community 232]]
+- [[_COMMUNITY_Community 233|Community 233]]
+- [[_COMMUNITY_Community 234|Community 234]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `Maps Registry (maps.json)` - 21 edges
-2. `Track Corners Schema (x/y coordinates, angle, length, number)` - 21 edges
-3. `LiveData Model` - 13 edges
-4. `FormulaVision` - 9 edges
-5. `candidateLap` - 8 edges
+1. `drivers` - 21 edges
+2. `Maps Registry (maps.json)` - 21 edges
+3. `Track Corners Schema (x/y coordinates, angle, length, number)` - 21 edges
+4. `LiveData Model` - 13 edges
+5. `FormulaVision` - 9 edges
 6. `candidateLap` - 8 edges
 7. `candidateLap` - 8 edges
 8. `candidateLap` - 8 edges
@@ -266,15 +273,15 @@
 - **F1 Circuit Track Maps (Chunk 5)** — trackmaps_sakhir_outer, trackmaps_sakhir, trackmaps_shanghai, trackmaps_silverstone, trackmaps_singapore, trackmaps_sochi, trackmaps_spa, trackmaps_spielberg, trackmaps_suzuka, trackmaps_yasmarina, trackmaps_zandvoort [INFERRED 0.95]
 - **F1 Tyre Compound Icons** — tyre_hard, tyre_medium, tyre_soft, tyre_intermediate, tyre_unknown [EXTRACTED 1.00]
 
-## Communities (228 total, 65 thin omitted)
+## Communities (235 total, 65 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.02
-Nodes (97): AlertDialog, _alertRaceControl, applySector, applySegment, applyStint, build, _buildDriverDataTable, _buildDriverList (+89 more)
+Nodes (111): AlertDialog, _alertRaceControl, applySector, applySegment, applyStint, build, _buildDashboardMainContent, _buildDriverDataTable (+103 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.04
-Nodes (52): ArchiveStatus, Car, CarData, CarDataChannels, ChampionshipDriver, ChampionshipPrediction, ChampionshipTeam, Circuit (+44 more)
+Nodes (54): ArchiveStatus, _asInt, Car, CarData, CarDataChannels, CarTelemetry, ChampionshipDriver, ChampionshipPrediction (+46 more)
 
 ### Community 2 - "Community 2"
 Cohesion: 0.07
@@ -433,8 +440,8 @@ Cohesion: 0.10
 Nodes (20): build, _buildEventItem, _buildRaceList, _buildRaceWeekendPanel, Center, Container, DateFormat, F1Event (+12 more)
 
 ### Community 41 - "Community 41"
-Cohesion: 0.06
-Nodes (34): build, Center, Column, Container, fetchInitialData, initState, launchUrl, LiveHomePage (+26 more)
+Cohesion: 0.05
+Nodes (36): build, Center, Column, Container, fetchInitialData, initState, launchUrl, LiveHomePage (+28 more)
 
 ### Community 42 - "Community 42"
 Cohesion: 0.11
@@ -461,8 +468,8 @@ Cohesion: 0.12
 Nodes (16): build, Center, Container, DriversStandingsPage, _DriversStandingsPageState, Function, getDriverImageId, initState (+8 more)
 
 ### Community 48 - "Community 48"
-Cohesion: 0.09
-Nodes (21): build, _buildStintChip, _buildStintHistory, Container, didUpdateWidget, dispose, Divider, DriverRowCard (+13 more)
+Cohesion: 0.07
+Nodes (26): build, _buildStintChip, _buildStintHistory, _buildStintSheet, Container, didUpdateWidget, dispose, Divider (+18 more)
 
 ### Community 49 - "Community 49"
 Cohesion: 0.13
@@ -577,7 +584,7 @@ Cohesion: 0.25
 Nodes (7): build, main, MaterialApp, MyApp, package:flutter_dotenv/flutter_dotenv.dart, package:flutter/material.dart, package:formulavision/pages/nav_page.dart
 
 ### Community 77 - "Community 77"
-Cohesion: 0.25
+Cohesion: 0.29
 Nodes (7): 10, circuitKey, country, countryKey, iocCountryCode, name, years
 
 ### Community 78 - "Community 78"
@@ -613,7 +620,7 @@ Cohesion: 0.29
 Nodes (7): 34, circuitKey, country, countryKey, iocCountryCode, name, years
 
 ### Community 86 - "Community 86"
-Cohesion: 0.29
+Cohesion: 0.25
 Nodes (7): 39, circuitKey, country, countryKey, iocCountryCode, name, years
 
 ### Community 87 - "Community 87"
@@ -801,8 +808,8 @@ Cohesion: 0.12
 Nodes (4): ResizeChannel(), SetChannelWarnsOnOverflow(), Resize(), SetWarnsOnOverflow()
 
 ### Community 193 - "Community 193"
-Cohesion: 0.14
-Nodes (13): build, _buildSector, _cell, Color, Column, Container, MiniSectorBar, Row (+5 more)
+Cohesion: 0.12
+Nodes (16): build, _buildSector, _cell, Color, Column, Container, _flexFor, MiniSectorBar (+8 more)
 
 ### Community 196 - "Community 196"
 Cohesion: 0.18
@@ -829,8 +836,8 @@ Cohesion: 0.25
 Nodes (3): FlutterAppDelegate, AppDelegate, AppDelegate
 
 ### Community 204 - "Community 204"
-Cohesion: 0.29
-Nodes (6): AppSettings, getApiUrlSync, getDefaultApiUrl, isRaceControlSoundEnabledSync, package:flutter_dotenv/flutter_dotenv.dart, package:shared_preferences/shared_preferences.dart
+Cohesion: 0.20
+Nodes (9): AppSettings, getApiUrlSync, getDefaultApiUrl, getSpeedUnitSync, getTrackMapDisplayModeSync, isRaceControlSoundEnabledSync, isTrackMapEnabledSync, package:flutter_dotenv/flutter_dotenv.dart (+1 more)
 
 ### Community 205 - "Community 205"
 Cohesion: 0.29
@@ -841,8 +848,8 @@ Cohesion: 0.33
 Nodes (5): getCleanName, main, testCleanName, dart:io, dart:convert
 
 ### Community 207 - "Community 207"
-Cohesion: 0.40
-Nodes (4): main, package:flutter_test/flutter_test.dart, package:formulavision/main.dart, package:flutter/material.dart
+Cohesion: 0.33
+Nodes (5): main, package:flutter_test/flutter_test.dart, package:formulavision/main.dart, package:flutter/material.dart, package:flutter_test/flutter_test.dart
 
 ### Community 208 - "Community 208"
 Cohesion: 0.40
@@ -860,25 +867,53 @@ Nodes (4): images, info, author, version
 Cohesion: 0.40
 Nodes (4): images, info, author, version
 
+### Community 228 - "Community 228"
+Cohesion: 0.08
+Nodes (24): circuit, drivers, 1, 10, 11, 14, 16, 18 (+16 more)
+
+### Community 229 - "Community 229"
+Cohesion: 0.20
+Nodes (9): build, main, PositionData, _positions, _pumpFrames, package:flutter/material.dart, package:flutter_test/flutter_test.dart, package:formulavision/data/models/live_data.model.dart (+1 more)
+
+### Community 230 - "Community 230"
+Cohesion: 0.50
+Nodes (3): main, package:flutter_test/flutter_test.dart, package:formulavision/data/models/live_data.model.dart
+
+### Community 231 - "Community 231"
+Cohesion: 0.50
+Nodes (3): main, package:flutter_test/flutter_test.dart, package:formulavision/data/models/live_data.model.dart
+
+### Community 232 - "Community 232"
+Cohesion: 0.22
+Nodes (8): _harness, main, _sector, package:flutter/material.dart, package:flutter_test/flutter_test.dart, package:formulavision/components/driver_row_card.dart, package:formulavision/data/models/live_data.model.dart, package:shared_preferences/shared_preferences.dart
+
+### Community 233 - "Community 233"
+Cohesion: 0.11
+Nodes (17): _AeroPill, build, Color, Column, Container, initState, _PedalBar, _RpmBar (+9 more)
+
+### Community 234 - "Community 234"
+Cohesion: 0.50
+Nodes (3): main, package:flutter_test/flutter_test.dart, package:formulavision/data/models/live_data.model.dart
+
 ## Knowledge Gaps
-- **1914 isolated node(s):** `main`, `testCleanName`, `getCleanName`, `dart:convert`, `dart:io` (+1909 more)
+- **2010 isolated node(s):** `main`, `testCleanName`, `getCleanName`, `dart:convert`, `dart:io` (+2005 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **65 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `49` connect `Community 88` to `Community 77`?**
+- **Why does `49` connect `Community 88` to `Community 86`?**
   _High betweenness centrality (0.002) - this node is a cross-community bridge._
-- **Why does `2` connect `Community 83` to `Community 77`?**
+- **Why does `2` connect `Community 83` to `Community 86`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
-- **Why does `28` connect `Community 103` to `Community 77`?**
+- **Why does `28` connect `Community 103` to `Community 86`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
 - **Are the 20 inferred relationships involving `Track Corners Schema (x/y coordinates, angle, length, number)` (e.g. with `Austin (Circuit of the Americas)` and `Baku City Circuit`) actually correct?**
   _`Track Corners Schema (x/y coordinates, angle, length, number)` has 20 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `main`, `testCleanName`, `getCleanName` to the rest of the system?**
-  _1919 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _2015 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.02040816326530612 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.017857142857142856 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.03773584905660377 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.03636363636363636 - nodes in this community are weakly interconnected._
