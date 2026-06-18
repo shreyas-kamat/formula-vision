@@ -1,0 +1,4 @@
+TODO
+
+1. Remove the Database integration of the API
+2. 

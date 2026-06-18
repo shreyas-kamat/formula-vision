@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:formulavision/auth/login_page.dart';
+import 'package:formulavision/data/services/app_settings_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'dart:convert';
@@ -114,7 +114,8 @@ class AuthService {
         return false;
       }
 
-      var url = Uri.parse('${dotenv.env['API_URL']}/api/v1/auth/refresh-token');
+      final apiUrl = await AppSettings.getApiUrl();
+      var url = Uri.parse('$apiUrl/api/v1/auth/refresh-token');
       var response = await http.post(
         url,
         headers: <String, String>{

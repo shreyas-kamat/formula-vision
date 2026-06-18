@@ -36,51 +36,42 @@ class _NavPageState extends State<NavPage> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Center(
+        child: tabItems[_selectedIndex],
+      ),
+      bottomNavigationBar: FlashyTabBar(
+        animationCurve: Curves.linear,
+        selectedIndex: _selectedIndex,
+        iconSize: 30,
         backgroundColor: Colors.black,
-        body: Center(
-          child: tabItems[_selectedIndex],
-        ),
-        bottomNavigationBar: FlashyTabBar(
-          animationCurve: Curves.linear,
-          selectedIndex: _selectedIndex,
-          iconSize: 30,
-          backgroundColor: Colors.black,
-          showElevation: false, // use this to remove appBar's elevation
-          onItemSelected: (index) => setState(() {
-            _selectedIndex = index;
-          }),
-          items: [
-            FlashyTabBarItem(
-                icon: Icon(
-                  Icons.home,
-                ),
-                title: Text('Home'),
-                activeColor: Colors.redAccent,
-                inactiveColor: Colors.white),
-            FlashyTabBarItem(
-                icon: Icon(Icons.sports_motorsports),
-                title: Text('Dashboard'),
-                activeColor: Colors.redAccent,
-                inactiveColor: Colors.white),
-            FlashyTabBarItem(
-                icon: Icon(Icons.event),
-                title: Text('Schedule'),
-                activeColor: Colors.redAccent,
-                inactiveColor: Colors.white),
-            FlashyTabBarItem(
-                icon: Icon(Icons.leaderboard),
-                title: Text('Standings'),
-                activeColor: Colors.redAccent,
-                inactiveColor: Colors.white),
-            // FlashyTabBarItem(
-            //     icon: Icon(Icons.bug_report),
-            //     title: Text('Testing'),
-            //     activeColor: Colors.redAccent,
-            //     inactiveColor: Colors.white),
-          ],
-        ),
+        showElevation: false, // use this to remove appBar's elevation
+        onItemSelected: (index) => setState(() {
+          _selectedIndex = index;
+        }),
+        items: [
+          FlashyTabBarItem(
+              icon: Icon(Icons.home),
+              title: Text('Home'),
+              activeColor: Colors.redAccent,
+              inactiveColor: Colors.white),
+          FlashyTabBarItem(
+              icon: Icon(Icons.sports_motorsports),
+              title: Text('Dashboard'),
+              activeColor: Colors.redAccent,
+              inactiveColor: Colors.white),
+          FlashyTabBarItem(
+              icon: Icon(Icons.event),
+              title: Text('Schedule'),
+              activeColor: Colors.redAccent,
+              inactiveColor: Colors.white),
+          FlashyTabBarItem(
+              icon: Icon(Icons.leaderboard),
+              title: Text('Standings'),
+              activeColor: Colors.redAccent,
+              inactiveColor: Colors.white),
+        ],
       ),
     );
   }

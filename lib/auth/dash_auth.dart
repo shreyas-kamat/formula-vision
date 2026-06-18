@@ -13,33 +13,6 @@ class DashAuth extends StatefulWidget {
 class _DashAuthState extends State<DashAuth> {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Transactions',
-      // FutureBuilder<bool>(
-      //   future: isLoggedIn(),
-      //   builder: (context, snapshot) {
-      //     if (snapshot.connectionState == ConnectionState.waiting) {
-      //       return Scaffold(
-      //         backgroundColor: Colors.black,
-      //         body: Center(
-      //           child: CircularProgressIndicator(),
-      //         ),
-      //       );
-      //     } else if (snapshot.hasError) {
-      //       return Scaffold(
-      //         body: Center(
-      //           child: Text('Error: ${snapshot.error}'),
-      //         ),
-      //       );
-      //     } else if (snapshot.data == true) {
-      //       return const DashboardPage();
-      //     } else {
-      //       return DashAuthPage();
-      //     }
-      //   },
-      // ),
-      home: const DashboardPage(),
-    );
+    return const DashboardPage();
   }
 }

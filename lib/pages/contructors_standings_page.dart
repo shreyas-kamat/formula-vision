@@ -46,14 +46,18 @@ class _ContructorsStandingsPageState extends State<ContructorsStandingsPage> {
         return 'aston-martin';
       case 'alpine':
         return 'alpine';
-      case 'Haas F1 Team':
+      case 'haas':
         return 'haas';
       case 'rb':
         return 'racing-bulls';
-      case 'Williams':
+      case 'williams':
         return 'williams';
       case 'sauber':
         return 'kick-sauber';
+      case 'audi':
+        return 'audi';
+      case 'cadillac':
+        return 'cadillac';
       default:
         return constructorName;
     }
@@ -164,7 +168,7 @@ class _ContructorsStandingsPageState extends State<ContructorsStandingsPage> {
                               SizedBox(
                                 width: 30,
                                 child: Text(
-                                  standing.position,
+                                  standing.position ?? standing.positionText,
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 20,

@@ -3,12 +3,14 @@ import 'dart:async';
 import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:formulavision/data/services/app_settings_service.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:formulavision/components/animated_driver_tile.dart';
+import 'package:formulavision/components/driver_row_card.dart';
+import 'package:formulavision/components/race_control_toast.dart';
 import 'package:formulavision/components/race_timer_bar.dart';
 import 'package:formulavision/components/weather_info_card.dart';
-import 'package:formulavision/components/session_info_card.dart';
 import 'package:formulavision/components/track_status_card.dart';
 import 'package:formulavision/data/functions/cardata.function.dart';
 import 'package:formulavision/data/functions/live_data.function.dart';
@@ -77,13 +79,29 @@ class _TelemetryPageState extends State<TelemetryPage> {
   Map<String, int> _previousPositions = {};
   final Map<String, int> _currentPositions = {};
   final Map<String, String> _positionChanges = {}; // 'up', 'down', or 'same'
+  bool _isHeaderPinned = true; // Track if header is pinned
+  bool _isRaceTimerPinned = false; // Track if race timer bar is pinned
+
+  // Race control message alerts
+  final AudioPlayer _rcAudioPlayer = AudioPlayer();
+  int _lastSeenRaceControlCount = 0;
+  bool _raceControlSeeded = false;
+  bool _raceControlSoundEnabled = true;
 
   @override
   void initState() {
     super.initState();
     _initialize();
+    _loadRaceControlSoundSetting();
     final data = decompressCarData();
     print(data);
+  }
+
+  Future<void> _loadRaceControlSoundSetting() async {
+    final enabled = await AppSettings.isRaceControlSoundEnabled();
+    if (mounted) {
+      setState(() => _raceControlSoundEnabled = enabled);
+    }
   }
 
   Future<void> _initialize() async {
@@ -104,6 +122,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
     _delayTimer?.cancel(); // Clean up delay timer
     _messageQueue.clear(); // Clear any queued messages
     _liveDataController.close(); // Close the StreamController
+    _rcAudioPlayer.dispose(); // Release the alert audio player
     super.dispose();
   }
 
@@ -116,8 +135,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
     try {
       // final prefs = await SharedPreferences.getInstance();
       // final String? token = prefs.getString('jwt_token');
+      final apiUrl = await AppSettings.getApiUrl();
       final response = await http.get(
-        Uri.parse('${dotenv.env['API_URL']}/initialData'),
+        Uri.parse('$apiUrl/initialData'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
           // 'Authorization': 'Bearer $token',
@@ -164,6 +184,10 @@ class _TelemetryPageState extends State<TelemetryPage> {
               _positionChanges[racingNumber] = 'same';
             });
           }
+          // Seed race control marker so historical messages don't toast.
+          _lastSeenRaceControlCount =
+              liveData.raceControlMessages?.messages.length ?? 0;
+          _raceControlSeeded = true;
         }
       });
     }
@@ -177,9 +201,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
     try {
       // Negotiate connection with simulation parameter
+      final apiUrl = await AppSettings.getApiUrl();
       final response = await http.get(
-        Uri.parse(
-            '${dotenv.env['API_URL']}/negotiate?simulation=$_useSimulation'),
+        Uri.parse('$apiUrl/negotiate?simulation=$_useSimulation'),
       );
 
       if (response.statusCode == 200) {
@@ -202,8 +226,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
   // Custom SSE client implementation
   Future<void> _connectSSE() async {
     try {
+      final apiUrl = await AppSettings.getApiUrl();
       final sseUrl =
-          '${dotenv.env['API_URL']}/events${_useSimulation ? '?simulation=true' : ''}';
+          '$apiUrl/events${_useSimulation ? '?simulation=true' : ''}';
       print('Connecting to SSE endpoint: $sseUrl');
 
       // Create a client that doesn't automatically close the connection
@@ -448,12 +473,19 @@ class _TelemetryPageState extends State<TelemetryPage> {
                   print('TimingData Updated Successfully');
                   break;
 
-                // case 'TimingAppData':
-                //   setState(() {
-                //     _updateTimingAppData(updated);
-                //   });
-                //   print('TimingAppData Updated Successfully');
-                //   break;
+                case 'TimingAppData':
+                  setState(() {
+                    _updateTimingAppData(updated);
+                  });
+                  print('TimingAppData Updated Successfully');
+                  break;
+
+                case 'RaceControlMessages':
+                  setState(() {
+                    _updateRaceControlMessages(updated);
+                  });
+                  print('RaceControlMessages Updated Successfully');
+                  break;
 
                 case 'DriverList':
                   setState(() {
@@ -717,6 +749,223 @@ class _TelemetryPageState extends State<TelemetryPage> {
     print('Position changes: $_positionChanges');
   }
 
+  /// Merges incoming sector data (List or index-keyed Map) into [sectors],
+  /// preserving fields and segments that aren't present in the delta.
+  void _mergeSectors(List<Sector> sectors, dynamic raw) {
+    void applySector(int index, Map<String, dynamic> sjson) {
+      final Sector? prev = index < sectors.length ? sectors[index] : null;
+      final List<Segment> segments =
+          prev != null ? List<Segment>.from(prev.segments) : <Segment>[];
+      if (sjson.containsKey('Segments')) {
+        _mergeSegments(segments, sjson['Segments']);
+      }
+      final merged = Sector(
+        stopped: sjson['Stopped'] ?? prev?.stopped ?? false,
+        value: sjson['Value'] ?? prev?.value ?? '',
+        status: sjson['Status'] ?? prev?.status ?? 0,
+        overallFastest: sjson['OverallFastest'] ?? prev?.overallFastest ?? false,
+        personalFastest:
+            sjson['PersonalFastest'] ?? prev?.personalFastest ?? false,
+        previousValue: sjson['PreviousValue'] ?? prev?.previousValue ?? '',
+        segments: segments,
+      );
+      if (index < sectors.length) {
+        sectors[index] = merged;
+      } else {
+        while (sectors.length < index) {
+          sectors.add(Sector(
+            stopped: false,
+            value: '',
+            status: 0,
+            overallFastest: false,
+            personalFastest: false,
+            segments: const [],
+          ));
+        }
+        sectors.add(merged);
+      }
+    }
+
+    if (raw is List) {
+      for (int i = 0; i < raw.length; i++) {
+        if (raw[i] is Map) applySector(i, Map<String, dynamic>.from(raw[i]));
+      }
+    } else if (raw is Map) {
+      raw.forEach((k, v) {
+        final idx = int.tryParse(k.toString());
+        if (idx != null && v is Map) {
+          applySector(idx, Map<String, dynamic>.from(v));
+        }
+      });
+    }
+  }
+
+  /// Merges incoming segment data (List or index-keyed Map) into [segments].
+  void _mergeSegments(List<Segment> segments, dynamic raw) {
+    void applySegment(int index, Map<String, dynamic> sjson) {
+      final status = sjson['Status'] ??
+          (index < segments.length ? segments[index].status : 0);
+      if (index < segments.length) {
+        segments[index] = Segment(status: status);
+      } else {
+        while (segments.length < index) {
+          segments.add(Segment(status: 0));
+        }
+        segments.add(Segment(status: status));
+      }
+    }
+
+    if (raw is List) {
+      for (int i = 0; i < raw.length; i++) {
+        if (raw[i] is Map) applySegment(i, Map<String, dynamic>.from(raw[i]));
+      }
+    } else if (raw is Map) {
+      raw.forEach((k, v) {
+        final idx = int.tryParse(k.toString());
+        if (idx != null && v is Map) {
+          applySegment(idx, Map<String, dynamic>.from(v));
+        }
+      });
+    }
+  }
+
+  /// Merges incoming TimingAppData (tyre stints) into the live data. The feed
+  /// sends stints either as a List (snapshot) or a Map keyed by stint index
+  /// (delta), so we merge by index to preserve prior stints.
+  void _updateTimingAppData(dynamic data) {
+    if (data is! Map<String, dynamic>) return;
+    if (data.isEmpty || data['Lines'] is! Map) return;
+    if (_liveDataFuture == null) return;
+
+    _liveDataFuture = _liveDataFuture!.then((liveDataList) {
+      if (liveDataList.isEmpty) return liveDataList;
+      final currentLiveData = liveDataList[0];
+      final Map<String, TimingAppDataDriver> currentLines =
+          Map<String, TimingAppDataDriver>.from(
+              currentLiveData.timingAppData?.lines ?? {});
+
+      final linesData = data['Lines'] as Map<String, dynamic>;
+      linesData.forEach((racingNumber, driverData) {
+        if (driverData is! Map<String, dynamic>) return;
+        final existing = currentLines[racingNumber];
+        final List<Stint> mergedStints =
+            existing != null ? List<Stint>.from(existing.stints) : <Stint>[];
+
+        void applyStint(int index, Map<String, dynamic> sjson) {
+          final prev = index < mergedStints.length ? mergedStints[index] : null;
+          final merged = Stint(
+            totalLaps: sjson['TotalLaps'] ?? prev?.totalLaps,
+            compound: sjson['Compound'] ?? prev?.compound,
+            isNew: sjson['New'] ?? prev?.isNew,
+          );
+          if (index < mergedStints.length) {
+            mergedStints[index] = merged;
+          } else {
+            while (mergedStints.length < index) {
+              mergedStints.add(Stint());
+            }
+            mergedStints.add(merged);
+          }
+        }
+
+        final stintsRaw = driverData['Stints'];
+        if (stintsRaw is List) {
+          for (int i = 0; i < stintsRaw.length; i++) {
+            if (stintsRaw[i] is Map) {
+              applyStint(i, Map<String, dynamic>.from(stintsRaw[i]));
+            }
+          }
+        } else if (stintsRaw is Map) {
+          stintsRaw.forEach((k, v) {
+            final idx = int.tryParse(k.toString());
+            if (idx != null && v is Map) {
+              applyStint(idx, Map<String, dynamic>.from(v));
+            }
+          });
+        }
+
+        currentLines[racingNumber] = TimingAppDataDriver(
+          racingNumber: driverData['RacingNumber'] ??
+              existing?.racingNumber ??
+              racingNumber,
+          stints: mergedStints,
+          line: driverData['Line'] ?? existing?.line ?? 0,
+          gridPos: driverData['GridPos'] ?? existing?.gridPos ?? '',
+        );
+      });
+
+      currentLiveData.timingAppData = TimingAppData(lines: currentLines);
+      return liveDataList;
+    }).then((liveDataList) {
+      if (!_liveDataController.isClosed) {
+        _liveDataController.add(liveDataList);
+      }
+      return liveDataList;
+    });
+  }
+
+  /// Merges incoming race control messages and triggers a toast (and, for
+  /// important categories, the alert sound) for any newly-arrived message.
+  void _updateRaceControlMessages(dynamic data) {
+    if (data is! Map<String, dynamic>) return;
+    final incoming = RaceControlMessages.fromJson(data);
+    if (incoming.messages.isEmpty) return;
+    if (_liveDataFuture == null) return;
+
+    _liveDataFuture = _liveDataFuture!.then((liveDataList) {
+      if (liveDataList.isEmpty) return liveDataList;
+      final currentLiveData = liveDataList[0];
+      final existing =
+          currentLiveData.raceControlMessages?.messages ?? <Message>[];
+
+      final List<Message> merged = List<Message>.from(existing);
+      for (final m in incoming.messages) {
+        final dup =
+            merged.any((e) => e.utc == m.utc && e.message == m.message);
+        if (!dup) merged.add(m);
+      }
+      currentLiveData.raceControlMessages =
+          RaceControlMessages(messages: merged);
+
+      if (!_raceControlSeeded) {
+        _lastSeenRaceControlCount = merged.length;
+        _raceControlSeeded = true;
+      } else if (merged.length > _lastSeenRaceControlCount) {
+        final newMessages = merged.sublist(_lastSeenRaceControlCount);
+        _lastSeenRaceControlCount = merged.length;
+        _alertRaceControl(newMessages);
+      }
+      return liveDataList;
+    }).then((liveDataList) {
+      if (!_liveDataController.isClosed) {
+        _liveDataController.add(liveDataList);
+      }
+      return liveDataList;
+    });
+  }
+
+  void _alertRaceControl(List<Message> messages) {
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    bool playSound = false;
+    for (final m in messages) {
+      messenger?.showSnackBar(RaceControlToast.buildSnackBar(m));
+      if (RaceControlToast.isImportant(m)) playSound = true;
+    }
+    if (playSound && _raceControlSoundEnabled) {
+      _playRaceControlSound();
+    }
+  }
+
+  Future<void> _playRaceControlSound() async {
+    try {
+      await _rcAudioPlayer.stop();
+      await _rcAudioPlayer.play(AssetSource('TeamRadioF1FX.wav'));
+    } catch (e) {
+      print('Error playing race control sound: $e');
+    }
+  }
+
   void _updateTimingData(dynamic data) {
     if (data is Map<String, dynamic>) {
       print('Updating timing data with: ${data.keys.toList()}');
@@ -738,6 +987,11 @@ class _TelemetryPageState extends State<TelemetryPage> {
                 Map<String, TimingDataDriver> currentLines =
                     currentLiveData.timingData?.lines ?? {};
 
+                // Snapshot positions from the previous update cycle so that
+                // _updatePositionChanges() compares this cycle against the last
+                // (single source of truth = live timing position).
+                _previousPositions = Map.from(_currentPositions);
+
                 // Process each driver's timing data
                 final linesData = data['Lines'] as Map<String, dynamic>;
                 linesData.forEach((racingNumber, driverData) {
@@ -745,44 +999,15 @@ class _TelemetryPageState extends State<TelemetryPage> {
                     // Create or update the driver's timing data
                     final currentDriverData = currentLines[racingNumber];
 
-                    // Process sectors if available
-                    List<Sector> updatedSectors = [];
-                    if (driverData.containsKey('Sectors') &&
-                        driverData['Sectors'] is List) {
-                      final sectorsData = driverData['Sectors'] as List;
-                      for (int i = 0; i < sectorsData.length; i++) {
-                        final sectorData = sectorsData[i];
-                        if (sectorData is Map<String, dynamic>) {
-                          // Create updated sector with segments if available
-                          List<Segment> updatedSegments = [];
-                          if (sectorData.containsKey('Segments') &&
-                              sectorData['Segments'] is List) {
-                            final segmentsData = sectorData['Segments'] as List;
-                            for (var segmentData in segmentsData) {
-                              if (segmentData is Map<String, dynamic>) {
-                                updatedSegments.add(Segment(
-                                  status: segmentData['Status'] ?? 0,
-                                ));
-                              }
-                            }
-                          }
-
-                          updatedSectors.add(Sector(
-                            stopped: sectorData['Stopped'] ?? false,
-                            value: sectorData['Value'] ?? '',
-                            status: sectorData['Status'] ?? 0,
-                            overallFastest:
-                                sectorData['OverallFastest'] ?? false,
-                            personalFastest:
-                                sectorData['PersonalFastest'] ?? false,
-                            previousValue: sectorData['PreviousValue'] ?? '',
-                            segments: updatedSegments,
-                          ));
-                        }
-                      }
-                    } else if (currentDriverData != null) {
-                      // Keep existing sectors if new data doesn't have them
-                      updatedSectors = currentDriverData.sectors;
+                    // Process sectors if available. The feed sends Sectors and
+                    // their Segments either as a List (snapshot) or a Map keyed
+                    // by index (delta), so we merge by index into the existing
+                    // sectors/segments to preserve mini-sector progress.
+                    List<Sector> updatedSectors = currentDriverData != null
+                        ? List<Sector>.from(currentDriverData.sectors)
+                        : <Sector>[];
+                    if (driverData.containsKey('Sectors')) {
+                      _mergeSectors(updatedSectors, driverData['Sectors']);
                     }
 
                     // Process speeds if available
@@ -989,16 +1214,12 @@ class _TelemetryPageState extends State<TelemetryPage> {
                           (currentDriverData?.numberOfPitStops ?? 0),
                     );
 
-                    // Track position changes for timing data updates
+                    // Live timing position is the single source of truth for
+                    // ordering. _previousPositions was snapshotted above, so we
+                    // only write the new current position here.
                     final newLine =
                         driverData['Line'] ?? (currentDriverData?.line ?? 0);
-                    final previousLine =
-                        _currentPositions[racingNumber] ?? newLine;
-
-                    if (previousLine != newLine) {
-                      _previousPositions[racingNumber] = previousLine;
-                      _currentPositions[racingNumber] = newLine;
-                    }
+                    _currentPositions[racingNumber] = newLine;
 
                     // Update the driver in our map
                     currentLines[racingNumber] = updatedDriver;
@@ -1296,532 +1517,704 @@ class _TelemetryPageState extends State<TelemetryPage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Live Dashboard'),
-        backgroundColor: Colors.red,
-        actions: [
-          Chip(
-            label: Text(_connectionStatus),
-            backgroundColor: _isConnected
-                ? (_useSimulation ? Colors.amber : Colors.green)
-                : Colors.red[300],
-            labelStyle: const TextStyle(color: Colors.black),
-          ),
-          const SizedBox(width: 10),
-        ],
+  Widget _buildExpandableTimerButton() {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: _delayEnabled ? Colors.orange : Colors.amber,
+        shape: BoxShape.circle,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Connection status and controls
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Delay toggle button
-                ElevatedButton.icon(
-                  icon: Icon(
-                    _delayEnabled ? Icons.pause : Icons.play_arrow,
-                    color: Colors.white,
+      child: Center(
+        child: IconButton(
+          onPressed: () {
+            _showDelayModal(context);
+          },
+          icon: const Icon(Icons.timer),
+          color: Colors.black,
+          iconSize: 24,
+          constraints: const BoxConstraints(),
+          padding: EdgeInsets.zero,
+        ),
+      ),
+    );
+  }
+
+  void _showDelayModal(BuildContext context) {
+    int tempDelay = _delaySeconds;
+    bool tempDelayEnabled = _delayEnabled;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFF1e1e1e),
+              title: const Text(
+                'Adjust Delay',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Delay enabled toggle
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[900],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Enable Delay',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Switch(
+                          value: tempDelayEnabled,
+                          onChanged: (value) {
+                            setModalState(() {
+                              tempDelayEnabled = value;
+                            });
+                          },
+                          activeThumbColor: Colors.orange,
+                        ),
+                      ],
+                    ),
                   ),
-                  label: Text(_delayEnabled ? 'Delay ON' : 'Delay OFF'),
-                  onPressed: _toggleDelay,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        _delayEnabled ? Colors.orange : Colors.grey,
-                    foregroundColor: Colors.white,
+                  const SizedBox(height: 24),
+                  // Delay value display with +/- buttons
+                  Opacity(
+                    opacity: tempDelayEnabled ? 1.0 : 0.5,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: tempDelayEnabled
+                            ? Colors.grey[900]
+                            : Colors.grey[800],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: tempDelayEnabled ? Colors.orange : Colors.grey,
+                          width: 2,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          const Text(
+                            'Delay Duration',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 100,
+                                child: TextField(
+                                  controller: TextEditingController(
+                                    text: tempDelay.toString(),
+                                  ),
+                                  enabled: tempDelayEnabled,
+                                  textAlign: TextAlign.center,
+                                  keyboardType: TextInputType.number,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'monospace',
+                                  ),
+                                  decoration: const InputDecoration(
+                                    border: InputBorder.none,
+                                    contentPadding: EdgeInsets.zero,
+                                  ),
+                                  onSubmitted: (value) {
+                                    final newDelay =
+                                        int.tryParse(value) ?? tempDelay;
+                                    setModalState(() {
+                                      tempDelay = newDelay.clamp(0, 300);
+                                    });
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                's',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'monospace',
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          // +/- buttons
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ElevatedButton(
+                                onPressed: tempDelayEnabled && tempDelay > 0
+                                    ? () {
+                                        setModalState(() {
+                                          tempDelay--;
+                                        });
+                                      }
+                                    : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.orange,
+                                  disabledBackgroundColor: Colors.grey[700],
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: const Text(
+                                  '−',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 24),
+                              ElevatedButton(
+                                onPressed: tempDelayEnabled && tempDelay < 300
+                                    ? () {
+                                        setModalState(() {
+                                          tempDelay++;
+                                        });
+                                      }
+                                    : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.orange,
+                                  disabledBackgroundColor: Colors.grey[700],
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: const Text(
+                                  '+',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                // Delay controls with +/- buttons and text input
-                if (_delayEnabled) ...[
-                  Column(
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Decrease button
-                          IconButton(
-                            onPressed: _delaySeconds > 0
-                                ? () => _updateDelay(_delaySeconds - 5)
-                                : null,
-                            icon: const Icon(Icons.remove),
-                            style: IconButton.styleFrom(
-                              backgroundColor: Colors.orange.withOpacity(0.2),
-                              foregroundColor: Colors.orange,
-                              padding: const EdgeInsets.all(8),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          // Text input field
-                          Container(
-                            width: 60,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Center(
-                              child: TextField(
-                                controller: TextEditingController(
-                                    text: _delaySeconds.toString()),
-                                textAlign: TextAlign.center,
-                                keyboardType: TextInputType.number,
-                                style: const TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
-                                decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                ),
-                                onSubmitted: (value) {
-                                  final newDelay =
-                                      int.tryParse(value) ?? _delaySeconds;
-                                  _updateDelay(
-                                      newDelay.clamp(0, 300)); // Max 5 minutes
-                                },
-                              ),
-                            ),
-                          ),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _delayEnabled = tempDelayEnabled;
+                      _delaySeconds = tempDelay;
+                      if (_delayEnabled && _delaySeconds > 0) {
+                        _startDelayTimer();
+                      } else {
+                        _delayTimer?.cancel();
+                        _processQueuedMessages();
+                      }
+                    });
+                    Navigator.of(context).pop();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    'Apply',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 
+  // Helper method to get track status display
+  String _getTrackStatusDisplay(String? status) {
+    switch (status?.toLowerCase()) {
+      case '1':
+      case 'track clear':
+        return 'Track Clear';
+      case '2':
+      case 'yellow flag':
+        return 'Yellow Flag';
+      case '3':
+      case 'safety car':
+        return 'Safety Car';
+      case '4':
+      case 'red flag':
+        return 'Red Flag';
+      case '5':
+      case 'vsc':
+      case 'virtual safety car':
+        return 'VSC';
+      default:
+        return status ?? 'Track Clear';
+    }
+  }
+
+  // Helper method to get track status color
+  Color _getTrackStatusColor(String? status) {
+    switch (status?.toLowerCase()) {
+      case '1':
+      case 'track clear':
+        return Colors.green;
+      case '2':
+      case 'yellow flag':
+        return Colors.yellow;
+      case '3':
+      case 'safety car':
+        return Colors.orange;
+      case '4':
+      case 'red flag':
+        return Colors.red;
+      case '5':
+      case 'vsc':
+      case 'virtual safety car':
+        return Colors.yellow[700] ?? Colors.yellow;
+      default:
+        return Colors.green;
+    }
+  }
+
+  // Header widget to avoid repetition
+  Widget _buildHeaderWidget(
+      SessionInfo? sessionInfo, TrackStatus? trackStatus) {
+    final meetingName = sessionInfo?.meeting.name ?? 'Grand Prix';
+    final sessionType = sessionInfo?.type ?? 'Session';
+    final trackStatusDisplay = _getTrackStatusDisplay(trackStatus?.status);
+    final trackStatusColor = _getTrackStatusColor(trackStatus?.status);
+
+    return Slidable(
+      endActionPane: ActionPane(
+        motion: const ScrollMotion(),
+        extentRatio: 0.15,
+        children: [
+          SlidableAction(
+            onPressed: (context) {
+              setState(() {
+                _isHeaderPinned = !_isHeaderPinned;
+              });
+            },
+            icon: _isHeaderPinned ? Icons.lock : Icons.lock_open,
+            foregroundColor: Colors.orange,
+            backgroundColor: Colors.transparent,
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  meetingName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 25,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'formula-bold',
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                // const SizedBox(height: 4),
+                // Session Type with Live Badge
+                Row(
+                  children: [
+                    Text(
+                      sessionType,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: trackStatusColor.withOpacity(0.4),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 12,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: trackStatusColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
                           const SizedBox(width: 8),
-                          // Increase button
-                          IconButton(
-                            onPressed: _delaySeconds < 300
-                                ? () => _updateDelay(_delaySeconds + 5)
-                                : null,
-                            icon: const Icon(Icons.add),
-                            style: IconButton.styleFrom(
-                              backgroundColor: Colors.orange.withOpacity(0.2),
-                              foregroundColor: Colors.orange,
-                              padding: const EdgeInsets.all(8),
+                          Text(
+                            trackStatusDisplay,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      // Preset buttons
-                    ],
-                  ),
-                ],
-              ],
-            ),
-
-            // if (_errorMessage.isNotEmpty)
-            //   Padding(
-            //     padding: const EdgeInsets.only(top: 8.0),
-            //     child: Text(
-            //       'Error: $_errorMessage',
-            //       style: const TextStyle(color: Colors.red),
-            //     ),
-            //   ),
-
-            const SizedBox(height: 10),
-
-            // Messages received counter and delay info
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Messages received: $_messageCount',
-                  style: const TextStyle(
-                      fontSize: 14, fontStyle: FontStyle.italic),
+                    ),
+                  ],
                 ),
-                if (_delayEnabled) ...[
-                  Text(
-                    'Queued messages: ${_messageQueue.length}',
-                    style: const TextStyle(
-                        fontSize: 14,
-                        fontStyle: FontStyle.italic,
-                        color: Colors.orange),
-                  ),
-                  Text(
-                    'Delay: ${_delaySeconds}s',
-                    style: const TextStyle(
-                        fontSize: 14,
-                        fontStyle: FontStyle.italic,
-                        color: Colors.orange),
-                  ),
-                ],
-                // Lap count display
-                // FutureBuilder<List<LiveData>>(
-                //   future: _liveDataFuture,
-                //   builder: (context, snapshot) {
-                //     if (snapshot.hasData &&
-                //         snapshot.data!.isNotEmpty &&
-                //         snapshot.data![0].lapCount != null &&
-                //         snapshot.data![0].sessionInfo != null) {
-                //       final liveData = snapshot.data![0];
-                //       final lapCount = liveData.lapCount!;
-                //       final sessionInfo = liveData.sessionInfo!;
-
-                //       // Only show lap count for 'Sprint' or 'Race' sessions
-                //       final sessionType = sessionInfo.type.toLowerCase();
-                //       final sessionName = sessionInfo.name.toLowerCase();
-
-                //       final isRaceOrSprint = sessionType == 'race' ||
-                //           sessionType == 'sprint' ||
-                //           sessionName.contains('race') ||
-                //           sessionName.contains('sprint');
-
-                //       if (isRaceOrSprint) {
-                //         return Padding(
-                //           padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-                //           child: LapCountCard(
-                //             currentLap: lapCount.currentLap,
-                //             totalLaps: lapCount.totalLaps,
-                //             sessionType: sessionInfo.name,
-                //           ),
-                //         );
-                //       }
-                //     }
-                //     return const SizedBox.shrink();
-                //   },
-                // ),
-
-                // // Compact Lap count display
-                // StreamBuilder<List<LiveData>>(
-                //   stream: liveDataStream,
-                //   initialData: _liveDataFuture != null ? [] : null,
-                //   builder: (context, snapshot) {
-                //     // Debug: Print what data we have
-                //     print('=== CompactLapCountCard Debug ===');
-                //     print(
-                //         '_liveDataFuture != null: ${_liveDataFuture != null}');
-                //     print(
-                //         'snapshot.connectionState: ${snapshot.connectionState}');
-                //     print('snapshot.hasData: ${snapshot.hasData}');
-                //     print('snapshot.hasError: ${snapshot.hasError}');
-                //     if (snapshot.hasError) {
-                //       print('snapshot.error: ${snapshot.error}');
-                //     }
-                //     if (snapshot.hasData) {
-                //       print(
-                //           'snapshot.data!.isNotEmpty: ${snapshot.data!.isNotEmpty}');
-                //       if (snapshot.data!.isNotEmpty) {
-                //         final liveData = snapshot.data![0];
-                //         print(
-                //             'liveData.lapCount != null: ${liveData.lapCount != null}');
-                //         print(
-                //             'liveData.sessionInfo != null: ${liveData.sessionInfo != null}');
-                //         print(
-                //             'liveData.extrapolatedClock != null: ${liveData.extrapolatedClock != null}');
-                //         if (liveData.extrapolatedClock != null) {
-                //           print(
-                //               'extrapolatedClock.remaining: "${liveData.extrapolatedClock!.remaining}"');
-                //           print(
-                //               'extrapolatedClock.extrapolating: ${liveData.extrapolatedClock!.extrapolating}');
-                //         }
-                //       }
-                //     }
-
-                //     if (snapshot.hasData &&
-                //         snapshot.data!.isNotEmpty &&
-                //         snapshot.data![0].sessionInfo != null) {
-                //       final liveData = snapshot.data![0];
-                //       final sessionInfo = liveData.sessionInfo!;
-
-                //       // Use default values if lapCount is null
-                //       final lapCount = liveData.lapCount;
-                //       final currentLap = lapCount?.currentLap ?? 0;
-                //       final totalLaps = lapCount?.totalLaps ?? 0;
-
-                //       // Check if it's a race or sprint session for lap count display
-                //       final sessionType = sessionInfo.type.toLowerCase();
-                //       final sessionName = sessionInfo.name.toLowerCase();
-
-                //       // Only show lap count for race and sprint sessions
-                //       // Explicitly exclude practice, qualifying, and other session types
-                //       // Handle all possible capitalizations: Practice/practice, Qualifying/qualifying, etc.
-                //       final isRaceOrSprint = (sessionType == 'race' ||
-                //               sessionType == 'sprint' ||
-                //               sessionName.contains('race') ||
-                //               sessionName.contains('sprint')) &&
-                //           !sessionType.contains('practice') &&
-                //           !sessionType.contains('qualifying') &&
-                //           !sessionType.contains('qual') &&
-                //           !sessionName.contains('practice') &&
-                //           !sessionName.contains('qualifying') &&
-                //           !sessionName.contains('qual');
-
-                //       // Debug: Print session info to help verify detection
-                //       print(
-                //           'Original - Session Type: "${sessionInfo.type}", Session Name: "${sessionInfo.name}"');
-                //       print(
-                //           'Lowercase - Session Type: "$sessionType", Session Name: "$sessionName"');
-
-                //       // Debug: Show evaluation steps
-                //       final hasRaceOrSprint = (sessionType == 'race' ||
-                //           sessionType == 'sprint' ||
-                //           sessionName.contains('race') ||
-                //           sessionName.contains('sprint'));
-                //       final hasPractice = sessionType.contains('practice') ||
-                //           sessionName.contains('practice');
-                //       final hasQualifying =
-                //           sessionType.contains('qualifying') ||
-                //               sessionType.contains('qual') ||
-                //               sessionName.contains('qualifying') ||
-                //               sessionName.contains('qual');
-
-                //       print(
-                //           'Evaluation: hasRaceOrSprint=$hasRaceOrSprint, hasPractice=$hasPractice, hasQualifying=$hasQualifying');
-                //       print('Final Result: Show Lap Count: $isRaceOrSprint');
-
-                //       // Always show the card, but conditionally show lap count
-                //       return Padding(
-                //         padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
-                //         child: CompactLapCountCard(
-                //           currentLap: currentLap,
-                //           totalLaps: totalLaps,
-                //           sessionType: sessionInfo.name,
-                //           extrapolatedClock:
-                //               liveData.extrapolatedClock?.remaining,
-                //           isClockExtrapolating:
-                //               liveData.extrapolatedClock?.extrapolating ??
-                //                   false,
-                //           showLapCount:
-                //               isRaceOrSprint, // Only show lap count for race/sprint
-                //         ),
-                //       );
-                //     }
-
-                //     // If we have any data at all, show the card with available information
-                //     if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                //       final liveData = snapshot.data![0];
-                //       print('=== Showing card with available data ===');
-
-                //       return CompactLapCountCard(
-                //         currentLap: 0,
-                //         totalLaps: 0,
-                //         sessionType: 'Session',
-                //         extrapolatedClock:
-                //             liveData.extrapolatedClock?.remaining,
-                //         isClockExtrapolating:
-                //             liveData.extrapolatedClock?.extrapolating ?? false,
-                //         showLapCount:
-                //             false, // Don't show lap count if no session info
-                //       );
-                //     }
-
-                //     print(
-                //         '=== No data available, showing SizedBox.shrink() ===');
-                //     return const SizedBox.shrink();
-                //   },
-                // ),
               ],
             ),
-            // Text(
-            //   'Note: Currently the data displayed is updated but it is unstable. (Live Data Fetching is only available on my local machine, the NodeJS API will be made public soon [stable])',
-            //   style: TextStyle(
-            //       fontSize: 12,
-            //       fontStyle: FontStyle.italic,
-            //       color: Colors.grey),
-            // ),
+          ),
+          const SizedBox(width: 16),
+          _buildExpandableTimerButton(),
+        ],
+      ),
+    );
+  }
 
-            const SizedBox(height: 16),
-
-            // Main telemetry data display
-            Expanded(
-              child: StreamBuilder<List<LiveData>>(
-                stream: liveDataStream,
-                initialData: _liveDataFuture != null ? [] : null,
-                builder: (context, snapshot) {
-                  if (_liveDataFuture == null) {
-                    return const Center(
-                      child: Text('No telemetry data received yet'),
-                    );
-                  }
-
-                  if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                    final liveData = snapshot.data![0];
-                    return Column(
-                      children: [
-                        // Pinned RaceTimerBar at the top
-                        FutureBuilder<List<LiveData>>(
-                          future: _liveDataFuture,
-                          initialData: [],
-                          builder: (context, snapshot) {
-                            if (snapshot.hasData &&
-                                snapshot.data!.isNotEmpty &&
-                                snapshot.data![0].extrapolatedClock != null) {
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 12.0),
-                                child: RaceTimerBar(
-                                  remaining: snapshot
-                                      .data![0].extrapolatedClock!.remaining,
-                                  currentLap:
-                                      snapshot.data![0].lapCount?.currentLap,
-                                  totalLaps:
-                                      snapshot.data![0].lapCount?.totalLaps,
-                                  sessionType:
-                                      snapshot.data![0].sessionInfo!.name,
-                                ),
-                              );
-                            }
-                            return const SizedBox.shrink();
-                          },
-                        ),
-                        // Scrollable content below
-                        Expanded(
-                          child: SingleChildScrollView(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.start,
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Column(
+        children: [
+          // Connection indicator bar
+          Container(
+            width: double.infinity,
+            height: 8,
+            color: _isConnected
+                ? (_useSimulation ? Colors.amber : Colors.green)
+                : Colors.red,
+          ),
+          Expanded(
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // HEADER - Always on top when pinned
+                    if (_isHeaderPinned)
+                      FutureBuilder<List<LiveData>>(
+                        future: _liveDataFuture,
+                        initialData: [],
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData &&
+                              snapshot.data!.isNotEmpty &&
+                              snapshot.data![0].sessionInfo != null) {
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                FutureBuilder<List<LiveData>>(
-                                  future: _liveDataFuture,
-                                  initialData: [], // Initial empty data
-                                  builder: (context, snapshot) {
-                                    if (snapshot.hasData &&
-                                        snapshot.data!.isNotEmpty) {
-                                      final liveData = snapshot.data!;
-                                      return Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        children: [
-                                          // RaceTimerBar removed from here as it's now pinned above
-
-                                          // _buildExtrapolatedClock(liveData[0]
-                                          //     .extrapolatedClock!
-                                          //     .remaining),
-                                          SizedBox(height: 10),
-                                          // TrackMapWidget(
-                                          //   trackJsonAsset:
-                                          //       'assets/TrackMaps/Spielberg.json',
-                                          //   driverPositions: testDriverPositions,
-                                          //   width: 350,
-                                          //   height: 200,
-                                          // ),
-                                          SizedBox(height: 10),
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 8.0),
-                                            child: SessionInfoCard(
-                                              raceName: liveData[0]
-                                                  .sessionInfo!
-                                                  .meeting
-                                                  .name,
-                                              sessionName:
-                                                  liveData[0].sessionInfo!.name,
-                                              sessionType:
-                                                  liveData[0].sessionInfo!.type,
-                                              location: liveData[0]
-                                                  .sessionInfo!
-                                                  .meeting
-                                                  .location,
-                                              country: liveData[0]
-                                                  .sessionInfo!
-                                                  .meeting
-                                                  .country
-                                                  .name,
-                                              circuit: liveData[0]
-                                                  .sessionInfo!
-                                                  .meeting
-                                                  .circuit
-                                                  .shortName,
-                                              status: liveData[0]
-                                                  .sessionInfo!
-                                                  .archiveStatus
-                                                  .status,
-                                            ),
-                                          ),
-                                          _buildTrackStatusCard(
-                                              liveData[0].trackStatus!),
-                                          _buildWeatherCard(
-                                              liveData[0].weatherData!),
-
-                                          SizedBox(height: 10),
-                                          Text('Drivers',
-                                              style: TextStyle(
-                                                  fontSize: 20,
-                                                  fontWeight: FontWeight.bold)),
-                                          SizedBox(height: 5),
-                                          _buildDriverList(
-                                              liveData[0].driverList!.drivers,
-                                              liveData[0].timingData!.lines,
-                                              liveData[0]
-                                                      .timingAppData
-                                                      ?.lines ??
-                                                  {},
-                                              liveData[0].sessionInfo!),
-                                        ],
-                                      );
-                                    } else if (snapshot.hasError) {
-                                      return Text('Error: ${snapshot.error}');
-                                    } else {
-                                      return const CircularProgressIndicator();
-                                    }
-                                  },
-                                ),
+                                _buildHeaderWidget(
+                                    snapshot.data![0].sessionInfo,
+                                    snapshot.data![0].trackStatus),
+                                const SizedBox(height: 16),
                               ],
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
+                    if (!_isHeaderPinned) const SizedBox(height: 0),
+
+                    // RACE TIMER and CONTENT - Managed together
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // RACE TIMER - Pinned when _isRaceTimerPinned is true
+                          if (_isRaceTimerPinned)
+                            FutureBuilder<List<LiveData>>(
+                              future: _liveDataFuture,
+                              initialData: [],
+                              builder: (context, snapshot) {
+                                if (snapshot.hasData &&
+                                    snapshot.data!.isNotEmpty &&
+                                    snapshot.data![0].extrapolatedClock !=
+                                        null) {
+                                  return Padding(
+                                    padding:
+                                        const EdgeInsets.only(bottom: 12.0),
+                                    child: Slidable(
+                                      endActionPane: ActionPane(
+                                        motion: const ScrollMotion(),
+                                        extentRatio: 0.15,
+                                        children: [
+                                          SlidableAction(
+                                            onPressed: (context) {
+                                              setState(() {
+                                                _isRaceTimerPinned =
+                                                    !_isRaceTimerPinned;
+                                              });
+                                            },
+                                            icon: _isRaceTimerPinned
+                                                ? Icons.lock
+                                                : Icons.lock_open,
+                                            foregroundColor: Colors.orange,
+                                            backgroundColor: Colors.transparent,
+                                          ),
+                                        ],
+                                      ),
+                                      child: RaceTimerBar(
+                                        remaining: snapshot.data![0]
+                                            .extrapolatedClock!.remaining,
+                                        currentLap: snapshot
+                                            .data![0].lapCount?.currentLap,
+                                        totalLaps: snapshot
+                                            .data![0].lapCount?.totalLaps,
+                                        sessionType:
+                                            snapshot.data![0].sessionInfo!.name,
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              },
+                            ),
+
+                          // Main scrollable content
+                          Expanded(
+                            child: StreamBuilder<List<LiveData>>(
+                              stream: liveDataStream,
+                              initialData: _liveDataFuture != null ? [] : null,
+                              builder: (context, snapshot) {
+                                if (_liveDataFuture == null) {
+                                  return const Center(
+                                    child:
+                                        Text('No telemetry data received yet'),
+                                  );
+                                }
+
+                                if (snapshot.hasData &&
+                                    snapshot.data!.isNotEmpty) {
+                                  return SingleChildScrollView(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        // HEADER - Scrolls with content when unpinned
+                                        if (!_isHeaderPinned) ...[
+                                          FutureBuilder<List<LiveData>>(
+                                            future: _liveDataFuture,
+                                            initialData: [],
+                                            builder: (context, snapshot) {
+                                              if (snapshot.hasData &&
+                                                  snapshot.data!.isNotEmpty &&
+                                                  snapshot.data![0]
+                                                          .sessionInfo !=
+                                                      null) {
+                                                return Column(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    _buildHeaderWidget(
+                                                        snapshot.data![0]
+                                                            .sessionInfo,
+                                                        snapshot.data![0]
+                                                            .trackStatus),
+                                                    const SizedBox(height: 16),
+                                                  ],
+                                                );
+                                              }
+                                              return const SizedBox.shrink();
+                                            },
+                                          ),
+                                        ], // RACE TIMER - Scrolls with content when unpinned
+                                        if (!_isRaceTimerPinned)
+                                          FutureBuilder<List<LiveData>>(
+                                            future: _liveDataFuture,
+                                            initialData: [],
+                                            builder: (context, snapshot) {
+                                              if (snapshot.hasData &&
+                                                  snapshot.data!.isNotEmpty &&
+                                                  snapshot.data![0]
+                                                          .extrapolatedClock !=
+                                                      null) {
+                                                return Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          bottom: 12.0),
+                                                  child: Slidable(
+                                                    endActionPane: ActionPane(
+                                                      motion:
+                                                          const ScrollMotion(),
+                                                      extentRatio: 0.15,
+                                                      children: [
+                                                        SlidableAction(
+                                                          onPressed: (context) {
+                                                            setState(() {
+                                                              _isRaceTimerPinned =
+                                                                  !_isRaceTimerPinned;
+                                                            });
+                                                          },
+                                                          icon:
+                                                              _isRaceTimerPinned
+                                                                  ? Icons.lock
+                                                                  : Icons
+                                                                      .lock_open,
+                                                          foregroundColor:
+                                                              Colors.orange,
+                                                          backgroundColor:
+                                                              Colors
+                                                                  .transparent,
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    child: RaceTimerBar(
+                                                      remaining: snapshot
+                                                          .data![0]
+                                                          .extrapolatedClock!
+                                                          .remaining,
+                                                      currentLap: snapshot
+                                                          .data![0]
+                                                          .lapCount
+                                                          ?.currentLap,
+                                                      totalLaps: snapshot
+                                                          .data![0]
+                                                          .lapCount
+                                                          ?.totalLaps,
+                                                      sessionType: snapshot
+                                                          .data![0]
+                                                          .sessionInfo!
+                                                          .name,
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                              return const SizedBox.shrink();
+                                            },
+                                          ),
+
+                                        // Main content
+                                        FutureBuilder<List<LiveData>>(
+                                          future: _liveDataFuture,
+                                          initialData: [],
+                                          builder: (context, snapshot) {
+                                            if (snapshot.hasData &&
+                                                snapshot.data!.isNotEmpty) {
+                                              final liveData = snapshot.data!;
+                                              return Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                children: [
+                                                  _buildWeatherCard(
+                                                      liveData[0].weatherData!),
+                                                  SizedBox(height: 10),
+                                                  Text('Drivers',
+                                                      style: TextStyle(
+                                                          fontSize: 20,
+                                                          fontWeight:
+                                                              FontWeight.bold)),
+                                                  SizedBox(height: 5),
+                                                  _buildDriverList(
+                                                      liveData[0]
+                                                          .driverList!
+                                                          .drivers,
+                                                      liveData[0]
+                                                          .timingData!
+                                                          .lines,
+                                                      liveData[0]
+                                                              .timingAppData
+                                                              ?.lines ??
+                                                          {},
+                                                      liveData[0].sessionInfo!),
+                                                ],
+                                              );
+                                            } else if (snapshot.hasError) {
+                                              return Text(
+                                                  'Error: ${snapshot.error}');
+                                            } else {
+                                              return const CircularProgressIndicator();
+                                            }
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                } else if (snapshot.hasError) {
+                                  return Center(
+                                      child: Text('Error: ${snapshot.error}'));
+                                } else {
+                                  return const Center(
+                                      child: CircularProgressIndicator());
+                                }
+                              },
                             ),
                           ),
-                        ),
-                      ],
-                    );
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  } else {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                },
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              // : SingleChildScrollView(
-              //     child: Column(
-              //       crossAxisAlignment: CrossAxisAlignment.start,
-              //       children: [
-              //         const Text(
-              //           'Telemetry Data',
-              //           style: TextStyle(
-              //             fontSize: 20,
-              //             fontWeight: FontWeight.bold,
-              //           ),
-              //         ),
-              //         const SizedBox(height: 8),
-
-              //         // Session Info
-              //         if (_telemetryData.containsKey('SessionInfo'))
-              //           _buildSessionInfoCard(),
-
-              //         // Track Status
-              //         if (_telemetryData.containsKey('TrackStatus'))
-              //           _buildTrackStatusCard(),
-
-              //         // Weather Data
-              //         if (_telemetryData.containsKey('WeatherData'))
-              //           _buildWeatherCard(),
-
-              //         // Driver Data
-              //         if (_telemetryData.containsKey('TimingData') ||
-              //             _telemetryData.containsKey('DriverList'))
-              //           _buildDriverDataTable(),
-              //       ],
-              //     ),
-              //   ),
             ),
-            // TrackMapWidget(
-            //   trackImageAsset: 'assets/TrackMaps/your_track_map.png', // Replace with actual asset
-            //   drivers: liveData[0].driverList!.drivers,
-            //   width: 350,
-            //   height: 200,
-            //   coordinateMapper: _mapCoordinates,
-            // ),
-          ],
-        ),
+          ),
+        ],
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () {
-      //     setState(() {
-      //       _telemetryData = {};
-      //       _messageCount = 0;
-      //     });
-      //   },
-      //   tooltip: 'Clear data',
-      //   child: const Icon(Icons.clear),
-      // ),
     );
   }
 
@@ -1959,7 +2352,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
       SessionInfo sessionInfo) {
     // Sort drivers by line number (current race position)
     List<MapEntry<String, Driver>> sortedDrivers = drivers.entries.toList()
-      ..sort((a, b) => a.value.line.compareTo(b.value.line));
+      ..sort((a, b) => (_currentPositions[a.key] ?? a.value.line)
+          .compareTo(_currentPositions[b.key] ?? b.value.line));
 
     // Debug log to verify sorting
     print("Sorted drivers by position:");
@@ -1978,40 +2372,65 @@ class _TelemetryPageState extends State<TelemetryPage> {
         final Driver driver = entry.value;
 
         final TimingDataDriver timing = timingData[racingNumber]!;
-        // final TimingAppDataDriver timingApp = timingAppData[racingNumber]!;
+
+        // Live position is the single source of truth for ordering/labels.
+        final int livePos = _currentPositions[racingNumber] ?? driver.line;
 
         // Get interval value with proper handling based on position, not index
         String intervalText = "";
-        if (driver.line == 1) {
-          // Check if this is the race leader by position
-          // Leader (show LEADER or P1 instead of interval)
+        if (livePos == 1) {
+          // Leader (show LEADER instead of interval)
           intervalText = "Leader";
+        } else if (sessionInfo.type.toLowerCase() == 'qualifying') {
+          // For qualifying: Calculate time difference from driver above
+          final driverAbovePosition = livePos - 1;
+          MapEntry<String, Driver>? driverAbove;
+
+          for (var entry in sortedDrivers) {
+            final entryPos =
+                _currentPositions[entry.key] ?? entry.value.line;
+            if (entryPos == driverAbovePosition) {
+              driverAbove = entry;
+              break;
+            }
+          }
+
+          if (driverAbove != null) {
+            final driverAboveRacingNumber = driverAbove.key;
+            final driverAboveTiming = timingData[driverAboveRacingNumber];
+
+            // Parse best lap times
+            String currentBestTime = timing.bestLapTime.value;
+            String aboveBestTime = driverAboveTiming?.bestLapTime.value ?? '';
+
+            // Calculate time difference if both times are available
+            if (currentBestTime.isNotEmpty &&
+                aboveBestTime.isNotEmpty &&
+                currentBestTime != '--:--.---' &&
+                aboveBestTime != '--:--.---') {
+              // Parse lap times to milliseconds
+              final currentMs = _parseTimeToMilliseconds(currentBestTime);
+              final aboveMs = _parseTimeToMilliseconds(aboveBestTime);
+
+              if (currentMs > 0 && aboveMs > 0) {
+                final diffMs = currentMs - aboveMs;
+                intervalText = _formatMillisecondsToTime(diffMs);
+              } else {
+                intervalText = '';
+              }
+            } else {
+              intervalText = '';
+            }
+          }
         } else {
           // Get interval to position ahead
           intervalText =
               timing.intervalToPositionAhead?.value ?? timing.gapToLeader;
         }
 
-        String tyrePath(String tyreCompound) {
-          String tyre = '';
-          if (tyreCompound == '') {
-            return tyre = 'assets/tyres/unknown.svg'; // Default to Hard tyre
-          } else if (tyreCompound == 'HARD') {
-            return tyre = 'assets/tyres/Hard.svg';
-          } else if (tyreCompound == 'MEDIUM') {
-            return tyre = 'assets/tyres/Medium.svg';
-          } else if (tyreCompound == 'SOFT') {
-            return tyre = 'assets/tyres/Soft.svg';
-          } else if (tyreCompound == 'INTERMEDIATE') {
-            return tyre = 'assets/tyres/Intermediate.svg';
-          } else {
-            return tyre = 'assets/tyres/unknown.svg'; // Default to Hard tyre
-          }
-        }
-
+        // Parse team color
         Color teamColor;
         try {
-          // Parse team color
           if (driver.teamColour.isNotEmpty && driver.teamColour.length == 6) {
             teamColor = Color(int.parse('0xFF${driver.teamColour}'));
           } else {
@@ -2022,123 +2441,38 @@ class _TelemetryPageState extends State<TelemetryPage> {
           teamColor = Colors.grey;
         }
 
-        // return Padding(
-        //   padding: const EdgeInsets.symmetric(vertical: 5),
-        //   child: Container(
-        //     width: double.infinity,
-        //     height: 60,
-        //     decoration: BoxDecoration(
-        //       borderRadius: BorderRadius.circular(10),
-        //       border: timing.lastLapTime.overallFastest
-        //           ? Border.all(color: Colors.purple, width: 1)
-        //           : Border.all(color: Colors.white, width: 0.5),
-        //     ),
-        //     child: MaterialButton(
-        //       color: Color.fromRGBO(115, 115, 115, 1),
-        //       shape: RoundedRectangleBorder(
-        //         borderRadius: BorderRadius.circular(10),
-        //       ),
-        //       onPressed: () {
-        //         Navigator.push(
-        //             context,
-        //             MaterialPageRoute(
-        //               builder: (context) => LiveDetailsPage(
-        //                 racingNumber: racingNumber,
-        //               ),
-        //             ));
-        //       },
-        //       child: SingleChildScrollView(
-        //         scrollDirection: Axis.horizontal,
-        //         child: Row(
-        //           mainAxisAlignment: MainAxisAlignment.start,
-        //           crossAxisAlignment: CrossAxisAlignment.center,
-        //           children: [
-        //             Text(driver.line.toString(),
-        //                 style: TextStyle(
-        //                     color: Colors.white,
-        //                     fontSize: 25,
-        //                     fontWeight: FontWeight.w900)),
-        //             SizedBox(width: 20),
-        //             Container(
-        //               width: 5,
-        //               height: 25,
-        //               decoration: BoxDecoration(
-        //                 color: teamColor,
-        //                 borderRadius: BorderRadius.circular(10),
-        //               ),
-        //             ),
-        //             SizedBox(width: 5),
-        //             Text(
-        //               driver.tla.isNotEmpty ? driver.tla : '???',
-        //               style: TextStyle(
-        //                 color: Colors.white,
-        //                 fontSize: 20,
-        //                 fontFamily: 'formula-bold',
-        //               ),
-        //             ),
-        //             SizedBox(width: 50), // Add a minimum spacing
-        //             Text(timing.lastLapTime.value,
-        //                 style: TextStyle(
-        //                   color: Colors.white,
-        //                   fontWeight: FontWeight.w900,
-        //                   fontSize: 15,
-        //                 )),
-        //             SizedBox(width: 20),
-        //             Container(
-        //               width: 70,
-        //               height: 30,
-        //               decoration: BoxDecoration(
-        //                 color: intervalText == "Leader"
-        //                     ? Colors.red
-        //                     : Colors.green,
-        //                 borderRadius: BorderRadius.circular(40),
-        //               ),
-        //               child: Center(
-        //                 child: Padding(
-        //                   padding: const EdgeInsets.all(4.0),
-        //                   child: Text(intervalText,
-        //                       style: TextStyle(
-        //                         color: Colors.white,
-        //                         fontSize: 15,
-        //                         fontWeight: FontWeight.w900,
-        //                       )),
-        //                 ),
-        //               ),
-        //             ),
-        //             SizedBox(width: 20),
-        //             // SvgPicture.asset(
-        //             //   tyrePath(timingApp.stints[0].compound ?? 'Unknown'),
-        //             //   width: 30,
-        //             //   height: 30,
-        //             //   placeholderBuilder: (context) =>
-        //             //       CircularProgressIndicator(),
-        //             // ),
-        //             SizedBox(width: 20),
-        //             Text(timing.numberOfPitStops.toString(),
-        //                 style: TextStyle(
-        //                     color: Colors.white,
-        //                     fontSize: 25,
-        //                     fontWeight: FontWeight.w900)),
-        //           ],
-        //         ),
-        //       ),
-        //     ),
-        //   ),
-        // );
-        return Container(
-          margin: const EdgeInsets.symmetric(vertical: 5),
-          child: AnimatedDriverInfoCard(
-            key: ValueKey(
-                racingNumber), // Use racing number as key for stable identity
-            position: driver.line,
-            teamColor: teamColor,
-            tla: driver.tla.isNotEmpty ? driver.tla : '???',
-            interval: intervalText,
-            bestLapTime: timing.bestLapTime.value,
+        // Get tyre/stint info from timing app data if available
+        String tireCompound = '';
+        int stintLaps = 0;
+        bool isNewTyre = true;
+        List<Stint> stints = const [];
+        if (timingAppData.containsKey(racingNumber) &&
+            timingAppData[racingNumber]!.stints.isNotEmpty) {
+          stints = timingAppData[racingNumber]!.stints;
+          final currentStint = stints.last;
+          tireCompound = currentStint.compound ?? '';
+          stintLaps = currentStint.totalLaps ?? 0;
+          isNewTyre = (currentStint.isNew ?? 'true').toLowerCase() == 'true';
+        }
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5),
+          child: DriverRowCard(
+            key: ValueKey(racingNumber),
+            position: _currentPositions[racingNumber] ?? driver.line,
+            name: driver.tla.isNotEmpty ? driver.tla : '???',
             currentLapTime: timing.lastLapTime.value,
+            bestLapTime: timing.bestLapTime.value,
+            interval: intervalText,
+            teamColor: teamColor,
+            tireCompound: tireCompound,
             pitStops: timing.numberOfPitStops,
-            sessionType: sessionInfo.type,
             positionChange: _positionChanges[racingNumber] ?? 'same',
+            sessionType: sessionInfo.type,
+            stintLaps: stintLaps,
+            isNewTyre: isNewTyre,
+            stints: stints,
+            sectors: timing.sectors,
           ),
         );
       },
@@ -2175,6 +2509,50 @@ class _TelemetryPageState extends State<TelemetryPage> {
   //           ),
   //         ),
   //       );
+
+  // Helper method to parse lap time string to milliseconds
+  int _parseTimeToMilliseconds(String timeStr) {
+    try {
+      // Format: "1:23.456" or "m:ss.sss"
+      final parts = timeStr.split(':');
+      if (parts.length != 2) return 0;
+
+      final minutes = int.parse(parts[0]);
+      final secondParts = parts[1].split('.');
+      if (secondParts.length != 2) return 0;
+
+      final seconds = int.parse(secondParts[0]);
+      final milliseconds = int.parse(secondParts[1]);
+
+      return (minutes * 60 * 1000) + (seconds * 1000) + milliseconds;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  // Helper method to format milliseconds to lap time string
+  String _formatMillisecondsToTime(int ms) {
+    try {
+      if (ms < 0) {
+        // Handle negative time difference (shouldn't happen in qualifying)
+        return '';
+      }
+
+      final totalSeconds = ms ~/ 1000;
+      final minutes = totalSeconds ~/ 60;
+      final seconds = totalSeconds % 60;
+      final milliseconds = ms % 1000;
+
+      // Only show minutes if there are any
+      if (minutes > 0) {
+        return '+$minutes:${seconds.toString().padLeft(2, '0')}.${milliseconds.toString().padLeft(3, '0')}';
+      } else {
+        return '+$seconds.${milliseconds.toString().padLeft(3, '0')}';
+      }
+    } catch (e) {
+      return '';
+    }
+  }
 
   // Helper method to build preset delay buttons
   Widget _buildPresetButton(int seconds) {

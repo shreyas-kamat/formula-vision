@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Transactions',
+      title: 'Home',
       home: NavPage(),
       // home: FutureBuilder<bool>(
       //   future: isLoggedIn(),

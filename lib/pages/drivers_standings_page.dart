@@ -159,7 +159,7 @@ class _DriversStandingsPageState extends State<DriversStandingsPage> {
                               SizedBox(
                                 width: 30,
                                 child: Text(
-                                  standing.position,
+                                  standing.position ?? standing.positionText,
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 18,

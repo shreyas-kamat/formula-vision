@@ -54,6 +54,8 @@ dependencies:
   jwt_decoder: ^2.0.1
   archive: ^4.0.7
   url_launcher: ^6.3.2
+  flutter_slidable: ^3.0.0
+  audioplayers: ^6.1.0
 
 dev_dependencies:
   flutter_test:
@@ -77,6 +79,8 @@ flutter:
   assets:
 
     - .env
+
+    - assets/TeamRadioF1FX.wav
 
     - assets/logo/MainLogo.png
     - assets/logo/GitHub_Invertocat_White.png
@@ -119,11 +123,7 @@ flutter:
     - assets/TrackMaps/Zandvoort.json
 
     # Images
-    - assets/tyres/Soft.svg
-    - assets/tyres/Medium.svg
-    - assets/tyres/Hard.svg
-    - assets/tyres/Intermediate.svg
-    - assets/tyres/unknown.svg
+    - assets/tyres/
     
 
   

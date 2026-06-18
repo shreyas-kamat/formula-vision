@@ -36,42 +36,85 @@ class _TestPageState extends State<TestPage> {
                 children: [
                   const SizedBox(height: 16),
 
-                  // Header - Race Name
-                  const Text(
-                    'Monaco Grand Prix',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Formula1',
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Session Type with Live Badge
+                  // Header - Race Name with Timer Icon
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Qualifying',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 16,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Monaco Grand Prix',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 25,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'formula-bold',
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            // const SizedBox(height: 4),
+                            // Session Type with Live Badge
+                            Row(
+                              children: [
+                                const Text(
+                                  'Qualifying',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withOpacity(0.4),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 12,
+                                        height: 12,
+                                        decoration: const BoxDecoration(
+                                          color: Colors.green,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Text(
+                                        'Live',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 16),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 4),
+                        width: 40,
+                        height: 40,
                         decoration: BoxDecoration(
-                          color: Colors.green,
-                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.amber,
+                          shape: BoxShape.circle,
                         ),
-                        child: const Text(
-                          'Live',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                        child: const Center(
+                          child: Icon(
+                            Icons.timer,
+                            color: Colors.black,
+                            size: 24,
                           ),
                         ),
                       ),
@@ -85,7 +128,8 @@ class _TestPageState extends State<TestPage> {
                       // Timer
                       Expanded(
                         child: Container(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
                           decoration: BoxDecoration(
                             color: const Color.fromARGB(255, 76, 120, 55),
                             borderRadius: BorderRadius.circular(12),
@@ -96,13 +140,17 @@ class _TestPageState extends State<TestPage> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    'Race Timer',
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                  Row(
+                                    children: [
+                                      const Text(
+                                        'Race Timer',
+                                        style: TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                   const Text(
                                     '02:30:29',
@@ -205,86 +253,9 @@ class _TestPageState extends State<TestPage> {
                   const SizedBox(height: 24),
 
                   // Leaderboard Header
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 12),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 40,
-                          child: Text(
-                            'Pos',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Text(
-                            'Name',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          width: 80,
-                          child: Text(
-                            'Fastest Lap',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.right,
-                          ),
-                        ),
-                        SizedBox(
-                          width: 60,
-                          child: Text(
-                            'Interval',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        SizedBox(
-                          width: 40,
-                          child: Text(
-                            'Type',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        SizedBox(
-                          width: 30,
-                          child: Text(
-                            'Pit',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
 
                   // Driver Rows
-                  _buildDriverRow(1, 'HAM', '1:31.052', 'Interval', Colors.red),
+                  _buildDriverRow(1, 'HAM', '1:31.052', 'Leader', Colors.red),
                   const SizedBox(height: 10),
                   _buildDriverRow(2, 'VER', '1:31.854', '+0.458', Colors.blue),
                   const SizedBox(height: 10),
@@ -320,139 +291,191 @@ class _TestPageState extends State<TestPage> {
     String interval,
     Color teamColor,
   ) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            teamColor.withOpacity(0.3),
-            teamColor.withOpacity(0.1),
-          ],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.black26.withValues(alpha: 0.75),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.black, width: 1),
         ),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: teamColor.withOpacity(0.5), width: 1),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        child: Row(
-          children: [
-            // Position
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: teamColor,
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  position.toString(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-
-            // Name
-            Expanded(
-              child: Text(
-                name,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
-                ),
-              ),
-            ),
-
-            // Fastest Lap
-            SizedBox(
-              width: 80,
-              child: Text(
-                fastestLap,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontFamily: 'Roboto Mono',
-                ),
-                textAlign: TextAlign.right,
-              ),
-            ),
-            const SizedBox(width: 8),
-
-            // Interval
-            SizedBox(
-              width: 60,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              // Position Circle
+              Container(
+                width: 60,
+                height: 60,
                 decoration: BoxDecoration(
-                  color: interval == 'Interval' ? Colors.green : Colors.blue,
-                  borderRadius: BorderRadius.circular(4),
+                  color: teamColor,
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Text(
-                  interval,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-
-            // Tire Type
-            SizedBox(
-              width: 40,
-              child: Center(
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[700],
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.circle,
-                      size: 16,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Pit Stops
-            SizedBox(
-              width: 30,
-              child: Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  color: Colors.grey[800],
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
+                child: Center(
                   child: Text(
-                    '1',
-                    style: TextStyle(
+                    position.toString(),
+                    style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 14,
+                      fontSize: 30,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(width: 16),
+
+              // Name
+              SizedBox(
+                width: 60,
+                child: Text(
+                  name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.5,
+                  ),
+                  textAlign: TextAlign.left,
+                ),
+              ),
+
+              // Fastest Lap
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'LAP TIME',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  // const SizedBox(height: 4),
+                  // Best Lap Time (Bigger)
+                  Text(
+                    fastestLap.isNotEmpty ? fastestLap : '--:--.---',
+                    style: const TextStyle(
+                      color: Colors.green,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      fontFamily: 'Roboto Mono',
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 0),
+                  // Current Lap Time  (Smaller)
+                  Text(
+                    fastestLap,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Roboto Mono',
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 12),
+
+              // Interval Badge
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Text(
+                    'INTERVAL',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: interval == "Leader"
+                          ? Colors.red[700]
+                          : Colors.green[700],
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      interval,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 12),
+
+              // Tire Type
+              // Container(
+              //   width: 36,
+              //   height: 36,
+              //   decoration: BoxDecoration(
+              //     color: Colors.grey[700],
+              //     shape: BoxShape.circle,
+              //   ),
+              //   child: const Center(
+              //     child: Text(
+              //       'H',
+              //       style: TextStyle(
+              //         color: Colors.white,
+              //         fontSize: 14,
+              //         fontWeight: FontWeight.bold,
+              //       ),
+              //     ),
+              //   ),
+              // ),
+              // const SizedBox(width: 10),
+
+              // Pit Stops
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'PIT',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.grey[850],
+                      border: Border.all(
+                        width: 1,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '1',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

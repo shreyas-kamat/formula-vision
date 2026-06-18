@@ -129,7 +129,7 @@ class StandingsList {
 }
 
 class DriverStanding {
-  final String position;
+  final String? position;
   final String positionText;
   final String points;
   final String wins;
@@ -137,7 +137,7 @@ class DriverStanding {
   final List<Constructor> constructors;
 
   DriverStanding({
-    required this.position,
+    this.position,
     required this.positionText,
     required this.points,
     required this.wins,
@@ -205,9 +205,9 @@ class Constructor {
 
 class Driver {
   final String driverId;
-  final String permanentNumber;
+  final String? permanentNumber;
   final String code;
-  final String url;
+  final String? url;
   final String givenName;
   final String familyName;
   final String dateOfBirth;
@@ -215,9 +215,9 @@ class Driver {
 
   Driver({
     required this.driverId,
-    required this.permanentNumber,
+    this.permanentNumber,
     required this.code,
-    required this.url,
+    this.url,
     required this.givenName,
     required this.familyName,
     required this.dateOfBirth,
