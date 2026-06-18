@@ -50,8 +50,8 @@
     "semantic_hash": "4047f44d2722038f4a7d1ef07a8e5044"
   },
   "D:\\Projects\\Flutter\\formulavision\\lib\\components\\driver_row_card.dart": {
-    "mtime": 1781776353.35011,
-    "ast_hash": "e840df5b3ff97b88da33ad363c6cccb1",
+    "mtime": 1781791397.290482,
+    "ast_hash": "7a18bbe96246e112f38aa30385740f61",
     "semantic_hash": ""
   },
   "D:\\Projects\\Flutter\\formulavision\\lib\\components\\driver_tile.dart": {
@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "D:\\Projects\\Flutter\\formulavision\\lib\\data\\models\\live_data.model.dart": {
-    "mtime": 1781776442.122153,
-    "ast_hash": "aec55f25f793b255c3df983f5c4907f0",
+    "mtime": 1781790935.0946436,
+    "ast_hash": "7a5465a8f1ae6957e9e1e526d74d2e3a",
     "semantic_hash": ""
   },
   "D:\\Projects\\Flutter\\formulavision\\lib\\data\\models\\user.model.dart": {
@@ -265,8 +265,8 @@
     "semantic_hash": "a95b24cafcf6eccd56dbd3980290784d"
   },
   "D:\\Projects\\Flutter\\formulavision\\lib\\pages\\dashboard_page.dart": {
-    "mtime": 1781776782.5130606,
-    "ast_hash": "f58b9670fe4ecaccae2f4a23a794e877",
+    "mtime": 1781791047.0101478,
+    "ast_hash": "1144fc0857d48976fc7f923ae3d1cf4b",
     "semantic_hash": ""
   },
   "D:\\Projects\\Flutter\\formulavision\\lib\\pages\\drivers_standings_page.dart": {
@@ -580,12 +580,12 @@
     "semantic_hash": ""
   },
   "D:\\Projects\\Flutter\\formulavision\\ios\\Flutter\\flutter_export_environment.sh": {
-    "mtime": 1776716514.868874,
+    "mtime": 1781783005.8977625,
     "ast_hash": "f512c1e2dabc4ff1a9f409721e4fb328",
     "semantic_hash": ""
   },
   "D:\\Projects\\Flutter\\formulavision\\ios\\Flutter\\ephemeral\\flutter_lldb_helper.py": {
-    "mtime": 1776716514.8623273,
+    "mtime": 1781783005.8923695,
     "ast_hash": "98fc75412162af387e2e3461e4e58094",
     "semantic_hash": ""
   },
@@ -630,8 +630,8 @@
     "semantic_hash": ""
   },
   "D:\\Projects\\Flutter\\formulavision\\lib\\components\\mini_sector_bar.dart": {
-    "mtime": 1781776174.9581368,
-    "ast_hash": "7e7aa6bc41c4cc488dcbcce8d049c34b",
+    "mtime": 1781786343.4186995,
+    "ast_hash": "c854fa5f9e7a7aa52a73d9b57090be00",
     "semantic_hash": ""
   },
   "D:\\Projects\\Flutter\\formulavision\\lib\\components\\race_control_toast.dart": {
@@ -640,13 +640,13 @@
     "semantic_hash": ""
   },
   "D:\\Projects\\Flutter\\formulavision\\lib\\data\\services\\app_settings_service.dart": {
-    "mtime": 1781776107.3209736,
-    "ast_hash": "bb2dce3ff4a01dc8b6055835e42a6aff",
+    "mtime": 1781791071.9971883,
+    "ast_hash": "5af298035e43b6649e8597c3b68bd409",
     "semantic_hash": ""
   },
   "D:\\Projects\\Flutter\\formulavision\\lib\\pages\\settings_page.dart": {
-    "mtime": 1781776144.430521,
-    "ast_hash": "7625200ddbff7b0402c3a633dd456b0c",
+    "mtime": 1781781144.180579,
+    "ast_hash": "db9aab2407103c53221dac7f9c1ade7f",
     "semantic_hash": ""
   },
   "D:\\Projects\\Flutter\\formulavision\\linux\\flutter\\generated_plugin_registrant.cc": {
@@ -680,7 +680,7 @@
     "semantic_hash": ""
   },
   "D:\\Projects\\Flutter\\formulavision\\macos\\Flutter\\ephemeral\\flutter_export_environment.sh": {
-    "mtime": 1776716514.8718755,
+    "mtime": 1781783005.8997703,
     "ast_hash": "5938863636524a3ae6200c439a7f0b6a",
     "semantic_hash": ""
   },
@@ -722,206 +722,6 @@
   "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\generated_plugin_registrant.h": {
     "mtime": 1765803910.0,
     "ast_hash": "0ea33875f9f8e118f9c2ded03e2e2835",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\flutter_export.h": {
-    "mtime": 1774545340.3420002,
-    "ast_hash": "51d6ddd086e800d34c1d143004c474fd",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\flutter_messenger.h": {
-    "mtime": 1774545340.3420002,
-    "ast_hash": "9c15531692496dbfcb820431343d92fa",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\flutter_plugin_registrar.h": {
-    "mtime": 1774545340.3420002,
-    "ast_hash": "205b172dd4be89df08a835c5afcd2c1a",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\flutter_texture_registrar.h": {
-    "mtime": 1774545340.3420002,
-    "ast_hash": "4ffbfcf8b88a9690e82543b1761e81d5",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\flutter_windows.h": {
-    "mtime": 1774545340.3420002,
-    "ast_hash": "538863ede587e5ef3c7bb9b2bc9e6ea7",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\binary_messenger_impl.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "286e55d651260380486c1ca7a2c44578",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\byte_buffer_streams.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "0a33501e8af56a1390ab6f75e0f568d9",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\core_implementations.cc": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "91cfe8e97858850acdbc8891453ce5bc",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\engine_method_result.cc": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "6172a3effcf1f354d756ff757377a576",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\flutter_engine.cc": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "14c8cef2644702b8be3330109e5756a6",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\flutter_view_controller.cc": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "3c4959653a59ba03164e211059dc2652",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\plugin_registrar.cc": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "3190b92da7033c643bf749e7f4266da8",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\standard_codec.cc": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "035f8af9a9a084e129ceef3fa0396c47",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\texture_registrar_impl.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "7ec35caedbfe35b37bd7aa66dab7219b",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\basic_message_channel.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "45dd070af12cc7ab125d6ead5267f36c",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\binary_messenger.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "b313ec90af27dce06153c156a0cbb390",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\byte_streams.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "00010cc0042e98ea973f4037a29a3ca0",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\dart_project.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "925d737f94c0c079c56eedb812ed4b8f",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\encodable_value.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "ca5bf7ecc86138a058d535de1dfa811a",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\engine_method_result.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "55b4be5728dfb16220b1bda5bdace3fe",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\event_channel.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "143cf6f0acaa229d950d084c940cc77c",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\event_sink.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "b1b98c1cf40abd6a3c308182c4822476",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\event_stream_handler.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "62be5ae665a6b931d6dc9ac4b27d6c93",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\event_stream_handler_functions.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "248c4e48231edda0bc7ac80722f15b53",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\flutter_engine.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "2b2405abfa2cc54351b6ee6ad02585c0",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\flutter_view.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "33a6baf4984ec4c299c0b05cef6968ed",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\flutter_view_controller.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "815f4a5fbad9381269e2c216507285cd",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\message_codec.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "b5013c9553dc459d5f91b8ec2bda3d0a",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\method_call.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "a47afe801378afeffda4439e8cdb01ca",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\method_channel.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "beeb4b0780233e226f899bddd220b682",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\method_codec.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "1d712b93e2dd2e28cb67a55a8d484694",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\method_result.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "e48c7b84b470630e810b6a0bc2d8e542",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\method_result_functions.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "6bfbb61c519f63386a0fb55608dbea90",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\plugin_registrar.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "2b81addd18be801eda539f1de332ce4e",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\plugin_registrar_windows.h": {
-    "mtime": 1774545344.564194,
-    "ast_hash": "0bbbe470228d787a92d567a95faa2b33",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\plugin_registry.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "85c5071ca77f8687102dcae4f282388b",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\standard_codec_serializer.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "09399c3c509a601a970f6efd340a2529",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\standard_message_codec.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "81df344828c7c48155ae22824eb61e50",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\standard_method_codec.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "4707587e759b2b655852fc0e989c9e70",
-    "semantic_hash": ""
-  },
-  "D:\\Projects\\Flutter\\formulavision\\windows\\flutter\\ephemeral\\cpp_client_wrapper\\include\\flutter\\texture_registrar.h": {
-    "mtime": 1774545344.5485368,
-    "ast_hash": "ee739ab16ee0e2964edc9275a0379095",
     "semantic_hash": ""
   },
   "D:\\Projects\\Flutter\\formulavision\\windows\\runner\\flutter_window.cpp": {
@@ -995,8 +795,8 @@
     "semantic_hash": ""
   },
   "D:\\Projects\\Flutter\\formulavision\\pubspec.yaml": {
-    "mtime": 1781776067.8997967,
-    "ast_hash": "ecfc3bddbf76ea8703f5a1cf1b382a71",
+    "mtime": 1781781566.3056443,
+    "ast_hash": "e13e49244f6e817655275be956f90656",
     "semantic_hash": ""
   },
   "D:\\Projects\\Flutter\\formulavision\\README.md": {
@@ -1367,6 +1167,41 @@
   "D:\\Projects\\Flutter\\formulavision\\assets\\TeamRadioF1FX.wav": {
     "mtime": 1781774982.4587936,
     "ast_hash": "950e68bc8d891cd661260179575d093a",
+    "semantic_hash": ""
+  },
+  "D:\\Projects\\Flutter\\formulavision\\assets\\test\\position_replay.json": {
+    "mtime": 1781781554.9066393,
+    "ast_hash": "1a4f17a51f46feb835ec58464ab674cd",
+    "semantic_hash": ""
+  },
+  "D:\\Projects\\Flutter\\formulavision\\test\\live_track_map_widget_test.dart": {
+    "mtime": 1781781856.658246,
+    "ast_hash": "c2d87c8c5da391ec8e26b6c7a2baff24",
+    "semantic_hash": ""
+  },
+  "D:\\Projects\\Flutter\\formulavision\\test\\position_data_parse_test.dart": {
+    "mtime": 1781781655.5985012,
+    "ast_hash": "914753cd2b9f5d4d124c8ba9f48bab7d",
+    "semantic_hash": ""
+  },
+  "D:\\Projects\\Flutter\\formulavision\\test\\timing_data_sectors_parse_test.dart": {
+    "mtime": 1781784789.5003877,
+    "ast_hash": "9a1a29bd470f31989d1360b0eef7875f",
+    "semantic_hash": ""
+  },
+  "D:\\Projects\\Flutter\\formulavision\\test\\driver_row_card_test.dart": {
+    "mtime": 1781791546.5154433,
+    "ast_hash": "8ce8ea4da3839bfb72e5cb496cb16a38",
+    "semantic_hash": ""
+  },
+  "D:\\Projects\\Flutter\\formulavision\\lib\\components\\telemetry_hud.dart": {
+    "mtime": 1781791501.9641523,
+    "ast_hash": "cb247fd2d27194f83f7fdda9c9e49ae2",
+    "semantic_hash": ""
+  },
+  "D:\\Projects\\Flutter\\formulavision\\test\\car_telemetry_test.dart": {
+    "mtime": 1781791590.257471,
+    "ast_hash": "68749b2ae4997a88b12c9c3f04a5e67e",
     "semantic_hash": ""
   }
 }

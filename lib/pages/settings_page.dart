@@ -15,6 +15,8 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _isLoading = true;
   bool _isSaved = false;
   bool _isRaceControlSoundEnabled = true;
+  bool _isTrackMapEnabled = true;
+  String _trackMapDisplayMode = AppSettings.trackMapModeCard;
 
   @override
   void initState() {
@@ -32,11 +34,15 @@ class _SettingsPageState extends State<SettingsPage> {
     final isEnabled = await AppSettings.isCustomApiUrlEnabled();
     final customUrl = await AppSettings.getCustomApiUrl();
     final soundEnabled = await AppSettings.isRaceControlSoundEnabled();
+    final trackMapEnabled = await AppSettings.isTrackMapEnabled();
+    final trackMapMode = await AppSettings.getTrackMapDisplayMode();
 
     setState(() {
       _isCustomApiEnabled = isEnabled;
       _apiUrlController.text = customUrl;
       _isRaceControlSoundEnabled = soundEnabled;
+      _isTrackMapEnabled = trackMapEnabled;
+      _trackMapDisplayMode = trackMapMode;
       _isLoading = false;
     });
   }
@@ -79,6 +85,66 @@ class _SettingsPageState extends State<SettingsPage> {
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) setState(() => _isSaved = false);
     });
+  }
+
+  Widget _buildTrackMapModeOption({
+    required String label,
+    required IconData icon,
+    required String mode,
+  }) {
+    final bool isSelected = _trackMapDisplayMode == mode;
+    return Expanded(
+      child: GestureDetector(
+        onTap: _isTrackMapEnabled
+            ? () async {
+                setState(() {
+                  _trackMapDisplayMode = mode;
+                });
+                await AppSettings.setTrackMapDisplayMode(mode);
+              }
+            : null,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? Colors.redAccent.withValues(alpha: 0.25)
+                : Colors.black.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                  ? Colors.redAccent
+                  : Colors.white.withValues(alpha: 0.12),
+              width: isSelected ? 1.5 : 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                icon,
+                color: isSelected
+                    ? Colors.redAccent
+                    : Colors.white.withValues(alpha: 0.6),
+                size: 22,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: isSelected
+                      ? Colors.white
+                      : Colors.white.withValues(alpha: 0.6),
+                  fontSize: 12,
+                  fontFamily: 'formula',
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -229,7 +295,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                           Text(
                                             _isCustomApiEnabled
                                                 ? 'Using custom endpoint'
-                                                : 'Using default from .env',
+                                                : 'Using default',
                                             style: TextStyle(
                                               color: Colors.white
                                                   .withValues(alpha: 0.5),
@@ -248,9 +314,9 @@ class _SettingsPageState extends State<SettingsPage> {
                                           _isSaved = false;
                                         });
                                       },
-                                      activeColor: Colors.redAccent,
-                                      activeTrackColor:
-                                          Colors.redAccent.withValues(alpha: 0.3),
+                                      activeThumbColor: Colors.redAccent,
+                                      activeTrackColor: Colors.redAccent
+                                          .withValues(alpha: 0.3),
                                       inactiveThumbColor:
                                           Colors.white.withValues(alpha: 0.6),
                                       inactiveTrackColor:
@@ -283,8 +349,8 @@ class _SettingsPageState extends State<SettingsPage> {
                                       TextField(
                                         controller: _apiUrlController,
                                         enabled: _isCustomApiEnabled,
-                                        onChanged: (_) => setState(
-                                            () => _isSaved = false),
+                                        onChanged: (_) =>
+                                            setState(() => _isSaved = false),
                                         keyboardType: TextInputType.url,
                                         style: const TextStyle(
                                           color: Colors.white,
@@ -423,7 +489,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  'Active: ${_isCustomApiEnabled && _apiUrlController.text.trim().isNotEmpty ? _apiUrlController.text.trim() : 'Default (.env)'}',
+                                  'Active: ${_isCustomApiEnabled && _apiUrlController.text.trim().isNotEmpty ? _apiUrlController.text.trim() : 'Default'}',
                                   style: TextStyle(
                                     color: Colors.white.withValues(alpha: 0.45),
                                     fontSize: 11,
@@ -448,8 +514,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                   ? Colors.green.withValues(alpha: 0.8)
                                   : Colors.redAccent,
                               foregroundColor: Colors.white,
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
                               ),
@@ -568,8 +633,8 @@ class _SettingsPageState extends State<SettingsPage> {
                                             ? 'Plays on flags, safety car & penalties'
                                             : 'Muted — toasts still show',
                                         style: TextStyle(
-                                          color:
-                                              Colors.white.withValues(alpha: 0.5),
+                                          color: Colors.white
+                                              .withValues(alpha: 0.5),
                                           fontSize: 11,
                                           fontFamily: 'formula',
                                         ),
@@ -586,13 +651,165 @@ class _SettingsPageState extends State<SettingsPage> {
                                     await AppSettings
                                         .setRaceControlSoundEnabled(val);
                                   },
-                                  activeColor: Colors.redAccent,
+                                  activeThumbColor: Colors.redAccent,
                                   activeTrackColor:
                                       Colors.redAccent.withValues(alpha: 0.3),
                                   inactiveThumbColor:
                                       Colors.white.withValues(alpha: 0.6),
                                   inactiveTrackColor:
                                       Colors.white.withValues(alpha: 0.1),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        // ── Track Map ────────────────────────────────────────
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4, bottom: 12),
+                          child: Text(
+                            'TRACK MAP',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.6),
+                              fontSize: 11,
+                              fontFamily: 'formula',
+                              letterSpacing: 1.4,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.white.withValues(alpha: 0.08),
+                                Colors.black.withValues(alpha: 0.35),
+                              ],
+                            ),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              width: 1,
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Show/hide toggle
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: _isTrackMapEnabled
+                                            ? Colors.redAccent
+                                                .withValues(alpha: 0.2)
+                                            : Colors.white
+                                                .withValues(alpha: 0.07),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Icon(
+                                        Icons.map_outlined,
+                                        color: _isTrackMapEnabled
+                                            ? Colors.redAccent
+                                            : Colors.white
+                                                .withValues(alpha: 0.6),
+                                        size: 22,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Live Track Map',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 15,
+                                              fontFamily: 'formula-bold',
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            _isTrackMapEnabled
+                                                ? 'Shows cars moving on track'
+                                                : 'Hidden',
+                                            style: TextStyle(
+                                              color: Colors.white
+                                                  .withValues(alpha: 0.5),
+                                              fontSize: 11,
+                                              fontFamily: 'formula',
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Switch(
+                                      value: _isTrackMapEnabled,
+                                      onChanged: (val) async {
+                                        setState(() {
+                                          _isTrackMapEnabled = val;
+                                        });
+                                        await AppSettings.setTrackMapEnabled(
+                                            val);
+                                      },
+                                      activeThumbColor: Colors.redAccent,
+                                      activeTrackColor: Colors.redAccent
+                                          .withValues(alpha: 0.3),
+                                      inactiveThumbColor:
+                                          Colors.white.withValues(alpha: 0.6),
+                                      inactiveTrackColor:
+                                          Colors.white.withValues(alpha: 0.1),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                // Display-mode selector
+                                AnimatedOpacity(
+                                  opacity: _isTrackMapEnabled ? 1.0 : 0.4,
+                                  duration: const Duration(milliseconds: 250),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Display Mode',
+                                        style: TextStyle(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.5),
+                                          fontSize: 11,
+                                          fontFamily: 'formula',
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        children: [
+                                          _buildTrackMapModeOption(
+                                            label: 'Collapsible Card',
+                                            icon: Icons.view_agenda_outlined,
+                                            mode: AppSettings.trackMapModeCard,
+                                          ),
+                                          const SizedBox(width: 10),
+                                          _buildTrackMapModeOption(
+                                            label: 'Full View',
+                                            icon: Icons.fullscreen_rounded,
+                                            mode:
+                                                AppSettings.trackMapModeFullView,
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
@@ -637,8 +854,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               onTap: () async {
                                 final uri = Uri.parse(
                                     'https://github.com/skat9234/formula-vision');
-                                final messenger =
-                                    ScaffoldMessenger.of(context);
+                                final messenger = ScaffoldMessenger.of(context);
                                 try {
                                   await launchUrl(uri,
                                       mode: LaunchMode.externalApplication);
@@ -659,8 +875,8 @@ class _SettingsPageState extends State<SettingsPage> {
                                     Container(
                                       padding: const EdgeInsets.all(10),
                                       decoration: BoxDecoration(
-                                        color:
-                                            Colors.white.withValues(alpha: 0.07),
+                                        color: Colors.white
+                                            .withValues(alpha: 0.07),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Image.asset(
@@ -700,7 +916,8 @@ class _SettingsPageState extends State<SettingsPage> {
                                     ),
                                     Icon(
                                       Icons.open_in_new_rounded,
-                                      color: Colors.white.withValues(alpha: 0.4),
+                                      color:
+                                          Colors.white.withValues(alpha: 0.4),
                                       size: 18,
                                     ),
                                   ],

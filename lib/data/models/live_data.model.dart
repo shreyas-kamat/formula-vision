@@ -120,6 +120,8 @@ class LiveData {
   TeamRadio? teamRadio;
   ChampionshipPrediction? championshipPrediction;
   PositionData? positionData;
+  // Per-driver live telemetry, keyed by racing number.
+  Map<String, CarTelemetry> carData;
 
   LiveData({
     this.heartbeat,
@@ -139,7 +141,49 @@ class LiveData {
     this.teamRadio,
     this.championshipPrediction,
     this.positionData,
+    Map<String, CarTelemetry>? carData,
+  }) : carData = carData ?? {};
+}
+
+/// Live car telemetry for a single driver, as broadcast by the API
+/// (`{ RPM, Speed, Gear, Throttle, Brake, DRS }`, Speed in km/h).
+class CarTelemetry {
+  final int rpm;
+  final int speed; // km/h
+  final int gear;
+  final int throttle; // 0..100
+  final int brake; // 0..100
+  final int drs;
+
+  const CarTelemetry({
+    this.rpm = 0,
+    this.speed = 0,
+    this.gear = 0,
+    this.throttle = 0,
+    this.brake = 0,
+    this.drs = 0,
   });
+
+  /// DRS / active-aero engaged. F1 DRS channel: 10/12/14 == active.
+  bool get isDrsActive => drs == 10 || drs == 12 || drs == 14;
+
+  static int _asInt(dynamic v) {
+    if (v is int) return v;
+    if (v is double) return v.round();
+    if (v is String) return int.tryParse(v) ?? double.tryParse(v)?.round() ?? 0;
+    return 0;
+  }
+
+  factory CarTelemetry.fromJson(Map<String, dynamic> json) {
+    return CarTelemetry(
+      rpm: _asInt(json['RPM'] ?? json['rpm']),
+      speed: _asInt(json['Speed'] ?? json['speed']),
+      gear: _asInt(json['Gear'] ?? json['gear']),
+      throttle: _asInt(json['Throttle'] ?? json['throttle']),
+      brake: _asInt(json['Brake'] ?? json['brake']),
+      drs: _asInt(json['DRS'] ?? json['drs']),
+    );
+  }
 }
 
 class Heartbeat {
@@ -1174,11 +1218,26 @@ class TimingDataDriver {
       );
     }
 
+    // The F1 SignalR feed (and the initial 'R' snapshot) sends this key as
+    // 'Sectors' (capitalised); our own toJson() persists it as 'sectors'.
+    // Accept both so the snapshot path populates sectors like the delta path.
     List<Sector> sectorsList = [];
-    if (json['sectors'] != null) {
-      sectorsList = List<Sector>.from(
-        json['sectors'].map((x) => Sector.fromJson(x)),
-      );
+    final rawSectors = json['Sectors'] ?? json['sectors'];
+    if (rawSectors != null) {
+      if (rawSectors is List) {
+        sectorsList =
+            List<Sector>.from(rawSectors.map((x) => Sector.fromJson(x)));
+      } else if (rawSectors is Map) {
+        // Index-keyed map form: { "0": {...}, "1": {...} }
+        final entries = rawSectors.entries.toList()
+          ..sort((a, b) =>
+              (int.tryParse(a.key.toString()) ?? 0)
+                  .compareTo(int.tryParse(b.key.toString()) ?? 0));
+        sectorsList = entries
+            .where((e) => e.value is Map)
+            .map((e) => Sector.fromJson(Map<String, dynamic>.from(e.value)))
+            .toList();
+      }
     }
 
     return TimingDataDriver(
@@ -1842,15 +1901,35 @@ class PositionData {
   });
 
   factory PositionData.fromJson(Map<String, dynamic> json) {
+    // The live Position.z payload is shaped as
+    //   { Entries: [ { Utc, Cars: { "44": {X,Y,Z,Status} } }, ... ] }
+    // so use the most recent entry. Fall back to a flat
+    //   { Timestamp, Cars: {...} } shape for snapshots/tests.
+    Map<String, dynamic>? carsSource;
+    String timestamp = json['Timestamp'] ?? '';
+
+    final entries = json['Entries'];
+    if (entries is List && entries.isNotEmpty) {
+      final last = entries.last;
+      if (last is Map) {
+        carsSource = (last['Cars'] as Map?)?.cast<String, dynamic>();
+        timestamp = last['Utc'] ?? last['Timestamp'] ?? timestamp;
+      }
+    } else if (json['Cars'] != null) {
+      carsSource = (json['Cars'] as Map).cast<String, dynamic>();
+    }
+
     Map<String, PositionDataCar> carsMap = {};
-    if (json['Cars'] != null) {
-      json['Cars'].forEach((key, value) {
-        carsMap[key] = PositionDataCar.fromJson(value);
+    if (carsSource != null) {
+      carsSource.forEach((key, value) {
+        if (value is Map) {
+          carsMap[key] = PositionDataCar.fromJson(value.cast<String, dynamic>());
+        }
       });
     }
 
     return PositionData(
-      timestamp: json['Timestamp'] ?? '',
+      timestamp: timestamp,
       cars: carsMap,
     );
   }
@@ -1866,7 +1945,8 @@ class PositionDataCar {
   final double x;
   final double y;
   final double z;
-  final int status;
+  // F1 sends this as a string, e.g. "OnTrack" / "OffTrack".
+  final String status;
 
   PositionDataCar({
     required this.x,
@@ -1875,12 +1955,14 @@ class PositionDataCar {
     required this.status,
   });
 
+  bool get isOnTrack => status == 'OnTrack';
+
   factory PositionDataCar.fromJson(Map<String, dynamic> json) {
     return PositionDataCar(
       x: (json['X'] ?? 0).toDouble(),
       y: (json['Y'] ?? 0).toDouble(),
       z: (json['Z'] ?? 0).toDouble(),
-      status: json['Status'] ?? 0,
+      status: json['Status']?.toString() ?? 'OnTrack',
     );
   }
 
