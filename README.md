@@ -40,16 +40,11 @@ An Unofficial, Free & Open-Source app for Realtime Stats, Schedules & Track Data
 - Drivers Championship Standings
 - Constructors Championship Standings
 - Schedule for the Season
-
-## Alpha Features (Invite-only)
-For Access to Invite-only Features, contact [formulavision@yahoo.com](mailto:formulavision@yahoo.com)
-  - Realtime Stats
-  - HomePage Dashboard
-  - Authentication
+- Realtime Stats
+- Track Map Viewer
 
 
 ## Planned Features
-  - Settings (Dependent on Authentication)
   - Themes
   - Scheduling Data fetching Revamp (currently fetched by parsing a `.ics` file, to be changed to fetch via the API)
 
