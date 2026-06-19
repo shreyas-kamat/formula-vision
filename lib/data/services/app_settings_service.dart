@@ -9,6 +9,14 @@ class AppSettings {
   static const String _trackMapEnabledKey = 'track_map_enabled';
   static const String _trackMapDisplayModeKey = 'track_map_display_mode';
   static const String _speedUnitKey = 'speed_unit';
+  static const String _feedSourceKey = 'feed_source';
+
+  /// Live-timing feed sources.
+  /// [feedSourceOnDevice] connects directly to F1 from the phone (residential
+  /// IP, no proxy needed). [feedSourceBackend] uses the legacy server relay as
+  /// a fallback.
+  static const String feedSourceOnDevice = 'onDevice';
+  static const String feedSourceBackend = 'backend';
 
   /// Speed units for the telemetry HUD.
   static const String speedUnitKmh = 'kmh';
@@ -130,5 +138,21 @@ class AppSettings {
   static Future<void> setSpeedUnit(String unit) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_speedUnitKey, unit);
+  }
+
+  /// Which live-timing source to use: [feedSourceOnDevice] (default) or
+  /// [feedSourceBackend].
+  static Future<String> getFeedSource() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_feedSourceKey) ?? feedSourceOnDevice;
+  }
+
+  static String getFeedSourceSync(SharedPreferences prefs) {
+    return prefs.getString(_feedSourceKey) ?? feedSourceOnDevice;
+  }
+
+  static Future<void> setFeedSource(String source) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_feedSourceKey, source);
   }
 }

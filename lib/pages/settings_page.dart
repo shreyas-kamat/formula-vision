@@ -17,6 +17,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _isRaceControlSoundEnabled = true;
   bool _isTrackMapEnabled = true;
   String _trackMapDisplayMode = AppSettings.trackMapModeCard;
+  String _feedSource = AppSettings.feedSourceOnDevice;
 
   @override
   void initState() {
@@ -36,6 +37,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final soundEnabled = await AppSettings.isRaceControlSoundEnabled();
     final trackMapEnabled = await AppSettings.isTrackMapEnabled();
     final trackMapMode = await AppSettings.getTrackMapDisplayMode();
+    final feedSource = await AppSettings.getFeedSource();
 
     setState(() {
       _isCustomApiEnabled = isEnabled;
@@ -43,6 +45,7 @@ class _SettingsPageState extends State<SettingsPage> {
       _isRaceControlSoundEnabled = soundEnabled;
       _isTrackMapEnabled = trackMapEnabled;
       _trackMapDisplayMode = trackMapMode;
+      _feedSource = feedSource;
       _isLoading = false;
     });
   }
@@ -85,6 +88,97 @@ class _SettingsPageState extends State<SettingsPage> {
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) setState(() => _isSaved = false);
     });
+  }
+
+  /// Live data source: direct on-device F1 connection (default) vs the backend
+  /// relay. On-device uses the phone's residential IP and bypasses F1's
+  /// datacenter-IP blocking; the change takes effect next time the live page
+  /// reconnects.
+  Widget _buildFeedSourceCard() {
+    final bool onDevice = _feedSource == AppSettings.feedSourceOnDevice;
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withValues(alpha: 0.08),
+            Colors.black.withValues(alpha: 0.35),
+          ],
+        ),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.15),
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: onDevice
+                    ? Colors.redAccent.withValues(alpha: 0.2)
+                    : Colors.white.withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                onDevice ? Icons.smartphone : Icons.cloud_outlined,
+                color: onDevice
+                    ? Colors.redAccent
+                    : Colors.white.withValues(alpha: 0.6),
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'On-device feed',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontFamily: 'formula-bold',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    onDevice
+                        ? 'Connecting directly to F1 from this device'
+                        : 'Using backend relay',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      fontSize: 11,
+                      fontFamily: 'formula',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Switch(
+              value: onDevice,
+              onChanged: (val) async {
+                final source = val
+                    ? AppSettings.feedSourceOnDevice
+                    : AppSettings.feedSourceBackend;
+                await AppSettings.setFeedSource(source);
+                if (mounted) setState(() => _feedSource = source);
+              },
+              activeThumbColor: Colors.redAccent,
+              activeTrackColor: Colors.redAccent.withValues(alpha: 0.3),
+              inactiveThumbColor: Colors.white.withValues(alpha: 0.6),
+              inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildTrackMapModeOption({
@@ -216,6 +310,23 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
 
                         const SizedBox(height: 36),
+
+                        // ── Live data source ─────────────────────────────────
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4, bottom: 12),
+                          child: Text(
+                            'LIVE DATA SOURCE',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.6),
+                              fontSize: 11,
+                              fontFamily: 'formula',
+                              letterSpacing: 1.4,
+                            ),
+                          ),
+                        ),
+                        _buildFeedSourceCard(),
+
+                        const SizedBox(height: 28),
 
                         // ── Section label ────────────────────────────────────
                         Padding(

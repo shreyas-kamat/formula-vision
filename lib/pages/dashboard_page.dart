@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:async';
-import 'dart:collection';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,26 +7,14 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:formulavision/data/services/app_settings_service.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:formulavision/components/connecting_indicator.dart';
 import 'package:formulavision/components/driver_row_card.dart';
 import 'package:formulavision/components/race_control_toast.dart';
 import 'package:formulavision/components/race_timer_bar.dart';
 import 'package:formulavision/components/weather_info_card.dart';
 import 'package:formulavision/components/track_status_card.dart';
-import 'package:formulavision/data/functions/cardata.function.dart';
-import 'package:formulavision/data/functions/live_data.function.dart';
 import 'package:formulavision/data/models/live_data.model.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:http/http.dart' as http;
-import 'package:flutter/services.dart' show rootBundle;
-
-// Helper class to queue messages with timestamps
-class _DelayedMessage {
-  final dynamic data;
-  final DateTime receivedAt;
-
-  _DelayedMessage(this.data, this.receivedAt);
-}
+import 'package:formulavision/data/services/live_data_service.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -54,39 +41,36 @@ class TelemetryPage extends StatefulWidget {
 }
 
 class _TelemetryPageState extends State<TelemetryPage> {
-  WebSocketChannel? _channel;
-  StreamSubscription? _sseSubscription;
-  final Map<String, dynamic> _telemetryData = {};
-  Future<List<SessionInfo>>? _sessionInfoFuture;
-  Future<List<WeatherData>>? _weatherDataFuture;
-  Future<List<LiveData>>? _liveDataFuture;
+  // Live data is owned by the shared LiveDataService so the dashboard and the
+  // home page render from one connection. These fields mirror only what the
+  // build needs; the service holds the source of truth.
+  final bool _useSimulation = false;
+
   bool _isConnected = false;
   String _connectionStatus = "Disconnected";
-  String _errorMessage = "";
-  int _messageCount = 0;
-  final bool _useSimulation = false;
-  final bool _useSSE = true; // Add flag to use SSE instead of WebSockets
 
-  // Delay-related variables
-  int _delaySeconds = 0; // User-defined delay in seconds
-  final Queue<_DelayedMessage> _messageQueue = Queue<_DelayedMessage>();
-  Timer? _delayTimer;
+  // Set once the first snapshot arrives; drives the header/timer FutureBuilders.
+  Future<List<LiveData>>? _liveDataFuture;
+  StreamSubscription<List<LiveData>>? _liveSub;
+  StreamSubscription<List<Message>>? _rcSub;
+
+  Stream<List<LiveData>> get liveDataStream => LiveDataService.instance.stream;
+
+  // Per-driver ordering + change arrows are computed by the service.
+  Map<String, int> get _currentPositions =>
+      LiveDataService.instance.currentPositions;
+  Map<String, String> get _positionChanges =>
+      LiveDataService.instance.positionChanges;
+
+  // Broadcast-delay mirror for the delay modal UI.
+  int _delaySeconds = 0;
   bool _delayEnabled = false;
 
-  final _liveDataController = StreamController<List<LiveData>>.broadcast();
-  Stream<List<LiveData>> get liveDataStream => _liveDataController.stream;
-
-  // Position tracking for animations
-  Map<String, int> _previousPositions = {};
-  final Map<String, int> _currentPositions = {};
-  final Map<String, String> _positionChanges = {}; // 'up', 'down', or 'same'
   bool _isHeaderPinned = true; // Track if header is pinned
   bool _isRaceTimerPinned = false; // Track if race timer bar is pinned
 
   // Race control message alerts
   final AudioPlayer _rcAudioPlayer = AudioPlayer();
-  int _lastSeenRaceControlCount = 0;
-  bool _raceControlSeeded = false;
   bool _raceControlSoundEnabled = true;
 
   // Track map display settings
@@ -94,44 +78,54 @@ class _TelemetryPageState extends State<TelemetryPage> {
   String _trackMapDisplayMode = AppSettings.trackMapModeCard;
   bool _trackMapExpanded = true; // Card-mode expand/collapse state
 
-  // Debug-only: replay a recorded Position.z sample so the track map can be
-  // verified offline. Overlays positions onto whatever base data is present
-  // (live or simulated). Flip to true to enable.
-  static const bool _debugTrackReplay = false;
-  Timer? _replayTimer;
-  List<dynamic> _replayFrames = [];
-  int _replayIndex = 0;
-
   @override
   void initState() {
     super.initState();
-    _initialize();
+    final service = LiveDataService.instance;
+    final cur = service.current;
+    if (cur != null) _liveDataFuture = Future.value(cur);
+    _isConnected = service.isConnected.value;
+    _connectionStatus = service.connectionStatus.value;
+    _delayEnabled = service.delayEnabled;
+    _delaySeconds = service.delaySeconds;
+    service.connectionStatus.addListener(_onServiceStatus);
+    service.isConnected.addListener(_onServiceStatus);
+    _rcSub = service.raceControlAlerts.listen(_alertRaceControl);
+    // Rebuild on each emit so the pinned header/timer FutureBuilders refresh
+    // alongside the streaming content; the future is set once from the first
+    // snapshot and resolves to the in-place-mutated list.
+    _liveSub = service.stream.listen((data) {
+      if (!mounted) return;
+      setState(() => _liveDataFuture ??= Future.value(data));
+    });
+    service.attach();
     _loadRaceControlSoundSetting();
     _loadTrackMapSettings();
-    _maybeStartTrackReplay();
-    final data = decompressCarData();
-    print(data);
   }
 
-  Future<void> _maybeStartTrackReplay() async {
-    if (!_debugTrackReplay) return;
-    try {
-      final jsonStr =
-          await rootBundle.loadString('assets/test/position_replay.json');
-      final data = jsonDecode(jsonStr);
-      _replayFrames = (data['frames'] as List?) ?? [];
-      final intervalMs = (data['frameIntervalMs'] as num?)?.toInt() ?? 250;
-      if (_replayFrames.isEmpty) return;
-      _replayTimer?.cancel();
-      _replayTimer = Timer.periodic(Duration(milliseconds: intervalMs), (_) {
-        if (!mounted || _replayFrames.isEmpty) return;
-        final frame = _replayFrames[_replayIndex % _replayFrames.length];
-        _replayIndex++;
-        _updatePositionData(Map<String, dynamic>.from(frame as Map));
-      });
-    } catch (e) {
-      print('Track replay failed: $e');
-    }
+  void _onServiceStatus() {
+    if (!mounted) return;
+    setState(() {
+      _connectionStatus = LiveDataService.instance.connectionStatus.value;
+      _isConnected = LiveDataService.instance.isConnected.value;
+    });
+  }
+
+  @override
+  void dispose() {
+    final service = LiveDataService.instance;
+    service.connectionStatus.removeListener(_onServiceStatus);
+    service.isConnected.removeListener(_onServiceStatus);
+    _liveSub?.cancel();
+    _rcSub?.cancel();
+    service.detach();
+    _rcAudioPlayer.dispose(); // Release the alert audio player
+    super.dispose();
+  }
+
+  void _updateDelay(int seconds) {
+    setState(() => _delaySeconds = seconds);
+    LiveDataService.instance.setDelaySeconds(seconds);
   }
 
   Future<void> _loadRaceControlSoundSetting() async {
@@ -152,877 +146,23 @@ class _TelemetryPageState extends State<TelemetryPage> {
     }
   }
 
-  Future<void> _initialize() async {
-    await fetchInitialData();
-    // Only connect to SSE if initial data was fetched successfully
-    // and we are not already connected.
-    if (_connectionStatus == "Initial data loaded" && !_isConnected) {
-      await _connectSSE();
+  /// Maps the internal connection status to friendly copy shown under the
+  /// start-light gantry while waiting for the first telemetry.
+  String _connectingDetail() {
+    switch (_connectionStatus) {
+      case 'Fetching initial data...':
+      case 'Initial data loaded':
+        return 'Loading session data';
+      case 'Connected':
+      case 'Subscribed':
+        return 'Subscribing to the feed';
+      case 'Failed to fetch initial data':
+      case 'Error fetching initial data':
+      case 'SSE connection error':
+        return 'Connection trouble — retrying';
+      default:
+        return 'Establishing connection';
     }
-  }
-
-  @override
-  void dispose() {
-    if (_sseSubscription != null) {
-      _sseSubscription!.cancel();
-      _sseSubscription = null;
-    }
-    _delayTimer?.cancel(); // Clean up delay timer
-    _replayTimer?.cancel(); // Stop debug position replay if running
-    _messageQueue.clear(); // Clear any queued messages
-    _liveDataController.close(); // Close the StreamController
-    _rcAudioPlayer.dispose(); // Release the alert audio player
-    super.dispose();
-  }
-
-  Future<void> fetchInitialData() async {
-    setState(() {
-      _connectionStatus = "Fetching initial data...";
-      _errorMessage = "";
-    });
-
-    try {
-      // final prefs = await SharedPreferences.getInstance();
-      // final String? token = prefs.getString('jwt_token');
-      final apiUrl = await AppSettings.getApiUrl();
-      final response = await http.get(
-        Uri.parse('$apiUrl/initialData'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          // 'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        print('Initial: $data');
-        // Check if data contains SessionInfo
-        setState(() {
-          _liveDataFuture = fetchLiveData(data['R']);
-        });
-
-        // Initialize position tracking with initial data
-        _initializePositionTracking();
-
-        setState(() {
-          _connectionStatus = "Initial data loaded";
-        });
-      } else {
-        setState(() {
-          _connectionStatus = "Failed to fetch initial data";
-          _errorMessage = "HTTP Status: ${response.statusCode}";
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _connectionStatus = "Error fetching initial data";
-        _errorMessage = e.toString();
-      });
-    }
-  }
-
-  void _initializePositionTracking() {
-    if (_liveDataFuture != null) {
-      _liveDataFuture!.then((liveDataList) {
-        if (liveDataList.isNotEmpty) {
-          final liveData = liveDataList[0];
-          if (liveData.driverList?.drivers != null) {
-            liveData.driverList!.drivers.forEach((racingNumber, driver) {
-              _currentPositions[racingNumber] = driver.line;
-              _previousPositions[racingNumber] = driver.line;
-              _positionChanges[racingNumber] = 'same';
-            });
-          }
-          // Seed race control marker so historical messages don't toast.
-          _lastSeenRaceControlCount =
-              liveData.raceControlMessages?.messages.length ?? 0;
-          _raceControlSeeded = true;
-        }
-      });
-    }
-  }
-
-  Future<void> _connectToServer() async {
-    setState(() {
-      _connectionStatus = " ...";
-      _errorMessage = "";
-    });
-
-    try {
-      // Negotiate connection with simulation parameter
-      final apiUrl = await AppSettings.getApiUrl();
-      final response = await http.get(
-        Uri.parse('$apiUrl/negotiate?simulation=$_useSimulation'),
-      );
-
-      if (response.statusCode == 200) {
-        // Connect to either WebSocket or SSE based on _useSSE flag
-        await _connectSSE();
-      } else {
-        setState(() {
-          _connectionStatus = "Failed to connect";
-          _errorMessage = "HTTP Status: ${response.statusCode}";
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _connectionStatus = "Connection error";
-        _errorMessage = e.toString();
-      });
-    }
-  }
-
-  // Custom SSE client implementation
-  Future<void> _connectSSE() async {
-    try {
-      final apiUrl = await AppSettings.getApiUrl();
-      final sseUrl =
-          '$apiUrl/events${_useSimulation ? '?simulation=true' : ''}';
-      print('Connecting to SSE endpoint: $sseUrl');
-
-      // Create a client that doesn't automatically close the connection
-      final client = http.Client();
-      // final prefs = await SharedPreferences.getInstance();
-      // final String? token = prefs.getString('jwt_token');
-      // Connect to the SSE endpoint with appropriate headers
-      final request = http.Request('GET', Uri.parse(sseUrl));
-      request.headers['Accept'] = 'text/event-stream';
-      request.headers['Cache-Control'] = 'no-cache';
-      request.headers['Content-Type'] = 'application/json; charset=UTF-8';
-      // if (token != null) {
-      //   request.headers['Authorization'] = 'Bearer $token';
-      // }
-
-      // final response = await http.get(
-      //   Uri.parse('${dotenv.env['API_URL']}/initialData'),
-      //   headers: <String, String>{
-      //     'Content-Type': 'application/json; charset=UTF-8',
-      //     'Authorization': 'Bearer $token',
-      //   },
-      // );
-
-      final streamedResponse = await client.send(request);
-
-      if (streamedResponse.statusCode != 200) {
-        throw Exception(
-            'Failed to connect to SSE endpoint: ${streamedResponse.statusCode}');
-      }
-
-      setState(() {
-        _isConnected = true;
-        _connectionStatus = _useSimulation ? "Connected (Sim)" : "Connected";
-      });
-
-      // Start delay timer if delay is enabled
-      if (_delayEnabled && _delaySeconds > 0) {
-        _startDelayTimer();
-      }
-
-      // Process the stream of events
-      _sseSubscription = streamedResponse.stream
-          .transform(utf8.decoder)
-          .transform(const LineSplitter())
-          .listen(
-        (line) {
-          // SSE format: lines starting with "data:" contain the payload
-          if (line.startsWith('data: ')) {
-            _messageCount++;
-            try {
-              final jsonData = line.substring(6); // Remove 'data: ' prefix
-              print('Received SSE message: $jsonData');
-              final data = jsonDecode(jsonData);
-              _processTelemetryData(data);
-            } catch (e) {
-              print("Error processing SSE message: $e");
-              setState(() {}); // Just update the message count
-            }
-          }
-        },
-        onError: (error) {
-          print('SSE stream error: $error');
-          if (mounted) {
-            setState(() {
-              _isConnected = false;
-              _connectionStatus = "SSE connection error";
-              _errorMessage = error.toString();
-            });
-          }
-          client.close();
-        },
-        onDone: () {
-          print('SSE connection closed');
-          setState(() {
-            _isConnected = false;
-            _connectionStatus = "SSE disconnected";
-          });
-          client.close();
-        },
-      );
-    } catch (e) {
-      print('Error connecting to SSE: $e');
-      setState(() {
-        _isConnected = false;
-        _connectionStatus = "SSE connection error";
-        _errorMessage = e.toString();
-      });
-    }
-  }
-
-  void _disconnectFromServer() {
-    if (_sseSubscription != null) {
-      _sseSubscription!.cancel();
-      _sseSubscription = null;
-    }
-
-    if (mounted) {
-      setState(() {
-        _isConnected = false;
-        _connectionStatus = "Disconnected";
-      });
-    }
-  }
-
-  // Method to toggle delay on/off
-  void _toggleDelay() {
-    setState(() {
-      _delayEnabled = !_delayEnabled;
-      if (!_delayEnabled) {
-        // Process all queued messages immediately when disabled
-        _processQueuedMessages();
-        _delayTimer?.cancel();
-      } else if (_delaySeconds > 0) {
-        _startDelayTimer();
-      }
-    });
-  }
-
-  // Method to update delay value
-  void _updateDelay(int seconds) {
-    setState(() {
-      _delaySeconds = seconds;
-      if (_delayEnabled && seconds > 0) {
-        _startDelayTimer();
-      } else if (seconds == 0) {
-        _processQueuedMessages();
-        _delayTimer?.cancel();
-      }
-    });
-  }
-
-  // Start the delay timer
-  void _startDelayTimer() {
-    _delayTimer?.cancel();
-    _delayTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      _processQueuedMessages();
-    });
-  }
-
-  // Process messages that have waited long enough
-  void _processQueuedMessages() {
-    final now = DateTime.now();
-    while (_messageQueue.isNotEmpty) {
-      final message = _messageQueue.first;
-      final waitTime = now.difference(message.receivedAt).inSeconds;
-
-      if (waitTime >= _delaySeconds) {
-        _messageQueue.removeFirst();
-        _processTelemetryDataImmediate(message.data);
-      } else {
-        break; // Stop processing if this message isn't ready yet
-      }
-    }
-  }
-
-  // Add message to delay queue or process immediately
-  void _processTelemetryData(dynamic data) {
-    if (_delayEnabled && _delaySeconds > 0) {
-      _messageQueue.add(_DelayedMessage(data, DateTime.now()));
-    } else {
-      _processTelemetryDataImmediate(data);
-    }
-  }
-
-  // Original processing method renamed
-  void _processTelemetryDataImmediate(dynamic data) {
-    // Handle empty data case
-    print('Processing telemetry data: ${data.runtimeType}');
-    print('Data keys: ${data.keys.toList()}');
-    if (data is Map) {
-      // SignalR connection init message (has "C" key)
-      if (data.containsKey('C')) {
-        print('Received Partial Update Message with ID: ${data['C']}');
-        // This is just a connection message, not actual data
-        setState(() {});
-      }
-
-      // Handle different types of messages
-      if (data.containsKey('M') && data['M'] is List) {
-        final messageArray = data['M'];
-        print('Processing ${messageArray.length} messages in update');
-
-        // Process each message in the array
-        for (var messageObject in messageArray) {
-          print('Processing message object: $messageObject');
-          if (messageObject is Map &&
-              messageObject.containsKey('A') &&
-              messageObject['A'] is List &&
-              messageObject['A'].isNotEmpty) {
-            // Check if this is the new format with ExtrapolatedClock as an object
-            if (messageObject['A'][0] is Map &&
-                messageObject['A'][0].containsKey('ExtrapolatedClock')) {
-              print('Found ExtrapolatedClock in new format');
-              final clockData = messageObject['A'][0]['ExtrapolatedClock'];
-              setState(() {
-                _updateExtrapolatedClock(clockData);
-              });
-              print('ExtrapolatedClock Updated Successfully from new format');
-              continue;
-            }
-
-            // Position data arrives in object form:
-            //   A[0] == { PositionData: { Entries: [...] } }
-            if (messageObject['A'][0] is Map &&
-                messageObject['A'][0].containsKey('PositionData')) {
-              final positionData = messageObject['A'][0]['PositionData'];
-              setState(() {
-                _updatePositionData(positionData);
-              });
-              print('PositionData Updated Successfully from new format');
-              continue;
-            }
-
-            // Car telemetry arrives in object form:
-            //   A[0] == { CarData: { Timestamp, Cars: { "44": {...} } } }
-            if (messageObject['A'][0] is Map &&
-                messageObject['A'][0].containsKey('CarData')) {
-              final carData = messageObject['A'][0]['CarData'];
-              setState(() {
-                _updateCarData(carData);
-              });
-              print('CarData Updated Successfully from new format');
-              continue;
-            }
-
-            final messageType = messageObject['A'][0];
-            print('Message type: $messageType');
-
-            if (messageObject['A'].length > 1) {
-              final updated = messageObject['A'][1];
-              final timestamp =
-                  messageObject['A'].length > 2 ? messageObject['A'][2] : null;
-
-              print(
-                  'Processing $messageType update with timestamp: $timestamp');
-              print('Updated data: $updated');
-
-              // Handle each message type appropriately
-              switch (messageType) {
-                case 'ExtrapolatedClock':
-                  print('ExtrapolatedClock data received: $updated');
-                  setState(() {
-                    _updateExtrapolatedClock(updated);
-                  });
-                  print('ExtrapolatedClock Updated Successfully');
-                  break;
-
-                case 'WeatherData':
-                  setState(() {
-                    _updateWeatherData(updated);
-                  });
-                  print('WeatherData Updated Successfully');
-                  break;
-
-                case 'SessionInfo':
-                  setState(() {
-                    _updateSessionInfo(updated);
-                  });
-                  print('SessionInfo Updated Successfully');
-                  break;
-
-                case 'TimingData':
-                  setState(() {
-                    _updateTimingData(updated);
-                  });
-                  print('TimingData Updated Successfully');
-                  break;
-
-                case 'TimingAppData':
-                  setState(() {
-                    _updateTimingAppData(updated);
-                  });
-                  print('TimingAppData Updated Successfully');
-                  break;
-
-                case 'RaceControlMessages':
-                  setState(() {
-                    _updateRaceControlMessages(updated);
-                  });
-                  print('RaceControlMessages Updated Successfully');
-                  break;
-
-                case 'DriverList':
-                  setState(() {
-                    _updateDriverList(updated);
-                  });
-                  print('DriverList Updated Successfully');
-                  break;
-
-                case 'TrackStatus':
-                  setState(() {
-                    _updateTrackStatus(updated);
-                  });
-                  print('TrackStatus Updated Successfully');
-                  break;
-
-                case 'LapCount':
-                  setState(() {
-                    _updateLapCount(updated);
-                  });
-                  print('LapCount Updated Successfully');
-                  break;
-
-                case 'PositionData':
-                case 'Position.z':
-                  setState(() {
-                    _updatePositionData(updated);
-                  });
-                  print('PositionData Updated Successfully');
-                  break;
-
-                default:
-                  print('No handler for message type: $messageType');
-              }
-            } else {
-              print('Message data is not a Map:');
-            }
-          } else {
-            print('Message does not contain valid "A" array structure');
-          }
-        }
-      }
-    }
-    // After processing all updates in a batch
-    if (!_liveDataController.isClosed) {
-      _liveDataFuture!.then((liveDataList) {
-        _liveDataController.add(liveDataList);
-      });
-    }
-  }
-
-  void _updateExtrapolatedClock(dynamic data) {
-    print('_updateExtrapolatedClock called with data: $data');
-    if (data is Map<String, dynamic>) {
-      print('Updating extrapolated clock with: ${data.keys.toList()}');
-      if (data.isEmpty) {
-        print('Received empty extrapolated clock data, skipping update');
-        return;
-      }
-
-      setState(() {
-        if (_liveDataFuture != null) {
-          _liveDataFuture = _liveDataFuture!.then((liveDataList) {
-            print(
-                'Updating extrapolated clock in live data list of size: ${liveDataList.length}');
-            if (liveDataList.isNotEmpty) {
-              final currentLiveData = liveDataList[0];
-
-              // Create a new ExtrapolatedClock with updated values
-              ExtrapolatedClock updatedClock = ExtrapolatedClock(
-                utc: data.containsKey('Utc')
-                    ? data['Utc']
-                    : currentLiveData.extrapolatedClock?.utc ?? '',
-                remaining: data.containsKey('Remaining')
-                    ? data['Remaining']
-                    : currentLiveData.extrapolatedClock?.remaining ?? '',
-                extrapolating: data.containsKey('Extrapolating')
-                    ? data['Extrapolating']
-                    : currentLiveData.extrapolatedClock?.extrapolating ?? false,
-              );
-
-              print(
-                  'Created updated clock: UTC=${updatedClock.utc}, Remaining=${updatedClock.remaining}, Extrapolating=${updatedClock.extrapolating}');
-
-              // Update the extrapolated clock in the current live data object
-              currentLiveData.extrapolatedClock = updatedClock;
-
-              return liveDataList;
-            }
-            return liveDataList;
-          });
-        }
-      });
-    } else {
-      print(
-          'Received non-map extrapolated clock data: ${data.runtimeType}, cannot update');
-    }
-  }
-
-  void _updateTrackStatus(dynamic data) {
-    if (data is Map<String, dynamic>) {
-      print('Updating track status with: ${data.keys.toList()}');
-      if (data.isEmpty) {
-        print('Received empty track status data, skipping update');
-        return;
-      }
-
-      setState(() {
-        if (_liveDataFuture != null) {
-          _liveDataFuture = _liveDataFuture!.then((liveDataList) {
-            if (liveDataList.isNotEmpty) {
-              final currentLiveData = liveDataList[0];
-
-              // Create a new TrackStatus with updated values
-              TrackStatus updatedTrackStatus = TrackStatus(
-                status: data.containsKey('Status')
-                    ? data['Status']
-                    : currentLiveData.trackStatus!.status,
-                message: data.containsKey('Message')
-                    ? data['Message']
-                    : currentLiveData.trackStatus!.message,
-              );
-
-              // Update the track status in the current live data object
-              currentLiveData.trackStatus = updatedTrackStatus;
-
-              return liveDataList;
-            }
-            return liveDataList;
-          }).then((liveDataList) {
-            // Add updated data to stream
-            if (!_liveDataController.isClosed) {
-              _liveDataController.add(liveDataList);
-            }
-            return liveDataList;
-          });
-        }
-      });
-    } else {
-      print(
-          'Received non-map track status data: ${data.runtimeType}, cannot update');
-    }
-  }
-
-  void _updateDriverList(dynamic data) {
-    if (data is Map<String, dynamic>) {
-      print('Updating driver list with: ${data.keys.toList()}');
-      if (data.isEmpty) {
-        print('Received empty driver list data, skipping update');
-        return;
-      }
-
-      setState(() {
-        _liveDataFuture = _liveDataFuture!.then((liveDataList) {
-          final currentLiveData = liveDataList[0];
-          Map<String, Driver> currentDrivers =
-              currentLiveData.driverList?.drivers ?? {};
-
-          // Store current positions before updating
-          _previousPositions = Map.from(_currentPositions);
-
-          // Remove '_kf' from keys to process since it's a special field
-          final driverKeys = data.keys.where((key) => key != '_kf').toList();
-
-          // Update each driver in the list
-          for (var racingNumber in driverKeys) {
-            final driverData = data[racingNumber] ?? {};
-            final prev = currentDrivers[racingNumber];
-
-            Driver updatedDriver = Driver(
-              racingNumber: driverData['RacingNumber'] ??
-                  driverData['racingNumber'] ??
-                  prev?.racingNumber ??
-                  racingNumber,
-              broadcastName: driverData['BroadcastName'] ??
-                  driverData['broadcastName'] ??
-                  prev?.broadcastName ??
-                  '',
-              fullName: driverData['FullName'] ??
-                  driverData['fullName'] ??
-                  prev?.fullName ??
-                  '',
-              countryCode: driverData['CountryCode'] ??
-                  driverData['countryCode'] ??
-                  prev?.countryCode ??
-                  '',
-              tla: driverData['Tla'] ??
-                  driverData['tla'] ??
-                  driverData['TLA'] ??
-                  prev?.tla ??
-                  '',
-              line: driverData['Line'] ?? driverData['line'] ?? prev?.line ?? 0,
-              teamName: driverData['TeamName'] ??
-                  driverData['teamName'] ??
-                  prev?.teamName ??
-                  '',
-              teamColour: driverData['TeamColour'] ??
-                  driverData['teamColour'] ??
-                  driverData['team_color'] ??
-                  prev?.teamColour ??
-                  '',
-              firstName: driverData['FirstName'] ??
-                  driverData['firstName'] ??
-                  prev?.firstName ??
-                  '',
-              lastName: driverData['LastName'] ??
-                  driverData['lastName'] ??
-                  prev?.lastName ??
-                  '',
-              reference: driverData['Reference'] ??
-                  driverData['reference'] ??
-                  prev?.reference ??
-                  '',
-              headshotUrl: driverData['HeadshotUrl'] ??
-                  driverData['headshotUrl'] ??
-                  prev?.headshotUrl ??
-                  '',
-            );
-
-            currentDrivers[racingNumber] = updatedDriver;
-
-            // Update current position tracking
-            _currentPositions[racingNumber] = updatedDriver.line;
-          }
-
-          // Calculate position changes
-          _updatePositionChanges();
-
-          // Create a new DriverList
-          DriverList updatedDriverList = DriverList(
-            drivers: currentDrivers,
-          );
-
-          // Update the driver list in the current live data object
-          currentLiveData.driverList = updatedDriverList;
-
-          return liveDataList;
-        }).then((liveDataList) {
-          // Add updated data to stream
-          if (!_liveDataController.isClosed) {
-            _liveDataController.add(liveDataList);
-          }
-          return liveDataList;
-        });
-      });
-    } else {
-      print(
-          'Received non-map driver list data: ${data.runtimeType}, cannot update');
-    }
-  }
-
-  void _updatePositionChanges() {
-    _positionChanges.clear();
-
-    for (var racingNumber in _currentPositions.keys) {
-      final currentPos = _currentPositions[racingNumber] ?? 0;
-      final previousPos = _previousPositions[racingNumber] ?? currentPos;
-
-      if (previousPos > currentPos) {
-        _positionChanges[racingNumber] =
-            'up'; // Lower number = higher position = moved up
-      } else if (previousPos < currentPos) {
-        _positionChanges[racingNumber] =
-            'down'; // Higher number = lower position = moved down
-      } else {
-        _positionChanges[racingNumber] = 'same';
-      }
-    }
-
-    print('Position changes: $_positionChanges');
-  }
-
-  /// Merges incoming sector data (List or index-keyed Map) into [sectors],
-  /// preserving fields and segments that aren't present in the delta.
-  void _mergeSectors(List<Sector> sectors, dynamic raw) {
-    void applySector(int index, Map<String, dynamic> sjson) {
-      final Sector? prev = index < sectors.length ? sectors[index] : null;
-      final List<Segment> segments =
-          prev != null ? List<Segment>.from(prev.segments) : <Segment>[];
-      if (sjson.containsKey('Segments')) {
-        _mergeSegments(segments, sjson['Segments']);
-      }
-      final merged = Sector(
-        stopped: sjson['Stopped'] ?? prev?.stopped ?? false,
-        value: sjson['Value'] ?? prev?.value ?? '',
-        status: sjson['Status'] ?? prev?.status ?? 0,
-        overallFastest: sjson['OverallFastest'] ?? prev?.overallFastest ?? false,
-        personalFastest:
-            sjson['PersonalFastest'] ?? prev?.personalFastest ?? false,
-        previousValue: sjson['PreviousValue'] ?? prev?.previousValue ?? '',
-        segments: segments,
-      );
-      if (index < sectors.length) {
-        sectors[index] = merged;
-      } else {
-        while (sectors.length < index) {
-          sectors.add(Sector(
-            stopped: false,
-            value: '',
-            status: 0,
-            overallFastest: false,
-            personalFastest: false,
-            segments: const [],
-          ));
-        }
-        sectors.add(merged);
-      }
-    }
-
-    if (raw is List) {
-      for (int i = 0; i < raw.length; i++) {
-        if (raw[i] is Map) applySector(i, Map<String, dynamic>.from(raw[i]));
-      }
-    } else if (raw is Map) {
-      raw.forEach((k, v) {
-        final idx = int.tryParse(k.toString());
-        if (idx != null && v is Map) {
-          applySector(idx, Map<String, dynamic>.from(v));
-        }
-      });
-    }
-  }
-
-  /// Merges incoming segment data (List or index-keyed Map) into [segments].
-  void _mergeSegments(List<Segment> segments, dynamic raw) {
-    void applySegment(int index, Map<String, dynamic> sjson) {
-      final status = sjson['Status'] ??
-          (index < segments.length ? segments[index].status : 0);
-      if (index < segments.length) {
-        segments[index] = Segment(status: status);
-      } else {
-        while (segments.length < index) {
-          segments.add(Segment(status: 0));
-        }
-        segments.add(Segment(status: status));
-      }
-    }
-
-    if (raw is List) {
-      for (int i = 0; i < raw.length; i++) {
-        if (raw[i] is Map) applySegment(i, Map<String, dynamic>.from(raw[i]));
-      }
-    } else if (raw is Map) {
-      raw.forEach((k, v) {
-        final idx = int.tryParse(k.toString());
-        if (idx != null && v is Map) {
-          applySegment(idx, Map<String, dynamic>.from(v));
-        }
-      });
-    }
-  }
-
-  /// Merges incoming TimingAppData (tyre stints) into the live data. The feed
-  /// sends stints either as a List (snapshot) or a Map keyed by stint index
-  /// (delta), so we merge by index to preserve prior stints.
-  void _updateTimingAppData(dynamic data) {
-    if (data is! Map<String, dynamic>) return;
-    if (data.isEmpty || data['Lines'] is! Map) return;
-    if (_liveDataFuture == null) return;
-
-    _liveDataFuture = _liveDataFuture!.then((liveDataList) {
-      if (liveDataList.isEmpty) return liveDataList;
-      final currentLiveData = liveDataList[0];
-      final Map<String, TimingAppDataDriver> currentLines =
-          Map<String, TimingAppDataDriver>.from(
-              currentLiveData.timingAppData?.lines ?? {});
-
-      final linesData = data['Lines'] as Map<String, dynamic>;
-      linesData.forEach((racingNumber, driverData) {
-        if (driverData is! Map<String, dynamic>) return;
-        final existing = currentLines[racingNumber];
-        final List<Stint> mergedStints =
-            existing != null ? List<Stint>.from(existing.stints) : <Stint>[];
-
-        void applyStint(int index, Map<String, dynamic> sjson) {
-          final prev = index < mergedStints.length ? mergedStints[index] : null;
-          final merged = Stint(
-            totalLaps: sjson['TotalLaps'] ?? prev?.totalLaps,
-            compound: sjson['Compound'] ?? prev?.compound,
-            isNew: sjson['New'] ?? prev?.isNew,
-          );
-          if (index < mergedStints.length) {
-            mergedStints[index] = merged;
-          } else {
-            while (mergedStints.length < index) {
-              mergedStints.add(Stint());
-            }
-            mergedStints.add(merged);
-          }
-        }
-
-        final stintsRaw = driverData['Stints'];
-        if (stintsRaw is List) {
-          for (int i = 0; i < stintsRaw.length; i++) {
-            if (stintsRaw[i] is Map) {
-              applyStint(i, Map<String, dynamic>.from(stintsRaw[i]));
-            }
-          }
-        } else if (stintsRaw is Map) {
-          stintsRaw.forEach((k, v) {
-            final idx = int.tryParse(k.toString());
-            if (idx != null && v is Map) {
-              applyStint(idx, Map<String, dynamic>.from(v));
-            }
-          });
-        }
-
-        currentLines[racingNumber] = TimingAppDataDriver(
-          racingNumber: driverData['RacingNumber'] ??
-              existing?.racingNumber ??
-              racingNumber,
-          stints: mergedStints,
-          line: driverData['Line'] ?? existing?.line ?? 0,
-          gridPos: driverData['GridPos'] ?? existing?.gridPos ?? '',
-        );
-      });
-
-      currentLiveData.timingAppData = TimingAppData(lines: currentLines);
-      return liveDataList;
-    }).then((liveDataList) {
-      if (!_liveDataController.isClosed) {
-        _liveDataController.add(liveDataList);
-      }
-      return liveDataList;
-    });
-  }
-
-  /// Merges incoming race control messages and triggers a toast (and, for
-  /// important categories, the alert sound) for any newly-arrived message.
-  void _updateRaceControlMessages(dynamic data) {
-    if (data is! Map<String, dynamic>) return;
-    final incoming = RaceControlMessages.fromJson(data);
-    if (incoming.messages.isEmpty) return;
-    if (_liveDataFuture == null) return;
-
-    _liveDataFuture = _liveDataFuture!.then((liveDataList) {
-      if (liveDataList.isEmpty) return liveDataList;
-      final currentLiveData = liveDataList[0];
-      final existing =
-          currentLiveData.raceControlMessages?.messages ?? <Message>[];
-
-      final List<Message> merged = List<Message>.from(existing);
-      for (final m in incoming.messages) {
-        final dup =
-            merged.any((e) => e.utc == m.utc && e.message == m.message);
-        if (!dup) merged.add(m);
-      }
-      currentLiveData.raceControlMessages =
-          RaceControlMessages(messages: merged);
-
-      if (!_raceControlSeeded) {
-        _lastSeenRaceControlCount = merged.length;
-        _raceControlSeeded = true;
-      } else if (merged.length > _lastSeenRaceControlCount) {
-        final newMessages = merged.sublist(_lastSeenRaceControlCount);
-        _lastSeenRaceControlCount = merged.length;
-        _alertRaceControl(newMessages);
-      }
-      return liveDataList;
-    }).then((liveDataList) {
-      if (!_liveDataController.isClosed) {
-        _liveDataController.add(liveDataList);
-      }
-      return liveDataList;
-    });
   }
 
   void _alertRaceControl(List<Message> messages) {
@@ -1044,593 +184,6 @@ class _TelemetryPageState extends State<TelemetryPage> {
       await _rcAudioPlayer.play(AssetSource('TeamRadioF1FX.wav'));
     } catch (e) {
       print('Error playing race control sound: $e');
-    }
-  }
-
-  void _updateTimingData(dynamic data) {
-    if (data is Map<String, dynamic>) {
-      print('Updating timing data with: ${data.keys.toList()}');
-      if (data.isEmpty) {
-        print('Received empty timing data, skipping update');
-        return;
-      }
-
-      setState(() {
-        if (_liveDataFuture != null) {
-          _liveDataFuture = _liveDataFuture!.then((liveDataList) {
-            if (liveDataList.isNotEmpty) {
-              final currentLiveData = liveDataList[0];
-
-              // Check if we have the Lines property which contains driver timing data
-              if (data.containsKey('Lines') &&
-                  data['Lines'] is Map<String, dynamic>) {
-                // Get the current timing data lines
-                Map<String, TimingDataDriver> currentLines =
-                    currentLiveData.timingData?.lines ?? {};
-
-                // Snapshot positions from the previous update cycle so that
-                // _updatePositionChanges() compares this cycle against the last
-                // (single source of truth = live timing position).
-                _previousPositions = Map.from(_currentPositions);
-
-                // Process each driver's timing data
-                final linesData = data['Lines'] as Map<String, dynamic>;
-                linesData.forEach((racingNumber, driverData) {
-                  if (driverData is Map<String, dynamic>) {
-                    // Create or update the driver's timing data
-                    final currentDriverData = currentLines[racingNumber];
-
-                    // Process sectors if available. The feed sends Sectors and
-                    // their Segments either as a List (snapshot) or a Map keyed
-                    // by index (delta), so we merge by index into the existing
-                    // sectors/segments to preserve mini-sector progress.
-                    List<Sector> updatedSectors = currentDriverData != null
-                        ? List<Sector>.from(currentDriverData.sectors)
-                        : <Sector>[];
-                    if (driverData.containsKey('Sectors')) {
-                      _mergeSectors(updatedSectors, driverData['Sectors']);
-                    }
-
-                    // Process speeds if available
-                    Speeds updatedSpeeds;
-                    if (driverData.containsKey('Speeds') &&
-                        driverData['Speeds'] is Map) {
-                      final speedsData =
-                          driverData['Speeds'] as Map<String, dynamic>;
-
-                      // Create individual speed components
-                      I1 i1 = I1(
-                          value: '',
-                          status: 0,
-                          overallFastest: false,
-                          personalFastest: false);
-                      I1 i2 = I1(
-                          value: '',
-                          status: 0,
-                          overallFastest: false,
-                          personalFastest: false);
-                      I1 fl = I1(
-                          value: '',
-                          status: 0,
-                          overallFastest: false,
-                          personalFastest: false);
-                      I1 st = I1(
-                          value: '',
-                          status: 0,
-                          overallFastest: false,
-                          personalFastest: false);
-
-                      // Update I1 speed if available
-                      if (speedsData.containsKey('I1') &&
-                          speedsData['I1'] is Map) {
-                        final i1Data = speedsData['I1'] as Map<String, dynamic>;
-                        i1 = I1(
-                          value: i1Data['Value'] ?? '',
-                          status: i1Data['Status'] ?? 0,
-                          overallFastest: i1Data['OverallFastest'] ?? false,
-                          personalFastest: i1Data['PersonalFastest'] ?? false,
-                        );
-                      } else if (currentDriverData?.speeds.i1 != null) {
-                        i1 = currentDriverData!.speeds.i1;
-                      }
-
-                      // Update I2 speed if available
-                      if (speedsData.containsKey('I2') &&
-                          speedsData['I2'] is Map) {
-                        final i2Data = speedsData['I2'] as Map<String, dynamic>;
-                        i2 = I1(
-                          value: i2Data['Value'] ?? '',
-                          status: i2Data['Status'] ?? 0,
-                          overallFastest: i2Data['OverallFastest'] ?? false,
-                          personalFastest: i2Data['PersonalFastest'] ?? false,
-                        );
-                      } else if (currentDriverData?.speeds.i2 != null) {
-                        i2 = currentDriverData!.speeds.i2;
-                      }
-
-                      // Update FL speed if available
-                      if (speedsData.containsKey('FL') &&
-                          speedsData['FL'] is Map) {
-                        final flData = speedsData['FL'] as Map<String, dynamic>;
-                        fl = I1(
-                          value: flData['Value'] ?? '',
-                          status: flData['Status'] ?? 0,
-                          overallFastest: flData['OverallFastest'] ?? false,
-                          personalFastest: flData['PersonalFastest'] ?? false,
-                        );
-                      } else if (currentDriverData?.speeds.fl != null) {
-                        fl = currentDriverData!.speeds.fl;
-                      }
-
-                      // Update ST speed if available
-                      if (speedsData.containsKey('ST') &&
-                          speedsData['ST'] is Map) {
-                        final stData = speedsData['ST'] as Map<String, dynamic>;
-                        st = I1(
-                          value: stData['Value'] ?? '',
-                          status: stData['Status'] ?? 0,
-                          overallFastest: stData['OverallFastest'] ?? false,
-                          personalFastest: stData['PersonalFastest'] ?? false,
-                        );
-                      } else if (currentDriverData?.speeds.st != null) {
-                        st = currentDriverData!.speeds.st;
-                      }
-
-                      updatedSpeeds = Speeds(i1: i1, i2: i2, fl: fl, st: st);
-                    } else if (currentDriverData?.speeds != null) {
-                      updatedSpeeds = currentDriverData!.speeds;
-                    } else {
-                      // Create empty speeds if no data available
-                      updatedSpeeds = Speeds(
-                        i1: I1(
-                            value: '',
-                            status: 0,
-                            overallFastest: false,
-                            personalFastest: false),
-                        i2: I1(
-                            value: '',
-                            status: 0,
-                            overallFastest: false,
-                            personalFastest: false),
-                        fl: I1(
-                            value: '',
-                            status: 0,
-                            overallFastest: false,
-                            personalFastest: false),
-                        st: I1(
-                            value: '',
-                            status: 0,
-                            overallFastest: false,
-                            personalFastest: false),
-                      );
-                    }
-
-                    // Process IntervalToPositionAhead if available
-                    IntervalToPositionAhead? updatedInterval;
-                    if (driverData.containsKey('IntervalToPositionAhead') &&
-                        driverData['IntervalToPositionAhead']
-                            is Map<String, dynamic>) {
-                      final intervalData = driverData['IntervalToPositionAhead']
-                          as Map<String, dynamic>;
-                      updatedInterval = IntervalToPositionAhead(
-                        value: intervalData['Value'] ?? '',
-                        catching: intervalData['Catching'] ?? false,
-                      );
-                    } else if (currentDriverData?.intervalToPositionAhead !=
-                        null) {
-                      updatedInterval =
-                          currentDriverData!.intervalToPositionAhead;
-                    }
-
-                    // Process BestLapTime if available
-                    PersonalBestLapTime updatedBestLap;
-                    if (driverData.containsKey('BestLapTime') &&
-                        driverData['BestLapTime'] is Map) {
-                      final bestLapData =
-                          driverData['BestLapTime'] as Map<String, dynamic>;
-                      updatedBestLap = PersonalBestLapTime(
-                        value: bestLapData['Value'] ?? '',
-                        lap: bestLapData['Lap'] ?? 0,
-                      );
-                    } else if (currentDriverData?.bestLapTime != null) {
-                      updatedBestLap = currentDriverData!.bestLapTime;
-                    } else {
-                      updatedBestLap = PersonalBestLapTime(value: '', lap: 0);
-                    }
-
-                    // Process LastLapTime if available
-                    I1 updatedLastLap;
-                    if (driverData.containsKey('LastLapTime') &&
-                        driverData['LastLapTime'] is Map) {
-                      final lastLapData =
-                          driverData['LastLapTime'] as Map<String, dynamic>;
-                      updatedLastLap = I1(
-                        value: lastLapData['Value'] ?? '-:--.---',
-                        status: lastLapData['Status'] ?? 0,
-                        overallFastest: lastLapData['OverallFastest'] ?? false,
-                        personalFastest:
-                            lastLapData['PersonalFastest'] ?? false,
-                      );
-                    } else if (currentDriverData?.lastLapTime != null) {
-                      updatedLastLap = currentDriverData!.lastLapTime;
-                    } else {
-                      updatedLastLap = I1(
-                        value: '-:--.---',
-                        status: 0,
-                        overallFastest: false,
-                        personalFastest: false,
-                      );
-                    }
-
-                    // Create the updated TimingDataDriver object
-                    TimingDataDriver updatedDriver = TimingDataDriver(
-                      gapToLeader: driverData['GapToLeader'] ??
-                          (currentDriverData?.gapToLeader ?? ''),
-                      intervalToPositionAhead: updatedInterval,
-                      line:
-                          driverData['Line'] ?? (currentDriverData?.line ?? 0),
-                      position: driverData['Position'] ??
-                          (currentDriverData?.position ?? ''),
-                      showPosition: driverData['ShowPosition'] ??
-                          (currentDriverData?.showPosition ?? true),
-                      racingNumber: driverData['RacingNumber'] ??
-                          (currentDriverData?.racingNumber ?? ''),
-                      retired: driverData['Retired'] ??
-                          (currentDriverData?.retired ?? false),
-                      inPit: driverData['InPit'] ??
-                          (currentDriverData?.inPit ?? false),
-                      pitOut: driverData['PitOut'] ??
-                          (currentDriverData?.pitOut ?? false),
-                      stopped: driverData['Stopped'] ??
-                          (currentDriverData?.stopped ?? false),
-                      status: driverData['Status'] ??
-                          (currentDriverData?.status ?? 0),
-                      sectors: updatedSectors,
-                      speeds: updatedSpeeds,
-                      bestLapTime: updatedBestLap,
-                      lastLapTime: updatedLastLap,
-                      numberOfLaps: driverData['NumberOfLaps'] ??
-                          (currentDriverData?.numberOfLaps ?? 0),
-                      numberOfPitStops: driverData['NumberOfPitStops'] ??
-                          (currentDriverData?.numberOfPitStops ?? 0),
-                    );
-
-                    // Live timing position is the single source of truth for
-                    // ordering. _previousPositions was snapshotted above, so we
-                    // only write the new current position here.
-                    final newLine =
-                        driverData['Line'] ?? (currentDriverData?.line ?? 0);
-                    _currentPositions[racingNumber] = newLine;
-
-                    // Update the driver in our map
-                    currentLines[racingNumber] = updatedDriver;
-                  }
-                });
-
-                // Create updated TimingData object
-                TimingData updatedTimingData = TimingData(
-                  lines: currentLines,
-                  withheld: data['Withheld'] ?? false,
-                );
-
-                // Update position changes after all timing data is processed
-                _updatePositionChanges();
-
-                // Update the timing data in the live data object
-                currentLiveData.timingData = updatedTimingData;
-              }
-
-              return liveDataList;
-            }
-            return liveDataList;
-          }).then((liveDataList) {
-            // Add updated data to stream
-            if (!_liveDataController.isClosed) {
-              _liveDataController.add(liveDataList);
-            }
-            return liveDataList;
-          });
-        }
-      });
-    } else {
-      print('Received non-map timing data: ${data.runtimeType}, cannot update');
-    }
-  }
-
-  void _updateWeatherData(dynamic data) {
-    if (data is Map<String, dynamic>) {
-      print('Updating weather data with: ${data.keys.toList()}');
-      if (data.isEmpty) {
-        print('Received empty weather data, skipping update');
-        return;
-      }
-
-      setState(() {
-        if (_liveDataFuture != null) {
-          _liveDataFuture = _liveDataFuture!.then((liveDataList) {
-            if (liveDataList.isNotEmpty) {
-              final currentLiveData = liveDataList[0];
-
-              // Create a new WeatherData with updated values
-              WeatherData updatedWeatherData = WeatherData(
-                airTemp: data.containsKey('AirTemp')
-                    ? data['AirTemp']?.toString() ??
-                        currentLiveData.weatherData!.airTemp
-                    : currentLiveData.weatherData!.airTemp,
-                humidity: data.containsKey('Humidity')
-                    ? data['Humidity']?.toString() ??
-                        currentLiveData.weatherData!.humidity
-                    : currentLiveData.weatherData!.humidity,
-                pressure: data.containsKey('Pressure')
-                    ? data['Pressure']?.toString() ??
-                        currentLiveData.weatherData!.pressure
-                    : currentLiveData.weatherData!.pressure,
-                rainfall: data.containsKey('Rainfall')
-                    ? data['Rainfall']?.toString() ??
-                        currentLiveData.weatherData!.rainfall
-                    : currentLiveData.weatherData!.rainfall,
-                trackTemp: data.containsKey('TrackTemp')
-                    ? data['TrackTemp']?.toString() ??
-                        currentLiveData.weatherData!.trackTemp
-                    : currentLiveData.weatherData!.trackTemp,
-                windDirection: data.containsKey('WindDirection')
-                    ? data['WindDirection']?.toString() ??
-                        currentLiveData.weatherData!.windDirection
-                    : currentLiveData.weatherData!.windDirection,
-                windSpeed: data.containsKey('WindSpeed')
-                    ? data['WindSpeed']?.toString() ??
-                        currentLiveData.weatherData!.windSpeed
-                    : currentLiveData.weatherData!.windSpeed,
-              );
-
-              // Update the weather data in the current live data object
-              currentLiveData.weatherData = updatedWeatherData;
-
-              return liveDataList;
-            }
-            return liveDataList;
-          }).then((liveDataList) {
-            // Add updated data to stream
-            if (!_liveDataController.isClosed) {
-              _liveDataController.add(liveDataList);
-            }
-            return liveDataList;
-          });
-        }
-      });
-    } else {
-      print(
-          'Received non-map weather data: ${data.runtimeType}, cannot update');
-    }
-  }
-
-  void _updateSessionInfo(dynamic data) {
-    if (data is Map<String, dynamic>) {
-      print('Updating session info with: ${data.keys.toList()}');
-      if (data.isEmpty) {
-        print('Received empty session info data, skipping update');
-        return;
-      }
-
-      setState(() {
-        if (_liveDataFuture != null) {
-          _liveDataFuture = _liveDataFuture!.then((liveDataList) {
-            if (liveDataList.isNotEmpty) {
-              final currentLiveData = liveDataList[0];
-              final currentSession = currentLiveData.sessionInfo!;
-
-              // Update Meeting information
-              Meeting updatedMeeting = Meeting(
-                key: data.containsKey('Meeting') &&
-                        data['Meeting'].containsKey('Key')
-                    ? data['Meeting']['Key']
-                    : currentSession.meeting.key,
-                name: data.containsKey('Meeting') &&
-                        data['Meeting'].containsKey('Name')
-                    ? data['Meeting']['Name']
-                    : currentSession.meeting.name,
-                officialName: data.containsKey('Meeting') &&
-                        data['Meeting'].containsKey('OfficialName')
-                    ? data['Meeting']['OfficialName']
-                    : currentSession.meeting.officialName,
-                location: data.containsKey('Meeting') &&
-                        data['Meeting'].containsKey('Location')
-                    ? data['Meeting']['Location']
-                    : currentSession.meeting.location,
-                // Update Country and Circuit if they exist in the data
-                country: data.containsKey('Meeting') &&
-                        data['Meeting'].containsKey('Country')
-                    ? Country(
-                        key: data['Meeting']['Country']['Key'] ??
-                            currentSession.meeting.country.key,
-                        code: data['Meeting']['Country']['Code'] ??
-                            currentSession.meeting.country.code,
-                        name: data['Meeting']['Country']['Name'] ??
-                            currentSession.meeting.country.name,
-                      )
-                    : currentSession.meeting.country,
-                circuit: data.containsKey('Meeting') &&
-                        data['Meeting'].containsKey('Circuit')
-                    ? Circuit(
-                        key: data['Meeting']['Circuit']['Key'] ??
-                            currentSession.meeting.circuit.key,
-                        shortName: data['Meeting']['Circuit']['ShortName'] ??
-                            currentSession.meeting.circuit.shortName,
-                      )
-                    : currentSession.meeting.circuit,
-              );
-
-              // Update Archive Status
-              ArchiveStatus updatedArchiveStatus = ArchiveStatus(
-                status: data.containsKey('ArchiveStatus') &&
-                        data['ArchiveStatus'].containsKey('Status')
-                    ? data['ArchiveStatus']['Status']
-                    : currentSession.archiveStatus.status,
-              );
-
-              // Create updated SessionInfo
-              SessionInfo updatedSessionInfo = SessionInfo(
-                meeting: updatedMeeting,
-                archiveStatus: updatedArchiveStatus,
-                key: data.containsKey('Key') ? data['Key'] : currentSession.key,
-                type: data.containsKey('Type')
-                    ? data['Type']
-                    : currentSession.type,
-                name: data.containsKey('Name')
-                    ? data['Name']
-                    : currentSession.name,
-                startDate: data.containsKey('StartDate')
-                    ? data['StartDate']
-                    : currentSession.startDate,
-                endDate: data.containsKey('EndDate')
-                    ? data['EndDate']
-                    : currentSession.endDate,
-                gmtOffset: data.containsKey('GmtOffset')
-                    ? data['GmtOffset']
-                    : currentSession.gmtOffset,
-                path: data.containsKey('Path')
-                    ? data['Path']
-                    : currentSession.path,
-                kf: data.containsKey('_kf') ? data['_kf'] : currentSession.kf,
-              );
-
-              // Update the session info in the current live data object
-              currentLiveData.sessionInfo = updatedSessionInfo;
-
-              return liveDataList;
-            }
-            return liveDataList;
-          }).then((liveDataList) {
-            // Add updated data to stream
-            if (!_liveDataController.isClosed) {
-              _liveDataController.add(liveDataList);
-            }
-            return liveDataList;
-          });
-        }
-      });
-    } else {
-      print(
-          'Received non-map session info: ${data.runtimeType}, cannot update');
-    }
-  }
-
-  void _updateLapCount(dynamic data) {
-    if (data is Map<String, dynamic>) {
-      print('Updating lap count with: ${data.keys.toList()}');
-      if (data.isEmpty) {
-        print('Received empty lap count data, skipping update');
-        return;
-      }
-
-      setState(() {
-        if (_liveDataFuture != null) {
-          _liveDataFuture = _liveDataFuture!.then((liveDataList) {
-            if (liveDataList.isNotEmpty) {
-              final currentLiveData = liveDataList[0];
-
-              // Create a new LapCount with updated values
-              LapCount updatedLapCount = LapCount(
-                currentLap: data.containsKey('CurrentLap')
-                    ? data['CurrentLap']
-                    : currentLiveData.lapCount?.currentLap ?? 0,
-                totalLaps: data.containsKey('TotalLaps')
-                    ? data['TotalLaps']
-                    : currentLiveData.lapCount?.totalLaps ?? 0,
-              );
-
-              // Update the lap count in the current live data object
-              currentLiveData.lapCount = updatedLapCount;
-
-              return liveDataList;
-            }
-            return liveDataList;
-          }).then((liveDataList) {
-            // Add updated data to stream
-            if (!_liveDataController.isClosed) {
-              _liveDataController.add(liveDataList);
-            }
-            return liveDataList;
-          });
-        }
-      });
-    } else {
-      print(
-          'Received non-map lap count data: ${data.runtimeType}, cannot update');
-    }
-  }
-
-  /// Merge incoming car telemetry into the live data object, keyed by racing
-  /// number, then re-emit so driver rows rebuild.
-  void _updateCarData(dynamic data) {
-    if (data is! Map) {
-      print('Received non-map car data: ${data.runtimeType}, cannot update');
-      return;
-    }
-    final cars = data['Cars'];
-    if (cars is! Map || cars.isEmpty) return;
-
-    setState(() {
-      if (_liveDataFuture != null) {
-        _liveDataFuture = _liveDataFuture!.then((liveDataList) {
-          if (liveDataList.isNotEmpty) {
-            final currentLiveData = liveDataList[0];
-            final updated =
-                Map<String, CarTelemetry>.from(currentLiveData.carData);
-            cars.forEach((racingNumber, channels) {
-              if (channels is Map) {
-                updated[racingNumber.toString()] = CarTelemetry.fromJson(
-                    Map<String, dynamic>.from(channels));
-              }
-            });
-            currentLiveData.carData = updated;
-          }
-          return liveDataList;
-        }).then((liveDataList) {
-          if (!_liveDataController.isClosed) {
-            _liveDataController.add(liveDataList);
-          }
-          return liveDataList;
-        });
-      }
-    });
-  }
-
-  void _updatePositionData(dynamic data) {
-    if (data is Map<String, dynamic>) {
-      print('Updating position data with: ${data.keys.toList()}');
-      if (data.isEmpty) {
-        print('Received empty position data, skipping update');
-        return;
-      }
-
-      setState(() {
-        if (_liveDataFuture != null) {
-          _liveDataFuture = _liveDataFuture!.then((liveDataList) {
-            if (liveDataList.isNotEmpty) {
-              final currentLiveData = liveDataList[0];
-
-              // Create a new PositionData with updated values
-              PositionData updatedPositionData = PositionData.fromJson(data);
-
-              // Update the position data in the current live data object
-              currentLiveData.positionData = updatedPositionData;
-
-              return liveDataList;
-            }
-            return liveDataList;
-          }).then((liveDataList) {
-            // Add updated data to stream
-            if (!_liveDataController.isClosed) {
-              _liveDataController.add(liveDataList);
-            }
-            return liveDataList;
-          });
-        }
-      });
-    } else {
-      print(
-          'Received non-map position data: ${data.runtimeType}, cannot update');
     }
   }
 
@@ -1869,13 +422,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
                     setState(() {
                       _delayEnabled = tempDelayEnabled;
                       _delaySeconds = tempDelay;
-                      if (_delayEnabled && _delaySeconds > 0) {
-                        _startDelayTimer();
-                      } else {
-                        _delayTimer?.cancel();
-                        _processQueuedMessages();
-                      }
                     });
+                    LiveDataService.instance.setDelayEnabled(tempDelayEnabled);
+                    LiveDataService.instance.setDelaySeconds(tempDelay);
                     Navigator.of(context).pop();
                   },
                   style: ElevatedButton.styleFrom(
@@ -2230,10 +779,17 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
   // Main dashboard content: switches between the inline card and the
   // dedicated tabbed full-view based on the user's track-map settings.
+  // The live track map is built from car-position telemetry, which only exists
+  // while a session is running. Hide it entirely when there are no positions
+  // (rather than showing a "Waiting for car positions…" placeholder).
+  bool _hasLivePositions(LiveData data) =>
+      data.positionData?.cars.isNotEmpty ?? false;
+
   Widget _buildDashboardMainContent(List<LiveData> liveData) {
     final data = liveData[0];
+    final showTrackMap = _trackMapEnabled && _hasLivePositions(data);
 
-    if (_trackMapEnabled &&
+    if (showTrackMap &&
         _trackMapDisplayMode == AppSettings.trackMapModeFullView) {
       final height = MediaQuery.of(context).size.height * 0.72;
       return SizedBox(
@@ -2267,7 +823,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
       children: [
         _buildWeatherCard(data.weatherData!),
         const SizedBox(height: 10),
-        if (_trackMapEnabled) ...[
+        if (showTrackMap) ...[
           _buildTrackMapCard(data),
           const SizedBox(height: 10),
         ],
@@ -2388,12 +944,11 @@ class _TelemetryPageState extends State<TelemetryPage> {
                           Expanded(
                             child: StreamBuilder<List<LiveData>>(
                               stream: liveDataStream,
-                              initialData: _liveDataFuture != null ? [] : null,
+                              initialData: LiveDataService.instance.current,
                               builder: (context, snapshot) {
                                 if (_liveDataFuture == null) {
-                                  return const Center(
-                                    child:
-                                        Text('No telemetry data received yet'),
+                                  return ConnectingIndicator(
+                                    detail: _connectingDetail(),
                                   );
                                 }
 

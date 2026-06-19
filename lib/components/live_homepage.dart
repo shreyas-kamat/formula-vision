@@ -1,13 +1,11 @@
-import 'dart:convert';
+import 'dart:async';
 // import 'package:formulavision/auth/login_page.dart';
 // import 'package:formulavision/data/functions/auth.function.dart';
 import 'package:formulavision/pages/circuit_list.dart';
 import 'package:formulavision/pages/settings_page.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:formulavision/data/functions/live_data.function.dart';
 import 'package:formulavision/data/models/live_data.model.dart';
-import 'package:formulavision/data/services/app_settings_service.dart';
+import 'package:formulavision/data/services/live_data_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LiveHomePage extends StatefulWidget {
@@ -21,12 +19,12 @@ class _LiveHomePageState extends State<LiveHomePage> {
   String username = 'User';
   bool isRaining = false;
   int windAngle = 135; // Angle in degrees (0-360) for wind direction
-  String _connectionStatus = "Disconnected";
   String meeting = "";
   String session = "";
   String imageUrl =
       'https://media.formula1.com/image/upload/f_auto,c_limit,w_1440,q_auto/f_auto/q_auto/content/dam/fom-website/2018-redesign-assets/Track%20icons%204x3/Bahrain%20carbon';
   Future<List<LiveData>>? _liveDataFuture;
+  StreamSubscription<List<LiveData>>? _liveSub;
 
   @override
   void initState() {
@@ -47,65 +45,41 @@ class _LiveHomePageState extends State<LiveHomePage> {
     return userName ?? 'User';
   }
 
+  // Drive the home card off the shared live-data service so it renders the
+  // already-received on-device snapshot immediately, with no separate backend
+  // call. The future is resolved by the first snapshot; later deltas just
+  // trigger a rebuild against the in-place-mutated list.
   Future<void> _initialize() async {
-    await fetchInitialData();
-    // Only connect to SSE if initial data was fetched successfully
-    // and we are not already connected.
-    if (_connectionStatus == "Initial data loaded") {
-      final liveDataList = await _liveDataFuture;
-      String location = '${liveDataList![0].sessionInfo?.meeting.country.name}';
-
-      if (liveDataList.isNotEmpty) {
-        if (liveDataList[0].sessionInfo?.meeting.location == 'Miami') {
-          setState(() {
-            location = liveDataList[0].sessionInfo?.meeting.location ?? '';
-          });
-        }
-        if (liveDataList[0].sessionInfo?.meeting.location == 'Emilia Romagna') {
-          setState(() {
-            location = liveDataList[0].sessionInfo?.meeting.location ?? '';
-          });
-        }
-
-        imageUrl =
-            'https://media.formula1.com/image/upload/f_auto,c_limit,w_1440,q_auto/f_auto/q_auto/content/dam/fom-website/2018-redesign-assets/Track%20icons%204x3/$location%20carbon';
-        print(liveDataList[0].sessionInfo?.meeting.country.name);
-      }
-    }
+    final service = LiveDataService.instance;
+    final cur = service.current;
+    _liveDataFuture = (cur != null) ? Future.value(cur) : service.stream.first;
+    if (cur != null) _applyImageFromData(cur);
+    _liveSub = service.stream.listen((data) {
+      if (!mounted) return;
+      _applyImageFromData(data);
+      setState(() {});
+    });
+    await service.attach();
   }
 
-  Future<void> fetchInitialData() async {
-    try {
-      // final prefs = await SharedPreferences.getInstance();
-      // final String? token = prefs.getString('jwt_token');
-      final apiUrl = await AppSettings.getApiUrl();
-      final response = await http.get(
-        Uri.parse('$apiUrl/initialData'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          // 'Authorization': 'Bearer $token',
-        },
-      );
+  /// Picks the F1 track-icon image for the current event. The CDN keys off the
+  /// country name, except a couple of events that key off the location.
+  void _applyImageFromData(List<LiveData> liveDataList) {
+    if (liveDataList.isEmpty) return;
+    final session = liveDataList[0].sessionInfo;
+    if (session == null) return;
+    String location = session.meeting.country.name;
+    final loc = session.meeting.location;
+    if (loc == 'Miami' || loc == 'Emilia Romagna') location = loc;
+    imageUrl =
+        'https://media.formula1.com/image/upload/f_auto,c_limit,w_1440,q_auto/f_auto/q_auto/content/dam/fom-website/2018-redesign-assets/Track%20icons%204x3/$location%20carbon';
+  }
 
-      print('API Response Status: ${response.statusCode}');
-      print('API Response Body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        print('Initial Data Received');
-        // Check if data contains SessionInfo
-        setState(() {
-          _liveDataFuture = fetchLiveData(data['R']);
-        });
-        setState(() {
-          _connectionStatus = "Initial data loaded";
-        });
-      } else {
-        print('Failed to fetch initial data. Status: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error fetching initial data: $e');
-    }
+  @override
+  void dispose() {
+    _liveSub?.cancel();
+    LiveDataService.instance.detach();
+    super.dispose();
   }
 
   @override
