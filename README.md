@@ -7,7 +7,7 @@
   <br>
 </h1>
 
-<h4 align="center">An Unofficial, Free & Open-Source app for Realtime Stats, Schedules & Track Data in Formula One</h4>
+<h4 align="center">An Unofficial, Free & Open-Source app for Realtime Stats, Schedules & Track Data in Motorsports</h4>
 
 <p align="center">
   <a href="#features">Features</a> •
@@ -32,7 +32,7 @@
 
 
 # FormulaVision
-An Unofficial, Free & Open-Source app for Realtime Stats, Schedules & Track Data in Formula One
+An Unofficial, Free & Open-Source app for Realtime Stats, Schedules & Track Data in Motorsports
 
 **NOTE: Currently, this project is Android-only, iOS Release will be out soon** 
 
