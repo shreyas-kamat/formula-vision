@@ -75,8 +75,8 @@
     "semantic_hash": "09c8e4e72d47d1a481283db7e682f5fe"
   },
   "D:\\Projects\\Flutter\\formulavision\\lib\\components\\live_homepage.dart": {
-    "mtime": 1779646597.3654401,
-    "ast_hash": "c9fbe6cef6872823bfac608c6382adaf",
+    "mtime": 1781868009.5084486,
+    "ast_hash": "88be73ad6f6a3c2c0d8900b7f0a2ae94",
     "semantic_hash": ""
   },
   "D:\\Projects\\Flutter\\formulavision\\lib\\components\\race_info_card.dart": {
@@ -130,9 +130,9 @@
     "semantic_hash": ""
   },
   "D:\\Projects\\Flutter\\formulavision\\lib\\data\\functions\\cardata.function.dart": {
-    "mtime": 1756040522.0,
-    "ast_hash": "6d733cf45d8109c7c02b6201052866ea",
-    "semantic_hash": "6d733cf45d8109c7c02b6201052866ea"
+    "mtime": 1781801181.0913837,
+    "ast_hash": "3b343bd416be2d0aee2c941cc4f03dc5",
+    "semantic_hash": ""
   },
   "D:\\Projects\\Flutter\\formulavision\\lib\\data\\functions\\live_data.function.dart": {
     "mtime": 1781776450.0372972,
@@ -244,11 +244,6 @@
     "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
     "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
-  "D:\\Projects\\Flutter\\formulavision\\lib\\data\\services\\websocket_service.dart": {
-    "mtime": 1759220712.0,
-    "ast_hash": "99cb23cdeaded4058351b0f7c08bc816",
-    "semantic_hash": "99cb23cdeaded4058351b0f7c08bc816"
-  },
   "D:\\Projects\\Flutter\\formulavision\\lib\\pages\\circuit_list.dart": {
     "mtime": 1770986326.0,
     "ast_hash": "aff9c072e7a4ec66736b2746062660bc",
@@ -265,8 +260,8 @@
     "semantic_hash": "a95b24cafcf6eccd56dbd3980290784d"
   },
   "D:\\Projects\\Flutter\\formulavision\\lib\\pages\\dashboard_page.dart": {
-    "mtime": 1781791047.0101478,
-    "ast_hash": "1144fc0857d48976fc7f923ae3d1cf4b",
+    "mtime": 1781867781.6569278,
+    "ast_hash": "dc1123024cc19f2076bcc2fa973a9e51",
     "semantic_hash": ""
   },
   "D:\\Projects\\Flutter\\formulavision\\lib\\pages\\drivers_standings_page.dart": {
@@ -640,13 +635,13 @@
     "semantic_hash": ""
   },
   "D:\\Projects\\Flutter\\formulavision\\lib\\data\\services\\app_settings_service.dart": {
-    "mtime": 1781791071.9971883,
-    "ast_hash": "5af298035e43b6649e8597c3b68bd409",
+    "mtime": 1781801202.7231133,
+    "ast_hash": "1e1f106913f35120ac48e73565ca6eca",
     "semantic_hash": ""
   },
   "D:\\Projects\\Flutter\\formulavision\\lib\\pages\\settings_page.dart": {
-    "mtime": 1781781144.180579,
-    "ast_hash": "db9aab2407103c53221dac7f9c1ade7f",
+    "mtime": 1781801374.3215797,
+    "ast_hash": "febbb2f7aad542486e24bdf91db6dec3",
     "semantic_hash": ""
   },
   "D:\\Projects\\Flutter\\formulavision\\linux\\flutter\\generated_plugin_registrant.cc": {
@@ -1202,6 +1197,36 @@
   "D:\\Projects\\Flutter\\formulavision\\test\\car_telemetry_test.dart": {
     "mtime": 1781791590.257471,
     "ast_hash": "68749b2ae4997a88b12c9c3f04a5e67e",
+    "semantic_hash": ""
+  },
+  "D:\\Projects\\Flutter\\formulavision\\lib\\data\\functions\\f1_decompress.function.dart": {
+    "mtime": 1781800991.0646634,
+    "ast_hash": "7bbfc5092e5c861b899881cf83d30725",
+    "semantic_hash": ""
+  },
+  "D:\\Projects\\Flutter\\formulavision\\lib\\data\\services\\f1_clock_extrapolator.dart": {
+    "mtime": 1781801025.364579,
+    "ast_hash": "596e82d7e18a6e4d7ba97039ecc2f9a2",
+    "semantic_hash": ""
+  },
+  "D:\\Projects\\Flutter\\formulavision\\lib\\data\\services\\f1_live_client.dart": {
+    "mtime": 1781803397.5181978,
+    "ast_hash": "1b3cd313c5f65cb504916964f3275651",
+    "semantic_hash": ""
+  },
+  "D:\\Projects\\Flutter\\formulavision\\test\\f1_decompress_test.dart": {
+    "mtime": 1781801485.9495609,
+    "ast_hash": "0b24d98e8068af2ec3069106635aea45",
+    "semantic_hash": ""
+  },
+  "D:\\Projects\\Flutter\\formulavision\\lib\\components\\connecting_indicator.dart": {
+    "mtime": 1781804455.0683308,
+    "ast_hash": "58946e45b7964885ebf7c77484b9a0ab",
+    "semantic_hash": ""
+  },
+  "D:\\Projects\\Flutter\\formulavision\\lib\\data\\services\\live_data_service.dart": {
+    "mtime": 1781847551.8378778,
+    "ast_hash": "039e1daa9c340fc1f4c6f5eefe208444",
     "semantic_hash": ""
   }
 }

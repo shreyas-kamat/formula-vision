@@ -237,7 +237,7 @@
       "file_type": "code",
       "source_file": "test_schedule.dart",
       "source_location": null,
-      "id": "dart_io",
+      "id": "test_schedule_dart_dart_io",
       "community": 206,
       "norm_label": "dart:io"
     },
@@ -400,7 +400,7 @@
       "source_file": "assets/maps.json",
       "source_location": "L1",
       "id": "assets_maps_json",
-      "community": 86,
+      "community": 74,
       "norm_label": "maps.json"
     },
     {
@@ -11896,6 +11896,141 @@
       "norm_label": "package:flutter/material.dart"
     },
     {
+      "label": "connecting_indicator.dart",
+      "file_type": "code",
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "id": "lib_components_connecting_indicator_dart",
+      "community": 239,
+      "norm_label": "connecting_indicator.dart"
+    },
+    {
+      "label": "ConnectingIndicator",
+      "file_type": "code",
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_connectingindicator",
+      "community": 239,
+      "norm_label": "connectingindicator"
+    },
+    {
+      "label": "_ConnectingIndicatorState",
+      "file_type": "code",
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_connectingindicatorstate",
+      "community": 239,
+      "norm_label": "_connectingindicatorstate"
+    },
+    {
+      "label": "_LightPod",
+      "file_type": "code",
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_lightpod",
+      "community": 239,
+      "norm_label": "_lightpod"
+    },
+    {
+      "label": "_Lamp",
+      "file_type": "code",
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_lamp",
+      "community": 239,
+      "norm_label": "_lamp"
+    },
+    {
+      "label": "dispose",
+      "file_type": "code",
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_dispose",
+      "community": 239,
+      "norm_label": "dispose"
+    },
+    {
+      "label": "_isLit",
+      "file_type": "code",
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_islit",
+      "community": 239,
+      "norm_label": "_islit"
+    },
+    {
+      "label": "build",
+      "file_type": "code",
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_build",
+      "community": 239,
+      "norm_label": "build"
+    },
+    {
+      "label": "Center",
+      "file_type": "code",
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_center",
+      "community": 239,
+      "norm_label": "center"
+    },
+    {
+      "label": "Row",
+      "file_type": "code",
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_row",
+      "community": 239,
+      "norm_label": "row"
+    },
+    {
+      "label": "Padding",
+      "file_type": "code",
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_padding",
+      "community": 239,
+      "norm_label": "padding"
+    },
+    {
+      "label": "SizedBox",
+      "file_type": "code",
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_sizedbox",
+      "community": 239,
+      "norm_label": "sizedbox"
+    },
+    {
+      "label": "Container",
+      "file_type": "code",
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_container",
+      "community": 239,
+      "norm_label": "container"
+    },
+    {
+      "label": "AnimatedContainer",
+      "file_type": "code",
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_animatedcontainer",
+      "community": 239,
+      "norm_label": "animatedcontainer"
+    },
+    {
+      "label": "package:flutter/material.dart",
+      "file_type": "code",
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "id": "lib_components_connecting_indicator_dart_package_flutter_material_dart",
+      "community": 239,
+      "norm_label": "package:flutter/material.dart"
+    },
+    {
       "label": "driver_row_card.dart",
       "file_type": "code",
       "source_file": "lib/components/driver_row_card.dart",
@@ -12301,13 +12436,22 @@
       "norm_label": "initstate"
     },
     {
-      "label": "fetchInitialData",
+      "label": "_applyImageFromData",
       "file_type": "code",
       "source_file": "lib/components/live_homepage.dart",
       "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_components_live_homepage_dart_fetchinitialdata",
+      "id": "d_projects_flutter_formulavision_lib_components_live_homepage_dart_applyimagefromdata",
       "community": 41,
-      "norm_label": "fetchinitialdata"
+      "norm_label": "_applyimagefromdata"
+    },
+    {
+      "label": "dispose",
+      "file_type": "code",
+      "source_file": "lib/components/live_homepage.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_components_live_homepage_dart_dispose",
+      "community": 41,
+      "norm_label": "dispose"
     },
     {
       "label": "build",
@@ -12355,13 +12499,13 @@
       "norm_label": "column"
     },
     {
-      "label": "dart:convert",
+      "label": "dart:async",
       "file_type": "code",
       "source_file": "lib/components/live_homepage.dart",
       "source_location": null,
-      "id": "lib_components_live_homepage_dart_dart_convert",
+      "id": "lib_components_live_homepage_dart_dart_async",
       "community": 41,
-      "norm_label": "dart:convert"
+      "norm_label": "dart:async"
     },
     {
       "label": "package:formulavision/pages/circuit_list.dart",
@@ -12382,15 +12526,6 @@
       "norm_label": "package:formulavision/pages/settings_page.dart"
     },
     {
-      "label": "package:http/http.dart",
-      "file_type": "code",
-      "source_file": "lib/components/live_homepage.dart",
-      "source_location": null,
-      "id": "lib_components_live_homepage_dart_package_http_http_dart",
-      "community": 41,
-      "norm_label": "package:http/http.dart"
-    },
-    {
       "label": "package:flutter/material.dart",
       "file_type": "code",
       "source_file": "lib/components/live_homepage.dart",
@@ -12398,15 +12533,6 @@
       "id": "lib_components_live_homepage_dart_package_flutter_material_dart",
       "community": 41,
       "norm_label": "package:flutter/material.dart"
-    },
-    {
-      "label": "package:formulavision/data/functions/live_data.function.dart",
-      "file_type": "code",
-      "source_file": "lib/components/live_homepage.dart",
-      "source_location": null,
-      "id": "lib_components_live_homepage_dart_package_formulavision_data_functions_live_data_function_dart",
-      "community": 41,
-      "norm_label": "package:formulavision/data/functions/live_data.function.dart"
     },
     {
       "label": "package:formulavision/data/models/live_data.model.dart",
@@ -12418,13 +12544,13 @@
       "norm_label": "package:formulavision/data/models/live_data.model.dart"
     },
     {
-      "label": "package:formulavision/data/services/app_settings_service.dart",
+      "label": "package:formulavision/data/services/live_data_service.dart",
       "file_type": "code",
       "source_file": "lib/components/live_homepage.dart",
       "source_location": null,
-      "id": "lib_components_live_homepage_dart_package_formulavision_data_services_app_settings_service_dart",
+      "id": "lib_components_live_homepage_dart_package_formulavision_data_services_live_data_service_dart",
       "community": 41,
-      "norm_label": "package:formulavision/data/services/app_settings_service.dart"
+      "norm_label": "package:formulavision/data/services/live_data_service.dart"
     },
     {
       "label": "package:shared_preferences/shared_preferences.dart",
@@ -13579,31 +13705,40 @@
       "norm_label": "cardata.function.dart"
     },
     {
-      "label": "decompressCarData",
+      "label": "f1_decompress.function.dart",
       "file_type": "code",
-      "source_file": "lib/data/functions/cardata.function.dart",
+      "source_file": "lib/data/functions/f1_decompress.function.dart",
       "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_data_functions_cardata_function_dart_decompresscardata",
-      "community": 123,
-      "norm_label": "decompresscardata"
+      "id": "lib_data_functions_f1_decompress_function_dart",
+      "community": 238,
+      "norm_label": "f1_decompress.function.dart"
+    },
+    {
+      "label": "_channel",
+      "file_type": "code",
+      "source_file": "lib/data/functions/f1_decompress.function.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_functions_f1_decompress_function_dart_channel",
+      "community": 238,
+      "norm_label": "_channel"
     },
     {
       "label": "dart:convert",
       "file_type": "code",
-      "source_file": "lib/data/functions/cardata.function.dart",
+      "source_file": "lib/data/functions/f1_decompress.function.dart",
       "source_location": null,
-      "id": "lib_data_functions_cardata_function_dart_dart_convert",
-      "community": 123,
+      "id": "lib_data_functions_f1_decompress_function_dart_dart_convert",
+      "community": 238,
       "norm_label": "dart:convert"
     },
     {
-      "label": "package:archive/archive.dart",
+      "label": "dart:io",
       "file_type": "code",
-      "source_file": "lib/data/functions/cardata.function.dart",
+      "source_file": "lib/data/functions/f1_decompress.function.dart",
       "source_location": null,
-      "id": "package_archive_archive_dart",
-      "community": 123,
-      "norm_label": "package:archive/archive.dart"
+      "id": "lib_data_functions_f1_decompress_function_dart_dart_io",
+      "community": 238,
+      "norm_label": "dart:io"
     },
     {
       "label": "live_data.function.dart",
@@ -15415,6 +15550,15 @@
       "norm_label": "getspeedunitsync"
     },
     {
+      "label": "getFeedSourceSync",
+      "file_type": "code",
+      "source_file": "lib/data/services/app_settings_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_app_settings_service_dart_getfeedsourcesync",
+      "community": 204,
+      "norm_label": "getfeedsourcesync"
+    },
+    {
       "label": "package:flutter_dotenv/flutter_dotenv.dart",
       "file_type": "code",
       "source_file": "lib/data/services/app_settings_service.dart",
@@ -15550,139 +15694,742 @@
       "norm_label": "f1_api_service.dart"
     },
     {
-      "label": "websocket_service.dart",
+      "label": "f1_clock_extrapolator.dart",
       "file_type": "code",
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_clock_extrapolator.dart",
       "source_location": null,
-      "id": "lib_data_services_websocket_service_dart",
-      "community": 49,
-      "norm_label": "websocket_service.dart"
+      "id": "lib_data_services_f1_clock_extrapolator_dart",
+      "community": 236,
+      "norm_label": "f1_clock_extrapolator.dart"
     },
     {
-      "label": "WebSocketService",
+      "label": "F1ClockExtrapolator",
       "file_type": "code",
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_clock_extrapolator.dart",
       "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_websocketservice",
-      "community": 49,
-      "norm_label": "websocketservice"
+      "id": "d_projects_flutter_formulavision_lib_data_services_f1_clock_extrapolator_dart_f1clockextrapolator",
+      "community": 236,
+      "norm_label": "f1clockextrapolator"
     },
     {
-      "label": "connect",
+      "label": "Function",
       "file_type": "code",
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_clock_extrapolator.dart",
       "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_connect",
-      "community": 49,
-      "norm_label": "connect"
+      "id": "d_projects_flutter_formulavision_lib_data_services_f1_clock_extrapolator_dart_function",
+      "community": 236,
+      "norm_label": "function"
     },
     {
-      "label": "disconnect",
+      "label": "updateFromF1Clock",
       "file_type": "code",
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_clock_extrapolator.dart",
       "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_disconnect",
-      "community": 49,
-      "norm_label": "disconnect"
+      "id": "d_projects_flutter_formulavision_lib_data_services_f1_clock_extrapolator_dart_updatefromf1clock",
+      "community": 236,
+      "norm_label": "updatefromf1clock"
     },
     {
-      "label": "_onData",
+      "label": "_start",
       "file_type": "code",
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_clock_extrapolator.dart",
       "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_ondata",
-      "community": 49,
-      "norm_label": "_ondata"
+      "id": "d_projects_flutter_formulavision_lib_data_services_f1_clock_extrapolator_dart_start",
+      "community": 236,
+      "norm_label": "_start"
     },
     {
-      "label": "_onError",
+      "label": "_stop",
       "file_type": "code",
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_clock_extrapolator.dart",
       "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_onerror",
-      "community": 49,
-      "norm_label": "_onerror"
+      "id": "d_projects_flutter_formulavision_lib_data_services_f1_clock_extrapolator_dart_stop",
+      "community": 236,
+      "norm_label": "_stop"
     },
     {
-      "label": "_onDone",
+      "label": "_tick",
       "file_type": "code",
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_clock_extrapolator.dart",
       "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_ondone",
-      "community": 49,
-      "norm_label": "_ondone"
+      "id": "d_projects_flutter_formulavision_lib_data_services_f1_clock_extrapolator_dart_tick",
+      "community": 236,
+      "norm_label": "_tick"
     },
     {
-      "label": "_scheduleReconnect",
+      "label": "_parseRemaining",
       "file_type": "code",
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_clock_extrapolator.dart",
       "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_schedulereconnect",
-      "community": 49,
-      "norm_label": "_schedulereconnect"
+      "id": "d_projects_flutter_formulavision_lib_data_services_f1_clock_extrapolator_dart_parseremaining",
+      "community": 236,
+      "norm_label": "_parseremaining"
     },
     {
-      "label": "_sendInitialMessage",
+      "label": "_format",
       "file_type": "code",
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_clock_extrapolator.dart",
       "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_sendinitialmessage",
-      "community": 49,
-      "norm_label": "_sendinitialmessage"
+      "id": "d_projects_flutter_formulavision_lib_data_services_f1_clock_extrapolator_dart_format",
+      "community": 236,
+      "norm_label": "_format"
     },
     {
-      "label": "_sendPing",
+      "label": "reset",
       "file_type": "code",
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_clock_extrapolator.dart",
       "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_sendping",
-      "community": 49,
-      "norm_label": "_sendping"
+      "id": "d_projects_flutter_formulavision_lib_data_services_f1_clock_extrapolator_dart_reset",
+      "community": 236,
+      "norm_label": "reset"
+    },
+    {
+      "label": "dispose",
+      "file_type": "code",
+      "source_file": "lib/data/services/f1_clock_extrapolator.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_f1_clock_extrapolator_dart_dispose",
+      "community": 236,
+      "norm_label": "dispose"
     },
     {
       "label": "dart:async",
       "file_type": "code",
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_clock_extrapolator.dart",
       "source_location": null,
-      "id": "lib_data_services_websocket_service_dart_dart_async",
-      "community": 49,
+      "id": "lib_data_services_f1_clock_extrapolator_dart_dart_async",
+      "community": 236,
+      "norm_label": "dart:async"
+    },
+    {
+      "label": "f1_live_client.dart",
+      "file_type": "code",
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "id": "lib_data_services_f1_live_client_dart",
+      "community": 235,
+      "norm_label": "f1_live_client.dart"
+    },
+    {
+      "label": "F1LiveClient",
+      "file_type": "code",
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_f1liveclient",
+      "community": 235,
+      "norm_label": "f1liveclient"
+    },
+    {
+      "label": "Function",
+      "file_type": "code",
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_function",
+      "community": 235,
+      "norm_label": "function"
+    },
+    {
+      "label": "_connect",
+      "file_type": "code",
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_connect",
+      "community": 235,
+      "norm_label": "_connect"
+    },
+    {
+      "label": "Exception",
+      "file_type": "code",
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_exception",
+      "community": 235,
+      "norm_label": "exception"
+    },
+    {
+      "label": "_onDone",
+      "file_type": "code",
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_ondone",
+      "community": 235,
+      "norm_label": "_ondone"
+    },
+    {
+      "label": "_handleRaw",
+      "file_type": "code",
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_handleraw",
+      "community": 235,
+      "norm_label": "_handleraw"
+    },
+    {
+      "label": "_handleParsed",
+      "file_type": "code",
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_handleparsed",
+      "community": 235,
+      "norm_label": "_handleparsed"
+    },
+    {
+      "label": "_handleSnapshot",
+      "file_type": "code",
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_handlesnapshot",
+      "community": 235,
+      "norm_label": "_handlesnapshot"
+    },
+    {
+      "label": "_handleFeed",
+      "file_type": "code",
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_handlefeed",
+      "community": 235,
+      "norm_label": "_handlefeed"
+    },
+    {
+      "label": "_emitClock",
+      "file_type": "code",
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_emitclock",
+      "community": 235,
+      "norm_label": "_emitclock"
+    },
+    {
+      "label": "_subscribe",
+      "file_type": "code",
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_subscribe",
+      "community": 235,
+      "norm_label": "_subscribe"
+    },
+    {
+      "label": "_startKeepAlive",
+      "file_type": "code",
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_startkeepalive",
+      "community": 235,
+      "norm_label": "_startkeepalive"
+    },
+    {
+      "label": "_stopKeepAlive",
+      "file_type": "code",
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_stopkeepalive",
+      "community": 235,
+      "norm_label": "_stopkeepalive"
+    },
+    {
+      "label": "dart:async",
+      "file_type": "code",
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "id": "lib_data_services_f1_live_client_dart_dart_async",
+      "community": 235,
       "norm_label": "dart:async"
     },
     {
       "label": "dart:convert",
       "file_type": "code",
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_live_client.dart",
       "source_location": null,
-      "id": "lib_data_services_websocket_service_dart_dart_convert",
-      "community": 49,
+      "id": "lib_data_services_f1_live_client_dart_dart_convert",
+      "community": 235,
       "norm_label": "dart:convert"
     },
     {
-      "label": "package:web_socket_channel/web_socket_channel.dart",
+      "label": "dart:io",
       "file_type": "code",
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_live_client.dart",
       "source_location": null,
-      "id": "lib_data_services_websocket_service_dart_package_web_socket_channel_web_socket_channel_dart",
-      "community": 49,
-      "norm_label": "package:web_socket_channel/web_socket_channel.dart"
+      "id": "lib_data_services_f1_live_client_dart_dart_io",
+      "community": 235,
+      "norm_label": "dart:io"
     },
     {
-      "label": "package:web_socket_channel/status.dart",
+      "label": "package:dio/dio.dart",
       "file_type": "code",
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_live_client.dart",
       "source_location": null,
-      "id": "package_web_socket_channel_status_dart",
-      "community": 49,
-      "norm_label": "package:web_socket_channel/status.dart"
+      "id": "package_dio_dio_dart",
+      "community": 235,
+      "norm_label": "package:dio/dio.dart"
     },
     {
-      "label": "../models/live_data.model.dart",
+      "label": "package:flutter/foundation.dart",
       "file_type": "code",
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_live_client.dart",
       "source_location": null,
-      "id": "models_live_data_model_dart",
-      "community": 49,
-      "norm_label": "../models/live_data.model.dart"
+      "id": "lib_data_services_f1_live_client_dart_package_flutter_foundation_dart",
+      "community": 235,
+      "norm_label": "package:flutter/foundation.dart"
+    },
+    {
+      "label": "../functions/f1_decompress.function.dart",
+      "file_type": "code",
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "id": "functions_f1_decompress_function_dart",
+      "community": 235,
+      "norm_label": "../functions/f1_decompress.function.dart"
+    },
+    {
+      "label": "f1_clock_extrapolator.dart",
+      "file_type": "code",
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "id": "f1_clock_extrapolator_dart",
+      "community": 235,
+      "norm_label": "f1_clock_extrapolator.dart"
+    },
+    {
+      "label": "live_data_service.dart",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "lib_data_services_live_data_service_dart",
+      "community": 241,
+      "norm_label": "live_data_service.dart"
+    },
+    {
+      "label": "_DelayedMessage",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_delayedmessage",
+      "community": 241,
+      "norm_label": "_delayedmessage"
+    },
+    {
+      "label": "LiveDataService",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_livedataservice",
+      "community": 241,
+      "norm_label": "livedataservice"
+    },
+    {
+      "label": "_shutdown",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_shutdown",
+      "community": 241,
+      "norm_label": "_shutdown"
+    },
+    {
+      "label": "_fetchInitialData",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_fetchinitialdata",
+      "community": 241,
+      "norm_label": "_fetchinitialdata"
+    },
+    {
+      "label": "_connectSSE",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_connectsse",
+      "community": 241,
+      "norm_label": "_connectsse"
+    },
+    {
+      "label": "_handleSnapshot",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_handlesnapshot",
+      "community": 241,
+      "norm_label": "_handlesnapshot"
+    },
+    {
+      "label": "Exception",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_exception",
+      "community": 241,
+      "norm_label": "exception"
+    },
+    {
+      "label": "setDelayEnabled",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_setdelayenabled",
+      "community": 241,
+      "norm_label": "setdelayenabled"
+    },
+    {
+      "label": "setDelaySeconds",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_setdelayseconds",
+      "community": 241,
+      "norm_label": "setdelayseconds"
+    },
+    {
+      "label": "_startDelayTimer",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_startdelaytimer",
+      "community": 241,
+      "norm_label": "_startdelaytimer"
+    },
+    {
+      "label": "Duration",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_duration",
+      "community": 241,
+      "norm_label": "duration"
+    },
+    {
+      "label": "_processQueuedMessages",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_processqueuedmessages",
+      "community": 241,
+      "norm_label": "_processqueuedmessages"
+    },
+    {
+      "label": "_scheduleEmit",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_scheduleemit",
+      "community": 241,
+      "norm_label": "_scheduleemit"
+    },
+    {
+      "label": "_emitNow",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_emitnow",
+      "community": 241,
+      "norm_label": "_emitnow"
+    },
+    {
+      "label": "_processTelemetryData",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_processtelemetrydata",
+      "community": 241,
+      "norm_label": "_processtelemetrydata"
+    },
+    {
+      "label": "_processTelemetryDataImmediate",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_processtelemetrydataimmediate",
+      "community": 241,
+      "norm_label": "_processtelemetrydataimmediate"
+    },
+    {
+      "label": "_initializePositionTracking",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_initializepositiontracking",
+      "community": 241,
+      "norm_label": "_initializepositiontracking"
+    },
+    {
+      "label": "_updatePositionChanges",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updatepositionchanges",
+      "community": 241,
+      "norm_label": "_updatepositionchanges"
+    },
+    {
+      "label": "_updateExtrapolatedClock",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updateextrapolatedclock",
+      "community": 241,
+      "norm_label": "_updateextrapolatedclock"
+    },
+    {
+      "label": "_updateTrackStatus",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updatetrackstatus",
+      "community": 241,
+      "norm_label": "_updatetrackstatus"
+    },
+    {
+      "label": "_updateDriverList",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updatedriverlist",
+      "community": 241,
+      "norm_label": "_updatedriverlist"
+    },
+    {
+      "label": "_mergeSectors",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_mergesectors",
+      "community": 241,
+      "norm_label": "_mergesectors"
+    },
+    {
+      "label": "applySector",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_applysector",
+      "community": 241,
+      "norm_label": "applysector"
+    },
+    {
+      "label": "_mergeSegments",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_mergesegments",
+      "community": 241,
+      "norm_label": "_mergesegments"
+    },
+    {
+      "label": "applySegment",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_applysegment",
+      "community": 241,
+      "norm_label": "applysegment"
+    },
+    {
+      "label": "_updateTimingAppData",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updatetimingappdata",
+      "community": 241,
+      "norm_label": "_updatetimingappdata"
+    },
+    {
+      "label": "applyStint",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_applystint",
+      "community": 241,
+      "norm_label": "applystint"
+    },
+    {
+      "label": "_updateRaceControlMessages",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updateracecontrolmessages",
+      "community": 241,
+      "norm_label": "_updateracecontrolmessages"
+    },
+    {
+      "label": "_updateTimingData",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updatetimingdata",
+      "community": 241,
+      "norm_label": "_updatetimingdata"
+    },
+    {
+      "label": "buildSpeed",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_buildspeed",
+      "community": 241,
+      "norm_label": "buildspeed"
+    },
+    {
+      "label": "I1",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_i1",
+      "community": 241,
+      "norm_label": "i1"
+    },
+    {
+      "label": "empty",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_empty",
+      "community": 241,
+      "norm_label": "empty"
+    },
+    {
+      "label": "_updateWeatherData",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updateweatherdata",
+      "community": 241,
+      "norm_label": "_updateweatherdata"
+    },
+    {
+      "label": "pick",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_pick",
+      "community": 241,
+      "norm_label": "pick"
+    },
+    {
+      "label": "_updateSessionInfo",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updatesessioninfo",
+      "community": 241,
+      "norm_label": "_updatesessioninfo"
+    },
+    {
+      "label": "_updateLapCount",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updatelapcount",
+      "community": 241,
+      "norm_label": "_updatelapcount"
+    },
+    {
+      "label": "_updateCarData",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updatecardata",
+      "community": 241,
+      "norm_label": "_updatecardata"
+    },
+    {
+      "label": "_updatePositionData",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updatepositiondata",
+      "community": 241,
+      "norm_label": "_updatepositiondata"
+    },
+    {
+      "label": "dart:async",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "lib_data_services_live_data_service_dart_dart_async",
+      "community": 241,
+      "norm_label": "dart:async"
+    },
+    {
+      "label": "dart:collection",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "dart_collection",
+      "community": 241,
+      "norm_label": "dart:collection"
+    },
+    {
+      "label": "dart:convert",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "lib_data_services_live_data_service_dart_dart_convert",
+      "community": 241,
+      "norm_label": "dart:convert"
+    },
+    {
+      "label": "package:flutter/foundation.dart",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "lib_data_services_live_data_service_dart_package_flutter_foundation_dart",
+      "community": 241,
+      "norm_label": "package:flutter/foundation.dart"
+    },
+    {
+      "label": "package:http/http.dart",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "lib_data_services_live_data_service_dart_package_http_http_dart",
+      "community": 241,
+      "norm_label": "package:http/http.dart"
+    },
+    {
+      "label": "package:formulavision/data/functions/f1_decompress.function.dart",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "lib_data_services_live_data_service_dart_package_formulavision_data_functions_f1_decompress_function_dart",
+      "community": 241,
+      "norm_label": "package:formulavision/data/functions/f1_decompress.function.dart"
+    },
+    {
+      "label": "package:formulavision/data/functions/live_data.function.dart",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "package_formulavision_data_functions_live_data_function_dart",
+      "community": 241,
+      "norm_label": "package:formulavision/data/functions/live_data.function.dart"
+    },
+    {
+      "label": "package:formulavision/data/models/live_data.model.dart",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "lib_data_services_live_data_service_dart_package_formulavision_data_models_live_data_model_dart",
+      "community": 241,
+      "norm_label": "package:formulavision/data/models/live_data.model.dart"
+    },
+    {
+      "label": "package:formulavision/data/services/app_settings_service.dart",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "lib_data_services_live_data_service_dart_package_formulavision_data_services_app_settings_service_dart",
+      "community": 241,
+      "norm_label": "package:formulavision/data/services/app_settings_service.dart"
+    },
+    {
+      "label": "package:formulavision/data/services/f1_live_client.dart",
+      "file_type": "code",
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "id": "package_formulavision_data_services_f1_live_client_dart",
+      "community": 241,
+      "norm_label": "package:formulavision/data/services/f1_live_client.dart"
     },
     {
       "label": "circuit_list.dart",
@@ -16117,15 +16864,6 @@
       "norm_label": "dashboard_page.dart"
     },
     {
-      "label": "_DelayedMessage",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_delayedmessage",
-      "community": 0,
-      "norm_label": "_delayedmessage"
-    },
-    {
       "label": "DashboardPage",
       "file_type": "code",
       "source_file": "lib/pages/dashboard_page.dart",
@@ -16207,22 +16945,13 @@
       "norm_label": "initstate"
     },
     {
-      "label": "fetchInitialData",
+      "label": "_onServiceStatus",
       "file_type": "code",
       "source_file": "lib/pages/dashboard_page.dart",
       "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_fetchinitialdata",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_onservicestatus",
       "community": 0,
-      "norm_label": "fetchinitialdata"
-    },
-    {
-      "label": "_connectSSE",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_connectsse",
-      "community": 0,
-      "norm_label": "_connectsse"
+      "norm_label": "_onservicestatus"
     },
     {
       "label": "dispose",
@@ -16234,42 +16963,6 @@
       "norm_label": "dispose"
     },
     {
-      "label": "_initializePositionTracking",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_initializepositiontracking",
-      "community": 0,
-      "norm_label": "_initializepositiontracking"
-    },
-    {
-      "label": "Exception",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_exception",
-      "community": 0,
-      "norm_label": "exception"
-    },
-    {
-      "label": "_disconnectFromServer",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_disconnectfromserver",
-      "community": 0,
-      "norm_label": "_disconnectfromserver"
-    },
-    {
-      "label": "_toggleDelay",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_toggledelay",
-      "community": 0,
-      "norm_label": "_toggledelay"
-    },
-    {
       "label": "_updateDelay",
       "file_type": "code",
       "source_file": "lib/pages/dashboard_page.dart",
@@ -16279,139 +16972,13 @@
       "norm_label": "_updatedelay"
     },
     {
-      "label": "_startDelayTimer",
+      "label": "_connectingDetail",
       "file_type": "code",
       "source_file": "lib/pages/dashboard_page.dart",
       "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_startdelaytimer",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_connectingdetail",
       "community": 0,
-      "norm_label": "_startdelaytimer"
-    },
-    {
-      "label": "_processQueuedMessages",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_processqueuedmessages",
-      "community": 0,
-      "norm_label": "_processqueuedmessages"
-    },
-    {
-      "label": "_processTelemetryData",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_processtelemetrydata",
-      "community": 0,
-      "norm_label": "_processtelemetrydata"
-    },
-    {
-      "label": "_processTelemetryDataImmediate",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_processtelemetrydataimmediate",
-      "community": 0,
-      "norm_label": "_processtelemetrydataimmediate"
-    },
-    {
-      "label": "_updateExtrapolatedClock",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updateextrapolatedclock",
-      "community": 0,
-      "norm_label": "_updateextrapolatedclock"
-    },
-    {
-      "label": "_updateTrackStatus",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatetrackstatus",
-      "community": 0,
-      "norm_label": "_updatetrackstatus"
-    },
-    {
-      "label": "_updateDriverList",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatedriverlist",
-      "community": 0,
-      "norm_label": "_updatedriverlist"
-    },
-    {
-      "label": "_updatePositionChanges",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatepositionchanges",
-      "community": 0,
-      "norm_label": "_updatepositionchanges"
-    },
-    {
-      "label": "_mergeSectors",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_mergesectors",
-      "community": 0,
-      "norm_label": "_mergesectors"
-    },
-    {
-      "label": "applySector",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_applysector",
-      "community": 0,
-      "norm_label": "applysector"
-    },
-    {
-      "label": "_mergeSegments",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_mergesegments",
-      "community": 0,
-      "norm_label": "_mergesegments"
-    },
-    {
-      "label": "applySegment",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_applysegment",
-      "community": 0,
-      "norm_label": "applysegment"
-    },
-    {
-      "label": "_updateTimingAppData",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatetimingappdata",
-      "community": 0,
-      "norm_label": "_updatetimingappdata"
-    },
-    {
-      "label": "applyStint",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_applystint",
-      "community": 0,
-      "norm_label": "applystint"
-    },
-    {
-      "label": "_updateRaceControlMessages",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updateracecontrolmessages",
-      "community": 0,
-      "norm_label": "_updateracecontrolmessages"
+      "norm_label": "_connectingdetail"
     },
     {
       "label": "_alertRaceControl",
@@ -16421,60 +16988,6 @@
       "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_alertracecontrol",
       "community": 0,
       "norm_label": "_alertracecontrol"
-    },
-    {
-      "label": "_updateTimingData",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatetimingdata",
-      "community": 0,
-      "norm_label": "_updatetimingdata"
-    },
-    {
-      "label": "_updateWeatherData",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updateweatherdata",
-      "community": 0,
-      "norm_label": "_updateweatherdata"
-    },
-    {
-      "label": "_updateSessionInfo",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatesessioninfo",
-      "community": 0,
-      "norm_label": "_updatesessioninfo"
-    },
-    {
-      "label": "_updateLapCount",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatelapcount",
-      "community": 0,
-      "norm_label": "_updatelapcount"
-    },
-    {
-      "label": "_updateCarData",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatecardata",
-      "community": 0,
-      "norm_label": "_updatecardata"
-    },
-    {
-      "label": "_updatePositionData",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatepositiondata",
-      "community": 0,
-      "norm_label": "_updatepositiondata"
     },
     {
       "label": "_buildExpandableTimerButton",
@@ -16684,6 +17197,15 @@
       "norm_label": "padding"
     },
     {
+      "label": "ConnectingIndicator",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_connectingindicator",
+      "community": 0,
+      "norm_label": "connectingindicator"
+    },
+    {
       "label": "SingleChildScrollView",
       "file_type": "code",
       "source_file": "lib/pages/dashboard_page.dart",
@@ -16882,15 +17404,6 @@
       "norm_label": "dart:async"
     },
     {
-      "label": "dart:collection",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "dart_collection",
-      "community": 0,
-      "norm_label": "dart:collection"
-    },
-    {
       "label": "dart:math",
       "file_type": "code",
       "source_file": "lib/pages/dashboard_page.dart",
@@ -16954,6 +17467,15 @@
       "norm_label": "package:flutter_svg/flutter_svg.dart"
     },
     {
+      "label": "package:formulavision/components/connecting_indicator.dart",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "id": "package_formulavision_components_connecting_indicator_dart",
+      "community": 0,
+      "norm_label": "package:formulavision/components/connecting_indicator.dart"
+    },
+    {
       "label": "package:formulavision/components/driver_row_card.dart",
       "file_type": "code",
       "source_file": "lib/pages/dashboard_page.dart",
@@ -16999,24 +17521,6 @@
       "norm_label": "package:formulavision/components/track_status_card.dart"
     },
     {
-      "label": "package:formulavision/data/functions/cardata.function.dart",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "package_formulavision_data_functions_cardata_function_dart",
-      "community": 0,
-      "norm_label": "package:formulavision/data/functions/cardata.function.dart"
-    },
-    {
-      "label": "package:formulavision/data/functions/live_data.function.dart",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "lib_pages_dashboard_page_dart_package_formulavision_data_functions_live_data_function_dart",
-      "community": 0,
-      "norm_label": "package:formulavision/data/functions/live_data.function.dart"
-    },
-    {
       "label": "package:formulavision/data/models/live_data.model.dart",
       "file_type": "code",
       "source_file": "lib/pages/dashboard_page.dart",
@@ -17026,22 +17530,13 @@
       "norm_label": "package:formulavision/data/models/live_data.model.dart"
     },
     {
-      "label": "package:web_socket_channel/web_socket_channel.dart",
+      "label": "package:formulavision/data/services/live_data_service.dart",
       "file_type": "code",
       "source_file": "lib/pages/dashboard_page.dart",
       "source_location": null,
-      "id": "lib_pages_dashboard_page_dart_package_web_socket_channel_web_socket_channel_dart",
+      "id": "lib_pages_dashboard_page_dart_package_formulavision_data_services_live_data_service_dart",
       "community": 0,
-      "norm_label": "package:web_socket_channel/web_socket_channel.dart"
-    },
-    {
-      "label": "package:http/http.dart",
-      "file_type": "code",
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "id": "lib_pages_dashboard_page_dart_package_http_http_dart",
-      "community": 0,
-      "norm_label": "package:http/http.dart"
+      "norm_label": "package:formulavision/data/services/live_data_service.dart"
     },
     {
       "label": "drivers_standings_page.dart",
@@ -17800,6 +18295,42 @@
       "norm_label": "dispose"
     },
     {
+      "label": "_buildFeedSourceCard",
+      "file_type": "code",
+      "source_file": "lib/pages/settings_page.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_pages_settings_page_dart_buildfeedsourcecard",
+      "community": 41,
+      "norm_label": "_buildfeedsourcecard"
+    },
+    {
+      "label": "Container",
+      "file_type": "code",
+      "source_file": "lib/pages/settings_page.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_pages_settings_page_dart_container",
+      "community": 41,
+      "norm_label": "container"
+    },
+    {
+      "label": "SizedBox",
+      "file_type": "code",
+      "source_file": "lib/pages/settings_page.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_pages_settings_page_dart_sizedbox",
+      "community": 41,
+      "norm_label": "sizedbox"
+    },
+    {
+      "label": "Text",
+      "file_type": "code",
+      "source_file": "lib/pages/settings_page.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_lib_pages_settings_page_dart_text",
+      "community": 41,
+      "norm_label": "text"
+    },
+    {
       "label": "_buildTrackMapModeOption",
       "file_type": "code",
       "source_file": "lib/pages/settings_page.dart",
@@ -17818,15 +18349,6 @@
       "norm_label": "expanded"
     },
     {
-      "label": "SizedBox",
-      "file_type": "code",
-      "source_file": "lib/pages/settings_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_settings_page_dart_sizedbox",
-      "community": 41,
-      "norm_label": "sizedbox"
-    },
-    {
       "label": "build",
       "file_type": "code",
       "source_file": "lib/pages/settings_page.dart",
@@ -17836,15 +18358,6 @@
       "norm_label": "build"
     },
     {
-      "label": "Container",
-      "file_type": "code",
-      "source_file": "lib/pages/settings_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_settings_page_dart_container",
-      "community": 41,
-      "norm_label": "container"
-    },
-    {
       "label": "Spacer",
       "file_type": "code",
       "source_file": "lib/pages/settings_page.dart",
@@ -17852,15 +18365,6 @@
       "id": "d_projects_flutter_formulavision_lib_pages_settings_page_dart_spacer",
       "community": 41,
       "norm_label": "spacer"
-    },
-    {
-      "label": "Text",
-      "file_type": "code",
-      "source_file": "lib/pages/settings_page.dart",
-      "source_location": null,
-      "id": "d_projects_flutter_formulavision_lib_pages_settings_page_dart_text",
-      "community": 41,
-      "norm_label": "text"
     },
     {
       "label": "launchUrl",
@@ -18443,7 +18947,7 @@
       "file_type": "code",
       "source_file": "lib/pages/test_page_alt.dart",
       "source_location": null,
-      "id": "lib_pages_test_page_alt_dart_package_web_socket_channel_web_socket_channel_dart",
+      "id": "package_web_socket_channel_web_socket_channel_dart",
       "community": 34,
       "norm_label": "package:web_socket_channel/web_socket_channel.dart"
     },
@@ -18913,6 +19417,78 @@
       "id": "test_driver_row_card_test_dart_package_shared_preferences_shared_preferences_dart",
       "community": 232,
       "norm_label": "package:shared_preferences/shared_preferences.dart"
+    },
+    {
+      "label": "f1_decompress_test.dart",
+      "file_type": "code",
+      "source_file": "test/f1_decompress_test.dart",
+      "source_location": null,
+      "id": "test_f1_decompress_test_dart",
+      "community": 237,
+      "norm_label": "f1_decompress_test.dart"
+    },
+    {
+      "label": "_toF1Z",
+      "file_type": "code",
+      "source_file": "test/f1_decompress_test.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_test_f1_decompress_test_dart_tof1z",
+      "community": 237,
+      "norm_label": "_tof1z"
+    },
+    {
+      "label": "base64Encode",
+      "file_type": "code",
+      "source_file": "test/f1_decompress_test.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_test_f1_decompress_test_dart_base64encode",
+      "community": 237,
+      "norm_label": "base64encode"
+    },
+    {
+      "label": "main",
+      "file_type": "code",
+      "source_file": "test/f1_decompress_test.dart",
+      "source_location": null,
+      "id": "d_projects_flutter_formulavision_test_f1_decompress_test_dart_main",
+      "community": 237,
+      "norm_label": "main"
+    },
+    {
+      "label": "dart:convert",
+      "file_type": "code",
+      "source_file": "test/f1_decompress_test.dart",
+      "source_location": null,
+      "id": "test_f1_decompress_test_dart_dart_convert",
+      "community": 237,
+      "norm_label": "dart:convert"
+    },
+    {
+      "label": "dart:io",
+      "file_type": "code",
+      "source_file": "test/f1_decompress_test.dart",
+      "source_location": null,
+      "id": "test_f1_decompress_test_dart_dart_io",
+      "community": 237,
+      "norm_label": "dart:io"
+    },
+    {
+      "label": "package:flutter_test/flutter_test.dart",
+      "file_type": "code",
+      "source_file": "test/f1_decompress_test.dart",
+      "source_location": null,
+      "id": "test_f1_decompress_test_dart_package_flutter_test_flutter_test_dart",
+      "community": 237,
+      "norm_label": "package:flutter_test/flutter_test.dart"
+    },
+    {
+      "label": "package:formulavision/data/functions/f1_decompress.function.dart",
+      "file_type": "code",
+      "source_file": "test/f1_decompress_test.dart",
+      "source_location": null,
+      "id": "test_f1_decompress_test_dart_package_formulavision_data_functions_f1_decompress_function_dart",
+      "community": 237,
+      "norm_label": "package:formulavision/data/functions/f1_decompress.function.dart"
     },
     {
       "label": "live_track_map_widget_test.dart",
@@ -19968,6 +20544,528 @@
       "norm_label": "launch screen assets"
     },
     {
+      "label": "fetchInitialData",
+      "file_type": "code",
+      "source_file": "lib/components/live_homepage.dart",
+      "source_location": null,
+      "community": 41,
+      "norm_label": "fetchinitialdata",
+      "id": "d_projects_flutter_formulavision_lib_components_live_homepage_dart_fetchinitialdata"
+    },
+    {
+      "label": "dart:convert",
+      "file_type": "code",
+      "source_file": "lib/components/live_homepage.dart",
+      "source_location": null,
+      "community": 41,
+      "norm_label": "dart:convert",
+      "id": "lib_components_live_homepage_dart_dart_convert"
+    },
+    {
+      "label": "package:http/http.dart",
+      "file_type": "code",
+      "source_file": "lib/components/live_homepage.dart",
+      "source_location": null,
+      "community": 41,
+      "norm_label": "package:http/http.dart",
+      "id": "lib_components_live_homepage_dart_package_http_http_dart"
+    },
+    {
+      "label": "package:formulavision/data/functions/live_data.function.dart",
+      "file_type": "code",
+      "source_file": "lib/components/live_homepage.dart",
+      "source_location": null,
+      "community": 41,
+      "norm_label": "package:formulavision/data/functions/live_data.function.dart",
+      "id": "lib_components_live_homepage_dart_package_formulavision_data_functions_live_data_function_dart"
+    },
+    {
+      "label": "package:formulavision/data/services/app_settings_service.dart",
+      "file_type": "code",
+      "source_file": "lib/components/live_homepage.dart",
+      "source_location": null,
+      "community": 41,
+      "norm_label": "package:formulavision/data/services/app_settings_service.dart",
+      "id": "lib_components_live_homepage_dart_package_formulavision_data_services_app_settings_service_dart"
+    },
+    {
+      "label": "_DelayedMessage",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "_delayedmessage",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_delayedmessage"
+    },
+    {
+      "label": "fetchInitialData",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "fetchinitialdata",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_fetchinitialdata"
+    },
+    {
+      "label": "_connectSSE",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "_connectsse",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_connectsse"
+    },
+    {
+      "label": "_initializePositionTracking",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "_initializepositiontracking",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_initializepositiontracking"
+    },
+    {
+      "label": "Exception",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "exception",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_exception"
+    },
+    {
+      "label": "_disconnectFromServer",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "_disconnectfromserver",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_disconnectfromserver"
+    },
+    {
+      "label": "_toggleDelay",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "_toggledelay",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_toggledelay"
+    },
+    {
+      "label": "_startDelayTimer",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "_startdelaytimer",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_startdelaytimer"
+    },
+    {
+      "label": "_processQueuedMessages",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "_processqueuedmessages",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_processqueuedmessages"
+    },
+    {
+      "label": "_processTelemetryData",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "_processtelemetrydata",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_processtelemetrydata"
+    },
+    {
+      "label": "_processTelemetryDataImmediate",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "_processtelemetrydataimmediate",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_processtelemetrydataimmediate"
+    },
+    {
+      "label": "_updateExtrapolatedClock",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "_updateextrapolatedclock",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updateextrapolatedclock"
+    },
+    {
+      "label": "_updateTrackStatus",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "_updatetrackstatus",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatetrackstatus"
+    },
+    {
+      "label": "_updateDriverList",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "_updatedriverlist",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatedriverlist"
+    },
+    {
+      "label": "_updatePositionChanges",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "_updatepositionchanges",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatepositionchanges"
+    },
+    {
+      "label": "_mergeSectors",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "_mergesectors",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_mergesectors"
+    },
+    {
+      "label": "applySector",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "applysector",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_applysector"
+    },
+    {
+      "label": "_mergeSegments",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "_mergesegments",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_mergesegments"
+    },
+    {
+      "label": "applySegment",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "applysegment",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_applysegment"
+    },
+    {
+      "label": "_updateTimingAppData",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "_updatetimingappdata",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatetimingappdata"
+    },
+    {
+      "label": "applyStint",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "applystint",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_applystint"
+    },
+    {
+      "label": "_updateRaceControlMessages",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "_updateracecontrolmessages",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updateracecontrolmessages"
+    },
+    {
+      "label": "_updateTimingData",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "_updatetimingdata",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatetimingdata"
+    },
+    {
+      "label": "_updateWeatherData",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "_updateweatherdata",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updateweatherdata"
+    },
+    {
+      "label": "_updateSessionInfo",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "_updatesessioninfo",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatesessioninfo"
+    },
+    {
+      "label": "_updateLapCount",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "_updatelapcount",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatelapcount"
+    },
+    {
+      "label": "_updateCarData",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "_updatecardata",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatecardata"
+    },
+    {
+      "label": "_updatePositionData",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "_updatepositiondata",
+      "id": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatepositiondata"
+    },
+    {
+      "label": "package:formulavision/data/functions/live_data.function.dart",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "package:formulavision/data/functions/live_data.function.dart",
+      "id": "lib_pages_dashboard_page_dart_package_formulavision_data_functions_live_data_function_dart"
+    },
+    {
+      "label": "package:web_socket_channel/web_socket_channel.dart",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "package:web_socket_channel/web_socket_channel.dart",
+      "id": "lib_pages_dashboard_page_dart_package_web_socket_channel_web_socket_channel_dart"
+    },
+    {
+      "label": "package:http/http.dart",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "package:http/http.dart",
+      "id": "lib_pages_dashboard_page_dart_package_http_http_dart"
+    },
+    {
+      "label": "package:web_socket_channel/web_socket_channel.dart",
+      "file_type": "code",
+      "source_file": "lib/pages/test_page_alt.dart",
+      "source_location": null,
+      "community": 34,
+      "norm_label": "package:web_socket_channel/web_socket_channel.dart",
+      "id": "lib_pages_test_page_alt_dart_package_web_socket_channel_web_socket_channel_dart"
+    },
+    {
+      "label": "package:formulavision/data/functions/f1_decompress.function.dart",
+      "file_type": "code",
+      "source_file": "test/f1_decompress_test.dart",
+      "source_location": null,
+      "community": 237,
+      "norm_label": "package:formulavision/data/functions/f1_decompress.function.dart",
+      "id": "package_formulavision_data_functions_f1_decompress_function_dart"
+    },
+    {
+      "label": "dart:io",
+      "file_type": "code",
+      "source_file": "test_schedule.dart",
+      "source_location": null,
+      "community": 206,
+      "norm_label": "dart:io",
+      "id": "dart_io"
+    },
+    {
+      "label": "decompressCarData",
+      "file_type": "code",
+      "source_file": "lib/data/functions/cardata.function.dart",
+      "source_location": null,
+      "community": 123,
+      "norm_label": "decompresscardata",
+      "id": "d_projects_flutter_formulavision_lib_data_functions_cardata_function_dart_decompresscardata"
+    },
+    {
+      "label": "dart:convert",
+      "file_type": "code",
+      "source_file": "lib/data/functions/cardata.function.dart",
+      "source_location": null,
+      "community": 123,
+      "norm_label": "dart:convert",
+      "id": "lib_data_functions_cardata_function_dart_dart_convert"
+    },
+    {
+      "label": "package:archive/archive.dart",
+      "file_type": "code",
+      "source_file": "lib/data/functions/cardata.function.dart",
+      "source_location": null,
+      "community": 123,
+      "norm_label": "package:archive/archive.dart",
+      "id": "package_archive_archive_dart"
+    },
+    {
+      "label": "websocket_service.dart",
+      "file_type": "code",
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "community": 49,
+      "norm_label": "websocket_service.dart",
+      "id": "lib_data_services_websocket_service_dart"
+    },
+    {
+      "label": "WebSocketService",
+      "file_type": "code",
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "community": 49,
+      "norm_label": "websocketservice",
+      "id": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_websocketservice"
+    },
+    {
+      "label": "connect",
+      "file_type": "code",
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "community": 49,
+      "norm_label": "connect",
+      "id": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_connect"
+    },
+    {
+      "label": "disconnect",
+      "file_type": "code",
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "community": 49,
+      "norm_label": "disconnect",
+      "id": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_disconnect"
+    },
+    {
+      "label": "_onData",
+      "file_type": "code",
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "community": 49,
+      "norm_label": "_ondata",
+      "id": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_ondata"
+    },
+    {
+      "label": "_onError",
+      "file_type": "code",
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "community": 49,
+      "norm_label": "_onerror",
+      "id": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_onerror"
+    },
+    {
+      "label": "_onDone",
+      "file_type": "code",
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "community": 49,
+      "norm_label": "_ondone",
+      "id": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_ondone"
+    },
+    {
+      "label": "_scheduleReconnect",
+      "file_type": "code",
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "community": 49,
+      "norm_label": "_schedulereconnect",
+      "id": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_schedulereconnect"
+    },
+    {
+      "label": "_sendInitialMessage",
+      "file_type": "code",
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "community": 49,
+      "norm_label": "_sendinitialmessage",
+      "id": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_sendinitialmessage"
+    },
+    {
+      "label": "_sendPing",
+      "file_type": "code",
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "community": 49,
+      "norm_label": "_sendping",
+      "id": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_sendping"
+    },
+    {
+      "label": "dart:async",
+      "file_type": "code",
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "community": 49,
+      "norm_label": "dart:async",
+      "id": "lib_data_services_websocket_service_dart_dart_async"
+    },
+    {
+      "label": "dart:convert",
+      "file_type": "code",
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "community": 49,
+      "norm_label": "dart:convert",
+      "id": "lib_data_services_websocket_service_dart_dart_convert"
+    },
+    {
+      "label": "package:web_socket_channel/web_socket_channel.dart",
+      "file_type": "code",
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "community": 49,
+      "norm_label": "package:web_socket_channel/web_socket_channel.dart",
+      "id": "lib_data_services_websocket_service_dart_package_web_socket_channel_web_socket_channel_dart"
+    },
+    {
+      "label": "package:web_socket_channel/status.dart",
+      "file_type": "code",
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "community": 49,
+      "norm_label": "package:web_socket_channel/status.dart",
+      "id": "package_web_socket_channel_status_dart"
+    },
+    {
+      "label": "../models/live_data.model.dart",
+      "file_type": "code",
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "community": 49,
+      "norm_label": "../models/live_data.model.dart",
+      "id": "models_live_data_model_dart"
+    },
+    {
+      "label": "package:formulavision/data/functions/cardata.function.dart",
+      "file_type": "code",
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "community": 0,
+      "norm_label": "package:formulavision/data/functions/cardata.function.dart",
+      "id": "package_formulavision_data_functions_cardata_function_dart"
+    },
+    {
       "label": "_buildStintHistory",
       "file_type": "code",
       "source_file": "lib/components/driver_row_card.dart",
@@ -20053,7 +21151,7 @@
       "file_type": "code",
       "source_file": "windows/flutter/ephemeral/cpp_client_wrapper/binary_messenger_impl.h",
       "source_location": "L1",
-      "community": 190,
+      "community": 240,
       "norm_label": "binary_messenger_impl.h",
       "id": "windows_flutter_ephemeral_cpp_client_wrapper_binary_messenger_impl_h"
     },
@@ -20062,7 +21160,7 @@
       "file_type": "code",
       "source_file": "windows/flutter/ephemeral/cpp_client_wrapper/binary_messenger_impl.h",
       "source_location": "L15",
-      "community": 190,
+      "community": 240,
       "norm_label": "flutter()",
       "id": "cpp_client_wrapper_binary_messenger_impl_flutter"
     },
@@ -20602,7 +21700,7 @@
       "file_type": "code",
       "source_file": "windows/flutter/ephemeral/cpp_client_wrapper/include/flutter/basic_message_channel.h",
       "source_location": "L1",
-      "community": 190,
+      "community": 240,
       "norm_label": "basic_message_channel.h",
       "id": "windows_flutter_ephemeral_cpp_client_wrapper_include_flutter_basic_message_channel_h"
     },
@@ -20611,7 +21709,7 @@
       "file_type": "code",
       "source_file": "windows/flutter/ephemeral/cpp_client_wrapper/include/flutter/basic_message_channel.h",
       "source_location": "L15",
-      "community": 190,
+      "community": 240,
       "norm_label": "flutter()",
       "id": "flutter_basic_message_channel_flutter"
     },
@@ -20620,7 +21718,7 @@
       "file_type": "code",
       "source_file": "windows/flutter/ephemeral/cpp_client_wrapper/include/flutter/binary_messenger.h",
       "source_location": "L1",
-      "community": 190,
+      "community": 240,
       "norm_label": "binary_messenger.h",
       "id": "windows_flutter_ephemeral_cpp_client_wrapper_include_flutter_binary_messenger_h"
     },
@@ -20629,7 +21727,7 @@
       "file_type": "code",
       "source_file": "windows/flutter/ephemeral/cpp_client_wrapper/include/flutter/binary_messenger.h",
       "source_location": "L12",
-      "community": 190,
+      "community": 240,
       "norm_label": "flutter()",
       "id": "flutter_binary_messenger_flutter"
     },
@@ -20836,7 +21934,7 @@
       "file_type": "code",
       "source_file": "windows/flutter/ephemeral/cpp_client_wrapper/include/flutter/message_codec.h",
       "source_location": "L1",
-      "community": 190,
+      "community": 240,
       "norm_label": "message_codec.h",
       "id": "windows_flutter_ephemeral_cpp_client_wrapper_include_flutter_message_codec_h"
     },
@@ -20872,7 +21970,7 @@
       "file_type": "code",
       "source_file": "windows/flutter/ephemeral/cpp_client_wrapper/include/flutter/method_channel.h",
       "source_location": "L1",
-      "community": 190,
+      "community": 192,
       "norm_label": "method_channel.h",
       "id": "windows_flutter_ephemeral_cpp_client_wrapper_include_flutter_method_channel_h"
     },
@@ -20881,7 +21979,7 @@
       "file_type": "code",
       "source_file": "windows/flutter/ephemeral/cpp_client_wrapper/include/flutter/method_channel.h",
       "source_location": "L18",
-      "community": 190,
+      "community": 192,
       "norm_label": "flutter()",
       "id": "flutter_method_channel_flutter"
     },
@@ -20890,7 +21988,7 @@
       "file_type": "code",
       "source_file": "windows/flutter/ephemeral/cpp_client_wrapper/include/flutter/method_channel.h",
       "source_location": "L99",
-      "community": 190,
+      "community": 192,
       "norm_label": "setmethodcallhandler()",
       "id": "flutter_method_channel_setmethodcallhandler"
     },
@@ -21070,7 +22168,7 @@
       "file_type": "code",
       "source_file": "windows/flutter/ephemeral/cpp_client_wrapper/include/flutter/standard_method_codec.h",
       "source_location": "L1",
-      "community": 195,
+      "community": 190,
       "norm_label": "standard_method_codec.h",
       "id": "windows_flutter_ephemeral_cpp_client_wrapper_include_flutter_standard_method_codec_h"
     },
@@ -21079,7 +22177,7 @@
       "file_type": "code",
       "source_file": "windows/flutter/ephemeral/cpp_client_wrapper/include/flutter/standard_method_codec.h",
       "source_location": "L15",
-      "community": 195,
+      "community": 190,
       "norm_label": "flutter()",
       "id": "flutter_standard_method_codec_flutter"
     },
@@ -23560,6 +24658,16 @@
       "weight": 1.0,
       "source": "test_schedule_dart",
       "target": "test_schedule_dart_dart_convert"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "test_schedule.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "test_schedule_dart",
+      "target": "test_schedule_dart_dart_io"
     },
     {
       "relation": "imports",
@@ -35905,6 +37013,146 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_components_connecting_indicator_dart",
+      "target": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_connectingindicator"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_components_connecting_indicator_dart",
+      "target": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_connectingindicatorstate"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_components_connecting_indicator_dart",
+      "target": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_lightpod"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_components_connecting_indicator_dart",
+      "target": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_lamp"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_components_connecting_indicator_dart",
+      "target": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_dispose"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_components_connecting_indicator_dart",
+      "target": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_islit"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_components_connecting_indicator_dart",
+      "target": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_build"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_components_connecting_indicator_dart",
+      "target": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_center"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_components_connecting_indicator_dart",
+      "target": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_row"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_components_connecting_indicator_dart",
+      "target": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_padding"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_components_connecting_indicator_dart",
+      "target": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_sizedbox"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_components_connecting_indicator_dart",
+      "target": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_container"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_components_connecting_indicator_dart",
+      "target": "d_projects_flutter_formulavision_lib_components_connecting_indicator_dart_animatedcontainer"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/components/connecting_indicator.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_components_connecting_indicator_dart",
+      "target": "lib_components_connecting_indicator_dart_package_flutter_material_dart"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
       "source_file": "lib/components/driver_row_card.dart",
       "source_location": null,
       "weight": 1.0,
@@ -36319,7 +37567,17 @@
       "source_location": null,
       "weight": 1.0,
       "source": "lib_components_live_homepage_dart",
-      "target": "d_projects_flutter_formulavision_lib_components_live_homepage_dart_fetchinitialdata"
+      "target": "d_projects_flutter_formulavision_lib_components_live_homepage_dart_applyimagefromdata"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/components/live_homepage.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_components_live_homepage_dart",
+      "target": "d_projects_flutter_formulavision_lib_components_live_homepage_dart_dispose"
     },
     {
       "relation": "defines",
@@ -36379,7 +37637,7 @@
       "source_location": null,
       "weight": 1.0,
       "source": "lib_components_live_homepage_dart",
-      "target": "lib_components_live_homepage_dart_dart_convert"
+      "target": "lib_components_live_homepage_dart_dart_async"
     },
     {
       "relation": "imports",
@@ -36409,27 +37667,7 @@
       "source_location": null,
       "weight": 1.0,
       "source": "lib_components_live_homepage_dart",
-      "target": "lib_components_live_homepage_dart_package_http_http_dart"
-    },
-    {
-      "relation": "imports",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/components/live_homepage.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_components_live_homepage_dart",
       "target": "lib_components_live_homepage_dart_package_flutter_material_dart"
-    },
-    {
-      "relation": "imports",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/components/live_homepage.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_components_live_homepage_dart",
-      "target": "lib_components_live_homepage_dart_package_formulavision_data_functions_live_data_function_dart"
     },
     {
       "relation": "imports",
@@ -36449,7 +37687,7 @@
       "source_location": null,
       "weight": 1.0,
       "source": "lib_components_live_homepage_dart",
-      "target": "lib_components_live_homepage_dart_package_formulavision_data_services_app_settings_service_dart"
+      "target": "lib_components_live_homepage_dart_package_formulavision_data_services_live_data_service_dart"
     },
     {
       "relation": "imports",
@@ -36460,6 +37698,56 @@
       "weight": 1.0,
       "source": "lib_components_live_homepage_dart",
       "target": "lib_components_live_homepage_dart_package_shared_preferences_shared_preferences_dart"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/components/live_homepage.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_components_live_homepage_dart",
+      "target": "d_projects_flutter_formulavision_lib_components_live_homepage_dart_fetchinitialdata"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/components/live_homepage.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_components_live_homepage_dart",
+      "target": "lib_components_live_homepage_dart_dart_convert"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/components/live_homepage.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_components_live_homepage_dart",
+      "target": "lib_components_live_homepage_dart_package_http_http_dart"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/components/live_homepage.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_components_live_homepage_dart",
+      "target": "lib_components_live_homepage_dart_package_formulavision_data_functions_live_data_function_dart"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/components/live_homepage.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_components_live_homepage_dart",
+      "target": "lib_components_live_homepage_dart_package_formulavision_data_services_app_settings_service_dart"
     },
     {
       "relation": "defines",
@@ -37670,6 +38958,36 @@
       "weight": 1.0,
       "source": "lib_data_functions_cardata_function_dart",
       "target": "package_archive_archive_dart"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/functions/f1_decompress.function.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_functions_f1_decompress_function_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_functions_f1_decompress_function_dart_channel"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/functions/f1_decompress.function.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_functions_f1_decompress_function_dart",
+      "target": "lib_data_functions_f1_decompress_function_dart_dart_convert"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/functions/f1_decompress.function.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_functions_f1_decompress_function_dart",
+      "target": "lib_data_functions_f1_decompress_function_dart_dart_io"
     },
     {
       "relation": "imports",
@@ -39482,6 +40800,16 @@
       "target": "d_projects_flutter_formulavision_lib_data_services_app_settings_service_dart_getspeedunitsync"
     },
     {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/app_settings_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_app_settings_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_app_settings_service_dart_getfeedsourcesync"
+    },
+    {
       "relation": "imports",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
@@ -39625,141 +40953,811 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_clock_extrapolator.dart",
       "source_location": null,
       "weight": 1.0,
-      "source": "lib_data_services_websocket_service_dart",
-      "target": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_websocketservice"
+      "source": "lib_data_services_f1_clock_extrapolator_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_f1_clock_extrapolator_dart_f1clockextrapolator"
     },
     {
       "relation": "defines",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_clock_extrapolator.dart",
       "source_location": null,
       "weight": 1.0,
-      "source": "lib_data_services_websocket_service_dart",
-      "target": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_connect"
+      "source": "lib_data_services_f1_clock_extrapolator_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_f1_clock_extrapolator_dart_function"
     },
     {
       "relation": "defines",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_clock_extrapolator.dart",
       "source_location": null,
       "weight": 1.0,
-      "source": "lib_data_services_websocket_service_dart",
-      "target": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_disconnect"
+      "source": "lib_data_services_f1_clock_extrapolator_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_f1_clock_extrapolator_dart_updatefromf1clock"
     },
     {
       "relation": "defines",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_clock_extrapolator.dart",
       "source_location": null,
       "weight": 1.0,
-      "source": "lib_data_services_websocket_service_dart",
-      "target": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_ondata"
+      "source": "lib_data_services_f1_clock_extrapolator_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_f1_clock_extrapolator_dart_start"
     },
     {
       "relation": "defines",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_clock_extrapolator.dart",
       "source_location": null,
       "weight": 1.0,
-      "source": "lib_data_services_websocket_service_dart",
-      "target": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_onerror"
+      "source": "lib_data_services_f1_clock_extrapolator_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_f1_clock_extrapolator_dart_stop"
     },
     {
       "relation": "defines",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_clock_extrapolator.dart",
       "source_location": null,
       "weight": 1.0,
-      "source": "lib_data_services_websocket_service_dart",
-      "target": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_ondone"
+      "source": "lib_data_services_f1_clock_extrapolator_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_f1_clock_extrapolator_dart_tick"
     },
     {
       "relation": "defines",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_clock_extrapolator.dart",
       "source_location": null,
       "weight": 1.0,
-      "source": "lib_data_services_websocket_service_dart",
-      "target": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_schedulereconnect"
+      "source": "lib_data_services_f1_clock_extrapolator_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_f1_clock_extrapolator_dart_parseremaining"
     },
     {
       "relation": "defines",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_clock_extrapolator.dart",
       "source_location": null,
       "weight": 1.0,
-      "source": "lib_data_services_websocket_service_dart",
-      "target": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_sendinitialmessage"
+      "source": "lib_data_services_f1_clock_extrapolator_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_f1_clock_extrapolator_dart_format"
     },
     {
       "relation": "defines",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_clock_extrapolator.dart",
       "source_location": null,
       "weight": 1.0,
-      "source": "lib_data_services_websocket_service_dart",
-      "target": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_sendping"
+      "source": "lib_data_services_f1_clock_extrapolator_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_f1_clock_extrapolator_dart_reset"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/f1_clock_extrapolator.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_f1_clock_extrapolator_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_f1_clock_extrapolator_dart_dispose"
     },
     {
       "relation": "imports",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_clock_extrapolator.dart",
       "source_location": null,
       "weight": 1.0,
-      "source": "lib_data_services_websocket_service_dart",
-      "target": "lib_data_services_websocket_service_dart_dart_async"
+      "source": "lib_data_services_f1_clock_extrapolator_dart",
+      "target": "lib_data_services_f1_clock_extrapolator_dart_dart_async"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_f1_live_client_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_f1liveclient"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_f1_live_client_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_function"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_f1_live_client_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_connect"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_f1_live_client_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_exception"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_f1_live_client_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_ondone"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_f1_live_client_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_handleraw"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_f1_live_client_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_handleparsed"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_f1_live_client_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_handlesnapshot"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_f1_live_client_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_handlefeed"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_f1_live_client_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_emitclock"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_f1_live_client_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_subscribe"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_f1_live_client_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_startkeepalive"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_f1_live_client_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_f1_live_client_dart_stopkeepalive"
     },
     {
       "relation": "imports",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_live_client.dart",
       "source_location": null,
       "weight": 1.0,
-      "source": "lib_data_services_websocket_service_dart",
-      "target": "lib_data_services_websocket_service_dart_dart_convert"
+      "source": "lib_data_services_f1_live_client_dart",
+      "target": "lib_data_services_f1_live_client_dart_dart_async"
     },
     {
       "relation": "imports",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_live_client.dart",
       "source_location": null,
       "weight": 1.0,
-      "source": "lib_data_services_websocket_service_dart",
-      "target": "lib_data_services_websocket_service_dart_package_web_socket_channel_web_socket_channel_dart"
+      "source": "lib_data_services_f1_live_client_dart",
+      "target": "lib_data_services_f1_live_client_dart_dart_convert"
     },
     {
       "relation": "imports",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_live_client.dart",
       "source_location": null,
       "weight": 1.0,
-      "source": "lib_data_services_websocket_service_dart",
-      "target": "package_web_socket_channel_status_dart"
+      "source": "lib_data_services_f1_live_client_dart",
+      "target": "lib_data_services_f1_live_client_dart_dart_io"
     },
     {
       "relation": "imports",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "lib/data/services/websocket_service.dart",
+      "source_file": "lib/data/services/f1_live_client.dart",
       "source_location": null,
       "weight": 1.0,
-      "source": "lib_data_services_websocket_service_dart",
-      "target": "models_live_data_model_dart"
+      "source": "lib_data_services_f1_live_client_dart",
+      "target": "package_dio_dio_dart"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_f1_live_client_dart",
+      "target": "lib_data_services_f1_live_client_dart_package_flutter_foundation_dart"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_f1_live_client_dart",
+      "target": "functions_f1_decompress_function_dart"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/f1_live_client.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_f1_live_client_dart",
+      "target": "f1_clock_extrapolator_dart"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_delayedmessage"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_livedataservice"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_shutdown"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_fetchinitialdata"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_connectsse"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_handlesnapshot"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_exception"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_setdelayenabled"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_setdelayseconds"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_startdelaytimer"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_duration"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_processqueuedmessages"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_scheduleemit"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_emitnow"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_processtelemetrydata"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_processtelemetrydataimmediate"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_initializepositiontracking"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updatepositionchanges"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updateextrapolatedclock"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updatetrackstatus"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updatedriverlist"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_mergesectors"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_applysector"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_mergesegments"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_applysegment"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updatetimingappdata"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_applystint"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updateracecontrolmessages"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updatetimingdata"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_buildspeed"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_i1"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_empty"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updateweatherdata"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_pick"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updatesessioninfo"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updatelapcount"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updatecardata"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_live_data_service_dart_updatepositiondata"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "lib_data_services_live_data_service_dart_dart_async"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "dart_collection"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "lib_data_services_live_data_service_dart_dart_convert"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "lib_data_services_live_data_service_dart_package_flutter_foundation_dart"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "lib_data_services_live_data_service_dart_package_http_http_dart"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "lib_data_services_live_data_service_dart_package_formulavision_data_functions_f1_decompress_function_dart"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "package_formulavision_data_functions_live_data_function_dart"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "lib_data_services_live_data_service_dart_package_formulavision_data_models_live_data_model_dart"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "lib_data_services_live_data_service_dart_package_formulavision_data_services_app_settings_service_dart"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/live_data_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_live_data_service_dart",
+      "target": "package_formulavision_data_services_f1_live_client_dart"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "dart_collection"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "package_formulavision_data_services_f1_live_client_dart"
     },
     {
       "relation": "defines",
@@ -40209,16 +42207,6 @@
       "source_location": null,
       "weight": 1.0,
       "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_delayedmessage"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
       "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_dashboardpage"
     },
     {
@@ -40309,17 +42297,7 @@
       "source_location": null,
       "weight": 1.0,
       "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_fetchinitialdata"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_connectsse"
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_onservicestatus"
     },
     {
       "relation": "defines",
@@ -40339,46 +42317,6 @@
       "source_location": null,
       "weight": 1.0,
       "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_initializepositiontracking"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_exception"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_disconnectfromserver"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_toggledelay"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
       "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatedelay"
     },
     {
@@ -40389,147 +42327,7 @@
       "source_location": null,
       "weight": 1.0,
       "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_startdelaytimer"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_processqueuedmessages"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_processtelemetrydata"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_processtelemetrydataimmediate"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updateextrapolatedclock"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatetrackstatus"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatedriverlist"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatepositionchanges"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_mergesectors"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_applysector"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_mergesegments"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_applysegment"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatetimingappdata"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_applystint"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updateracecontrolmessages"
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_connectingdetail"
     },
     {
       "relation": "defines",
@@ -40540,66 +42338,6 @@
       "weight": 1.0,
       "source": "lib_pages_dashboard_page_dart",
       "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_alertracecontrol"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatetimingdata"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updateweatherdata"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatesessioninfo"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatelapcount"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatecardata"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatepositiondata"
     },
     {
       "relation": "defines",
@@ -40839,6 +42577,16 @@
       "source_location": null,
       "weight": 1.0,
       "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_connectingindicator"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
       "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_singlechildscrollview"
     },
     {
@@ -41059,16 +42807,6 @@
       "source_location": null,
       "weight": 1.0,
       "source": "lib_pages_dashboard_page_dart",
-      "target": "dart_collection"
-    },
-    {
-      "relation": "imports",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
       "target": "lib_pages_dashboard_page_dart_dart_math"
     },
     {
@@ -41139,6 +42877,16 @@
       "source_location": null,
       "weight": 1.0,
       "source": "lib_pages_dashboard_page_dart",
+      "target": "package_formulavision_components_connecting_indicator_dart"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
       "target": "lib_pages_dashboard_page_dart_package_formulavision_components_driver_row_card_dart"
     },
     {
@@ -41189,7 +42937,297 @@
       "source_location": null,
       "weight": 1.0,
       "source": "lib_pages_dashboard_page_dart",
-      "target": "package_formulavision_data_functions_cardata_function_dart"
+      "target": "lib_pages_dashboard_page_dart_package_formulavision_data_models_live_data_model_dart"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "lib_pages_dashboard_page_dart_package_formulavision_data_services_live_data_service_dart"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_delayedmessage"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_fetchinitialdata"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_connectsse"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_initializepositiontracking"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_exception"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_disconnectfromserver"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_toggledelay"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_startdelaytimer"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_processqueuedmessages"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_processtelemetrydata"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_processtelemetrydataimmediate"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updateextrapolatedclock"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatetrackstatus"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatedriverlist"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatepositionchanges"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_mergesectors"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_applysector"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_mergesegments"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_applysegment"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatetimingappdata"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_applystint"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updateracecontrolmessages"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatetimingdata"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updateweatherdata"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatesessioninfo"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatelapcount"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatecardata"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_dashboard_page_dart_updatepositiondata"
     },
     {
       "relation": "imports",
@@ -41200,16 +43238,6 @@
       "weight": 1.0,
       "source": "lib_pages_dashboard_page_dart",
       "target": "lib_pages_dashboard_page_dart_package_formulavision_data_functions_live_data_function_dart"
-    },
-    {
-      "relation": "imports",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/dashboard_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_dashboard_page_dart",
-      "target": "lib_pages_dashboard_page_dart_package_formulavision_data_models_live_data_model_dart"
     },
     {
       "relation": "imports",
@@ -41230,6 +43258,16 @@
       "weight": 1.0,
       "source": "lib_pages_dashboard_page_dart",
       "target": "lib_pages_dashboard_page_dart_package_http_http_dart"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/dashboard_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_dashboard_page_dart",
+      "target": "package_formulavision_data_functions_cardata_function_dart"
     },
     {
       "relation": "imports",
@@ -42089,6 +44127,46 @@
       "source_location": null,
       "weight": 1.0,
       "source": "lib_pages_settings_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_settings_page_dart_buildfeedsourcecard"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/settings_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_settings_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_settings_page_dart_container"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/settings_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_settings_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_settings_page_dart_sizedbox"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/settings_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_settings_page_dart",
+      "target": "d_projects_flutter_formulavision_lib_pages_settings_page_dart_text"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/settings_page.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_settings_page_dart",
       "target": "d_projects_flutter_formulavision_lib_pages_settings_page_dart_buildtrackmapmodeoption"
     },
     {
@@ -42109,16 +44187,6 @@
       "source_location": null,
       "weight": 1.0,
       "source": "lib_pages_settings_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_settings_page_dart_sizedbox"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/settings_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_settings_page_dart",
       "target": "d_projects_flutter_formulavision_lib_pages_settings_page_dart_build"
     },
     {
@@ -42129,27 +44197,7 @@
       "source_location": null,
       "weight": 1.0,
       "source": "lib_pages_settings_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_settings_page_dart_container"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/settings_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_settings_page_dart",
       "target": "d_projects_flutter_formulavision_lib_pages_settings_page_dart_spacer"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "lib/pages/settings_page.dart",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "lib_pages_settings_page_dart",
-      "target": "d_projects_flutter_formulavision_lib_pages_settings_page_dart_text"
     },
     {
       "relation": "defines",
@@ -42759,6 +44807,16 @@
       "source_location": null,
       "weight": 1.0,
       "source": "lib_pages_test_page_alt_dart",
+      "target": "package_web_socket_channel_web_socket_channel_dart"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/pages/test_page_alt.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_pages_test_page_alt_dart",
       "target": "lib_pages_test_page_alt_dart_package_web_socket_channel_web_socket_channel_dart"
     },
     {
@@ -43219,6 +45277,86 @@
       "weight": 1.0,
       "source": "test_driver_row_card_test_dart",
       "target": "test_driver_row_card_test_dart_package_shared_preferences_shared_preferences_dart"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "test/f1_decompress_test.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "test_f1_decompress_test_dart",
+      "target": "d_projects_flutter_formulavision_test_f1_decompress_test_dart_tof1z"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "test/f1_decompress_test.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "test_f1_decompress_test_dart",
+      "target": "d_projects_flutter_formulavision_test_f1_decompress_test_dart_base64encode"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "test/f1_decompress_test.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "test_f1_decompress_test_dart",
+      "target": "d_projects_flutter_formulavision_test_f1_decompress_test_dart_main"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "test/f1_decompress_test.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "test_f1_decompress_test_dart",
+      "target": "test_f1_decompress_test_dart_dart_convert"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "test/f1_decompress_test.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "test_f1_decompress_test_dart",
+      "target": "test_f1_decompress_test_dart_dart_io"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "test/f1_decompress_test.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "test_f1_decompress_test_dart",
+      "target": "test_f1_decompress_test_dart_package_flutter_test_flutter_test_dart"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "test/f1_decompress_test.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "test_f1_decompress_test_dart",
+      "target": "test_f1_decompress_test_dart_package_formulavision_data_functions_f1_decompress_function_dart"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "test/f1_decompress_test.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "test_f1_decompress_test_dart",
+      "target": "package_formulavision_data_functions_f1_decompress_function_dart"
     },
     {
       "relation": "defines",
@@ -44554,6 +46692,146 @@
       "confidence_score": 1.0,
       "source": "ios_runner_assets_xcassets_launchimage_imageset_readme_md",
       "target": "launchimage_imageset_readme_launch_screen_assets"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_websocket_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_websocketservice"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_websocket_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_connect"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_websocket_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_disconnect"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_websocket_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_ondata"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_websocket_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_onerror"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_websocket_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_ondone"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_websocket_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_schedulereconnect"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_websocket_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_sendinitialmessage"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_websocket_service_dart",
+      "target": "d_projects_flutter_formulavision_lib_data_services_websocket_service_dart_sendping"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_websocket_service_dart",
+      "target": "lib_data_services_websocket_service_dart_dart_async"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_websocket_service_dart",
+      "target": "lib_data_services_websocket_service_dart_dart_convert"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_websocket_service_dart",
+      "target": "lib_data_services_websocket_service_dart_package_web_socket_channel_web_socket_channel_dart"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_websocket_service_dart",
+      "target": "package_web_socket_channel_status_dart"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/data/services/websocket_service.dart",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "lib_data_services_websocket_service_dart",
+      "target": "models_live_data_model_dart"
     },
     {
       "relation": "imports",
@@ -48084,5 +50362,5 @@
       "source_file": "assets/tyres"
     }
   ],
-  "built_at_commit": "822ff526663dcc2cdf29cf6b0cd87be170b84802"
+  "built_at_commit": "a8f1d34ca92e5d56c31ccb88cb460fc585317c08"
 }

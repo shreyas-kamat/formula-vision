@@ -1,16 +1,16 @@
-# Graph Report - formulavision  (2026-06-18)
+# Graph Report - formulavision  (2026-06-19)
 
 ## Corpus Check
-- 156 files · ~181,779 words
+- 161 files · ~183,487 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2512 nodes · 2424 edges · 235 communities (170 shown, 65 thin omitted)
+- 2634 nodes · 2542 edges · 242 communities (177 shown, 65 thin omitted)
 - Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 59 edges (avg confidence: 0.89)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `822ff526`
+- Built from commit: `a8f1d34c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -235,6 +235,12 @@
 - [[_COMMUNITY_Community 232|Community 232]]
 - [[_COMMUNITY_Community 233|Community 233]]
 - [[_COMMUNITY_Community 234|Community 234]]
+- [[_COMMUNITY_Community 235|Community 235]]
+- [[_COMMUNITY_Community 236|Community 236]]
+- [[_COMMUNITY_Community 237|Community 237]]
+- [[_COMMUNITY_Community 238|Community 238]]
+- [[_COMMUNITY_Community 239|Community 239]]
+- [[_COMMUNITY_Community 241|Community 241]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `drivers` - 21 edges
@@ -273,11 +279,11 @@
 - **F1 Circuit Track Maps (Chunk 5)** — trackmaps_sakhir_outer, trackmaps_sakhir, trackmaps_shanghai, trackmaps_silverstone, trackmaps_singapore, trackmaps_sochi, trackmaps_spa, trackmaps_spielberg, trackmaps_suzuka, trackmaps_yasmarina, trackmaps_zandvoort [INFERRED 0.95]
 - **F1 Tyre Compound Icons** — tyre_hard, tyre_medium, tyre_soft, tyre_intermediate, tyre_unknown [EXTRACTED 1.00]
 
-## Communities (235 total, 65 thin omitted)
+## Communities (242 total, 65 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.02
-Nodes (111): AlertDialog, _alertRaceControl, applySector, applySegment, applyStint, build, _buildDashboardMainContent, _buildDriverDataTable (+103 more)
+Nodes (115): AlertDialog, _alertRaceControl, applySector, applySegment, applyStint, build, _buildDashboardMainContent, _buildDriverDataTable (+107 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.04
@@ -412,8 +418,8 @@ Cohesion: 0.08
 Nodes (25): candidateLap, driverNumber, lapNumber, lapStartDate, lapStartSessionTime, lapTime, session, sessionStartTime (+17 more)
 
 ### Community 34 - "Community 34"
-Cohesion: 0.08
-Nodes (25): build, _buildConnectionStatusCard, _buildDriverListCard, _buildInfoRow, _buildTrackStatusCard, Card, CircularProgressIndicator, _connectToWebSocket (+17 more)
+Cohesion: 0.07
+Nodes (26): build, _buildConnectionStatusCard, _buildDriverListCard, _buildInfoRow, _buildTrackStatusCard, Card, CircularProgressIndicator, _connectToWebSocket (+18 more)
 
 ### Community 35 - "Community 35"
 Cohesion: 0.14
@@ -441,7 +447,7 @@ Nodes (20): build, _buildEventItem, _buildRaceList, _buildRaceWeekendPanel, Cent
 
 ### Community 41 - "Community 41"
 Cohesion: 0.05
-Nodes (36): build, Center, Column, Container, fetchInitialData, initState, launchUrl, LiveHomePage (+28 more)
+Nodes (41): _applyImageFromData, build, Center, Column, Container, dispose, fetchInitialData, initState (+33 more)
 
 ### Community 42 - "Community 42"
 Cohesion: 0.11
@@ -572,7 +578,7 @@ Cohesion: 0.22
 Nodes (8): build, HomePage, _HomePageState, LiveHomePage, package:flutter/material.dart, package:formulavision/pages/nav_page.dart, package:google_fonts/google_fonts.dart, package:formulavision/components/live_homepage.dart
 
 ### Community 74 - "Community 74"
-Cohesion: 0.29
+Cohesion: 0.25
 Nodes (7): 147, circuitKey, country, countryKey, iocCountryCode, name, years
 
 ### Community 75 - "Community 75"
@@ -620,7 +626,7 @@ Cohesion: 0.29
 Nodes (7): 34, circuitKey, country, countryKey, iocCountryCode, name, years
 
 ### Community 86 - "Community 86"
-Cohesion: 0.25
+Cohesion: 0.29
 Nodes (7): 39, circuitKey, country, countryKey, iocCountryCode, name, years
 
 ### Community 87 - "Community 87"
@@ -836,16 +842,16 @@ Cohesion: 0.25
 Nodes (3): FlutterAppDelegate, AppDelegate, AppDelegate
 
 ### Community 204 - "Community 204"
-Cohesion: 0.20
-Nodes (9): AppSettings, getApiUrlSync, getDefaultApiUrl, getSpeedUnitSync, getTrackMapDisplayModeSync, isRaceControlSoundEnabledSync, isTrackMapEnabledSync, package:flutter_dotenv/flutter_dotenv.dart (+1 more)
+Cohesion: 0.18
+Nodes (10): AppSettings, getApiUrlSync, getDefaultApiUrl, getFeedSourceSync, getSpeedUnitSync, getTrackMapDisplayModeSync, isRaceControlSoundEnabledSync, isTrackMapEnabledSync (+2 more)
 
 ### Community 205 - "Community 205"
 Cohesion: 0.29
 Nodes (3): RunnerTests, RunnerTests, XCTestCase
 
 ### Community 206 - "Community 206"
-Cohesion: 0.33
-Nodes (5): getCleanName, main, testCleanName, dart:io, dart:convert
+Cohesion: 0.29
+Nodes (6): getCleanName, main, testCleanName, dart:io, dart:convert, dart:io
 
 ### Community 207 - "Community 207"
 Cohesion: 0.33
@@ -895,25 +901,49 @@ Nodes (17): _AeroPill, build, Color, Column, Container, initState, _PedalBar, _R
 Cohesion: 0.50
 Nodes (3): main, package:flutter_test/flutter_test.dart, package:formulavision/data/models/live_data.model.dart
 
+### Community 235 - "Community 235"
+Cohesion: 0.10
+Nodes (20): _connect, _emitClock, Exception, F1LiveClient, Function, _handleFeed, _handleParsed, _handleRaw (+12 more)
+
+### Community 236 - "Community 236"
+Cohesion: 0.17
+Nodes (11): dispose, F1ClockExtrapolator, _format, Function, _parseRemaining, reset, _start, _stop (+3 more)
+
+### Community 237 - "Community 237"
+Cohesion: 0.22
+Nodes (8): base64Encode, main, _toF1Z, package:formulavision/data/functions/f1_decompress.function.dart, dart:convert, dart:io, package:flutter_test/flutter_test.dart, package:formulavision/data/functions/f1_decompress.function.dart
+
+### Community 238 - "Community 238"
+Cohesion: 0.50
+Nodes (3): _channel, dart:convert, dart:io
+
+### Community 239 - "Community 239"
+Cohesion: 0.13
+Nodes (14): AnimatedContainer, build, Center, ConnectingIndicator, _ConnectingIndicatorState, Container, dispose, _isLit (+6 more)
+
+### Community 241 - "Community 241"
+Cohesion: 0.04
+Nodes (48): applySector, applySegment, applyStint, buildSpeed, _connectSSE, _DelayedMessage, Duration, _emitNow (+40 more)
+
 ## Knowledge Gaps
-- **2010 isolated node(s):** `main`, `testCleanName`, `getCleanName`, `dart:convert`, `dart:io` (+2005 more)
+- **2124 isolated node(s):** `main`, `testCleanName`, `getCleanName`, `dart:convert`, `dart:io` (+2119 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **65 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `49` connect `Community 88` to `Community 86`?**
+- **Why does `49` connect `Community 88` to `Community 74`?**
   _High betweenness centrality (0.002) - this node is a cross-community bridge._
-- **Why does `2` connect `Community 83` to `Community 86`?**
+- **Why does `2` connect `Community 83` to `Community 74`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
-- **Why does `28` connect `Community 103` to `Community 86`?**
+- **Why does `28` connect `Community 103` to `Community 74`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
 - **Are the 20 inferred relationships involving `Track Corners Schema (x/y coordinates, angle, length, number)` (e.g. with `Austin (Circuit of the Americas)` and `Baku City Circuit`) actually correct?**
   _`Track Corners Schema (x/y coordinates, angle, length, number)` has 20 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `main`, `testCleanName`, `getCleanName` to the rest of the system?**
-  _2015 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _2129 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.017857142857142856 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.017241379310344827 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.03636363636363636 - nodes in this community are weakly interconnected._
