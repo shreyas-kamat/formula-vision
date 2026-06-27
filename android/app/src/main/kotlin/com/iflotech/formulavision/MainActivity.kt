@@ -1,4 +1,4 @@
-package com.example.formulavision
+package com.iflotech.formulavision
 
 import io.flutter.embedding.android.FlutterActivity
 

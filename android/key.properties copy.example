@@ -1,0 +1,8 @@
+# Copy this file to `key.properties` (same folder) and fill in real values.
+# `key.properties` is gitignored — never commit it or the .jks keystore.
+#
+# Use forward slashes in storeFile even on Windows.
+storePassword=YOUR_STORE_PASSWORD
+keyPassword=YOUR_KEY_PASSWORD
+keyAlias=upload
+storeFile=C:/Users/Shreyas Kamat/upload-keystore.jks

@@ -651,11 +651,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
       child: Column(
         children: [
           InkWell(
-            onTap: () =>
-                setState(() => _trackMapExpanded = !_trackMapExpanded),
+            onTap: () => setState(() => _trackMapExpanded = !_trackMapExpanded),
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               child: Row(
                 children: [
                   const Icon(Icons.map_outlined,
@@ -1268,8 +1266,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
           MapEntry<String, Driver>? driverAbove;
 
           for (var entry in sortedDrivers) {
-            final entryPos =
-                _currentPositions[entry.key] ?? entry.value.line;
+            final entryPos = _currentPositions[entry.key] ?? entry.value.line;
             if (entryPos == driverAbovePosition) {
               driverAbove = entry;
               break;
@@ -1504,6 +1501,7 @@ class _LiveTrackMapWidgetState extends State<LiveTrackMapWidget>
       center.dy + dx * sin + dy * cos,
     );
   }
+
   // Interpolation endpoints keyed by racing number.
   Map<String, Offset> _fromPositions = {};
   Map<String, Offset> _toPositions = {};
@@ -1611,15 +1609,18 @@ class _LiveTrackMapWidgetState extends State<LiveTrackMapWidget>
         final double rotationRad = rotationDeg * math.pi / 180.0;
         // Rotate around the raw centre; the cars are later rotated about the
         // same point so they stay aligned with the outline.
-        final rMinX = rawPoints.map((e) => e.dx).reduce((a, b) => math.min(a, b));
-        final rMaxX = rawPoints.map((e) => e.dx).reduce((a, b) => math.max(a, b));
-        final rMinY = rawPoints.map((e) => e.dy).reduce((a, b) => math.min(a, b));
-        final rMaxY = rawPoints.map((e) => e.dy).reduce((a, b) => math.max(a, b));
+        final rMinX =
+            rawPoints.map((e) => e.dx).reduce((a, b) => math.min(a, b));
+        final rMaxX =
+            rawPoints.map((e) => e.dx).reduce((a, b) => math.max(a, b));
+        final rMinY =
+            rawPoints.map((e) => e.dy).reduce((a, b) => math.min(a, b));
+        final rMaxY =
+            rawPoints.map((e) => e.dy).reduce((a, b) => math.max(a, b));
         final center = Offset((rMinX + rMaxX) / 2, (rMinY + rMaxY) / 2);
 
-        final rotated = rawPoints
-            .map((p) => rotateAround(p, center, rotationRad))
-            .toList();
+        final rotated =
+            rawPoints.map((p) => rotateAround(p, center, rotationRad)).toList();
 
         double minX = rotated.map((e) => e.dx).reduce((a, b) => math.min(a, b));
         double maxX = rotated.map((e) => e.dx).reduce((a, b) => math.max(a, b));

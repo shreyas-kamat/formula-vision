@@ -1,0 +1,25 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - img "FormulaVision logo" [ref=e3]
+    - generic [ref=e4]:
+      - generic [ref=e5]: FormulaVision
+      - generic [ref=e6]: The Ultimate Race Companion
+  - link "FormulaVision app preview" [ref=e7] [cursor=pointer]:
+    - /url: "#about"
+    - img "FormulaVision app — live timing, standings, circuit maps and schedule" [ref=e8]
+  - generic [ref=e9]:
+    - heading "Live Motorsport Timing & Race Insights" [level=1] [ref=e10]
+    - paragraph [ref=e11]: FormulaVision brings real-time lap times, driver & constructor standings, interactive circuit maps, and the full race weekend schedule together in one fast, focused app.
+  - generic [ref=e12]:
+    - generic [ref=e13]: Live Timing
+    - generic [ref=e15]: Driver & Constructor Standings
+    - generic [ref=e17]: Circuit Maps
+    - generic [ref=e19]: Race Schedule
+  - generic [ref=e21]:
+    - link "Privacy Policy" [ref=e22] [cursor=pointer]:
+      - /url: /privacy-policy/
+    - link "Contact" [ref=e23] [cursor=pointer]:
+      - /url: mailto:shreyaskamat@yahoo.com
+  - contentinfo [ref=e24]:
+    - paragraph [ref=e25]: © 2026 FormulaVision · Built by Shreyas Kamat
+    - paragraph [ref=e26]: FormulaVision is an unofficial application and is not affiliated with, endorsed by, or sponsored by any motorsport championship, series, governing body, or team. All trademarks belong to their respective owners.

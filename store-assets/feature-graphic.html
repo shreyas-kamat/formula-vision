@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&family=Saira+Condensed:wght@600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body { width: 1024px; height: 500px; overflow: hidden; }
+
+  .graphic {
+    position: relative;
+    width: 1024px;
+    height: 500px;
+    background:
+      radial-gradient(ellipse 70% 90% at 26% 42%, #8c1c1c 0%, #5a1010 32%, #2a0707 62%, #140303 100%);
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+  }
+
+  /* faint circuit line in the background */
+  .track {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.07;
+    pointer-events: none;
+  }
+  .track path {
+    fill: none;
+    stroke: #ffffff;
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* dark vignette to add depth */
+  .vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 80% at 70% 50%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.55) 100%);
+    pointer-events: none;
+  }
+
+  /* ---------------- LEFT CONTENT ---------------- */
+  .left {
+    position: absolute;
+    left: 60px;
+    top: 0;
+    height: 500px;
+    width: 540px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    z-index: 5;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 26px;
+  }
+  .logo {
+    width: 86px;
+    height: 86px;
+    border-radius: 20px;
+    box-shadow: 0 10px 26px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06) inset;
+    object-fit: cover;
+  }
+  .wordmark {
+    font-weight: 800;
+    font-size: 46px;
+    color: #ffffff;
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+  .tagline {
+    margin-top: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: #ff8a8a;
+  }
+
+  .headline {
+    font-family: 'Saira Condensed', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 50px;
+    line-height: 1.04;
+    color: #ffffff;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  .headline .accent { color: #ff3b3b; }
+
+  .subcopy {
+    font-size: 17px;
+    font-weight: 500;
+    color: #e7c9c9;
+    line-height: 1.45;
+    max-width: 470px;
+    margin-bottom: 28px;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    max-width: 470px;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #ffffff;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.14);
+    backdrop-filter: blur(2px);
+  }
+  .chip .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ff3b3b;
+    box-shadow: 0 0 8px #ff3b3b;
+  }
+
+  /* ---------------- RIGHT PHONES ---------------- */
+  .phones {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 470px;
+    height: 500px;
+    z-index: 4;
+  }
+  .phone {
+    position: absolute;
+    border-radius: 30px;
+    background: #0a0a0a;
+    padding: 6px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.08);
+  }
+  .phone img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 24px;
+    object-fit: cover;
+    object-position: top;
+  }
+
+  .phone.back {
+    width: 232px;
+    height: 480px;
+    right: 12px;
+    top: 96px;
+    transform: rotate(9deg);
+    filter: brightness(0.82) saturate(0.95);
+  }
+  .phone.front {
+    width: 250px;
+    height: 510px;
+    right: 232px;
+    top: 70px;
+    transform: rotate(-5deg);
+  }
+</style>
+</head>
+<body>
+  <div class="graphic">
+    <svg class="track" viewBox="0 0 1024 500" preserveAspectRatio="xMidYMid slice">
+      <path d="M120,360 C80,300 140,250 210,250 C300,250 300,150 220,150
+               C150,150 160,90 250,95 C360,100 420,180 520,180
+               C640,180 700,120 800,140 C900,160 940,260 880,330
+               C820,400 700,380 600,360 C480,335 420,420 300,410
+               C200,402 160,420 120,360 Z" />
+    </svg>
+
+    <div class="vignette"></div>
+
+    <div class="left">
+      <div class="brand">
+        <img class="logo" src="/assets/logo/MainLogo.png" alt="FV" />
+        <div>
+          <div class="wordmark">FormulaVision</div>
+          <div class="tagline">The Ultimate Race Companion</div>
+        </div>
+      </div>
+
+      <div class="headline">Live Motorsport<br><span class="accent">Timing &amp; Insights</span></div>
+      <div class="subcopy">Real-time lap times, driver &amp; constructor standings, circuit maps and the full race weekend schedule — all in one app.</div>
+
+      <div class="chips">
+        <span class="chip"><span class="dot"></span>Live Timing</span>
+        <span class="chip"><span class="dot"></span>Standings</span>
+        <span class="chip"><span class="dot"></span>Circuit Maps</span>
+        <span class="chip"><span class="dot"></span>Race Schedule</span>
+      </div>
+    </div>
+
+    <div class="phones">
+      <div class="phone back">
+        <img src="/assets/logo/screenshots/Android/Screenshot_1781941361.png" alt="Standings" />
+      </div>
+      <div class="phone front">
+        <img src="/assets/logo/screenshots/Android/Screenshot_1781941297.png" alt="Home" />
+      </div>
+    </div>
+  </div>
+</body>
+</html>

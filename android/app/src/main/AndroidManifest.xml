@@ -2,7 +2,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     
     <application
-        android:label="formulavision"
+        android:label="FormulaVision"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity
