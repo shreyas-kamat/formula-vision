@@ -39,12 +39,11 @@ int _channel(dynamic channels, int index) {
   return 0;
 }
 
-/// Decode a `CarData.z` payload and reduce it to the latest-entry, named-channel
-/// shape the dashboard consumes: `{ Timestamp, Cars: { "44": {RPM,...} } }`.
-/// Mirrors the backend's `formatCarTelemetryData`. Returns null on failure or
-/// when there is no usable entry. Safe to run under `compute()`.
-Map<String, dynamic>? decodeCarDataZ(String base64Data) {
-  final carData = _inflateJson(base64Data);
+/// Reduce a decoded CarData object (`{ Entries: [...] }`) to the latest-entry,
+/// named-channel shape the dashboard consumes: `{ Timestamp, Cars: { "44":
+/// {RPM,...} } }`. Mirrors the backend's `formatCarTelemetryData`. Works for
+/// both the inflated `CarData.z` payload and the uncompressed `CarData` topic.
+Map<String, dynamic>? reduceCarData(Map<String, dynamic>? carData) {
   final entries = carData?['Entries'];
   if (entries is! List || entries.isEmpty) return null;
 
@@ -72,6 +71,11 @@ Map<String, dynamic>? decodeCarDataZ(String base64Data) {
     'Cars': cars,
   };
 }
+
+/// Decode a `CarData.z` payload (base64 raw-DEFLATE) and reduce it. Returns null
+/// on failure or when there is no usable entry. Safe to run under `compute()`.
+Map<String, dynamic>? decodeCarDataZ(String base64Data) =>
+    reduceCarData(_inflateJson(base64Data));
 
 /// Decode a `Position.z` payload into its raw object. `PositionData.fromJson`
 /// understands the `{ Entries: [...] }` shape directly, so no reshaping is

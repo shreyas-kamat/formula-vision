@@ -12,6 +12,7 @@
 .swiftpm/
 migrate_working_dir/
 .env
+TODO.txt
 
 # IntelliJ related
 *.iml

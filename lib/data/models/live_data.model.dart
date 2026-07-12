@@ -1248,15 +1248,15 @@ class TimingDataDriver {
       intervalToPositionAhead: json['IntervalToPositionAhead'] != null
           ? IntervalToPositionAhead.fromJson(json['IntervalToPositionAhead'])
           : null,
-      line: json['line'] ?? 0,
-      position: json['position'] ?? '',
-      showPosition: json['showPosition'] ?? false,
-      racingNumber: json['racingNumber'] ?? '',
-      retired: json['retired'] ?? false,
-      inPit: json['inPit'] ?? false,
-      pitOut: json['pitOut'] ?? false,
-      stopped: json['stopped'] ?? false,
-      status: json['status'] ?? 0,
+      line: json['Line'] ?? json['line'] ?? 0,
+      position: json['Position'] ?? json['position'] ?? '',
+      showPosition: json['ShowPosition'] ?? json['showPosition'] ?? false,
+      racingNumber: json['RacingNumber'] ?? json['racingNumber'] ?? '',
+      retired: json['Retired'] ?? json['retired'] ?? false,
+      inPit: json['InPit'] ?? json['inPit'] ?? false,
+      pitOut: json['PitOut'] ?? json['pitOut'] ?? false,
+      stopped: json['Stopped'] ?? json['stopped'] ?? false,
+      status: json['Status'] ?? json['status'] ?? 0,
       sectors: sectorsList,
       speeds: json['Speeds'] != null
           ? Speeds.fromJson(json['Speeds'])
@@ -1292,8 +1292,8 @@ class TimingDataDriver {
               status: 0,
               overallFastest: false,
               personalFastest: false),
-      numberOfLaps: json['numberOfLaps'] ?? 0,
-      numberOfPitStops: json['NumberOfPitStops'] ?? 0,
+      numberOfLaps: json['NumberOfLaps'] ?? json['numberOfLaps'] ?? 0,
+      numberOfPitStops: json['NumberOfPitStops'] ?? json['numberOfPitStops'] ?? 0,
       knockedOut: json['knockedOut'],
       cutoff: json['cutoff'],
     );

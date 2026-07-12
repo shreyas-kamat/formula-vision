@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:formulavision/components/mini_sector_bar.dart';
 import 'package:formulavision/components/telemetry_hud.dart';
 import 'package:formulavision/data/models/live_data.model.dart';
+import 'package:formulavision/pages/live_details_page.dart';
 
 class DriverRowCard extends StatefulWidget {
   final int position;
@@ -21,6 +22,7 @@ class DriverRowCard extends StatefulWidget {
   final List<Stint> stints; // Full stint history (shown in the tyre-tap modal)
   final List<Sector> sectors; // Current lap sectors for the mini-sector bar
   final CarTelemetry? telemetry; // Live car telemetry for the HUD
+  final String? racingNumber; // Driver number, used to open the live speedometer
 
   const DriverRowCard({
     super.key,
@@ -39,6 +41,7 @@ class DriverRowCard extends StatefulWidget {
     this.stints = const [],
     this.sectors = const [],
     this.telemetry,
+    this.racingNumber,
   });
 
   @override
@@ -390,6 +393,29 @@ class _DriverRowCardState extends State<DriverRowCard>
                           children: [
                             const Divider(color: Colors.white24, height: 16),
                             TelemetryHud(telemetry: widget.telemetry),
+                            if (widget.racingNumber != null) ...[
+                              const SizedBox(height: 8),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton.icon(
+                                  onPressed: () => _openSpeedometer(context),
+                                  icon: const Icon(
+                                    Icons.speed_rounded,
+                                    size: 18,
+                                    color: Colors.white70,
+                                  ),
+                                  label: const Text(
+                                    'LIVE SPEEDOMETER',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 1,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -398,6 +424,20 @@ class _DriverRowCardState extends State<DriverRowCard>
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _openSpeedometer(BuildContext context) {
+    final racingNumber = widget.racingNumber;
+    if (racingNumber == null) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => LiveDetailsPage(
+          racingNumber: racingNumber,
+          driverName: widget.name,
+          teamColor: widget.teamColor,
         ),
       ),
     );

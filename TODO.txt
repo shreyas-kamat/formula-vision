@@ -1,4 +1,10 @@
 TODO
 
-1. Remove the Database integration of the API
+1. ViewCustomizer
 2. 
+
+Personal
+
+https://reactbits.dev/get-started/index
+ThreeJS
+etc

@@ -192,6 +192,11 @@ class LiveDataService {
     // Seed positions + telemetry from the compressed snapshot topics. When no
     // session is running these are usually absent, so the track map will sit on
     // "Waiting for car positions…" until live position telemetry starts.
+    final trackStatus = snapshot['TrackStatus'];
+    final sessionStatus = snapshot['SessionStatus'];
+    final lapCount = snapshot['LapCount'];
+    debugPrint('[LiveDataService] snapshot TrackStatus=$trackStatus '
+        'SessionStatus=$sessionStatus LapCount=$lapCount');
     final posZ = snapshot['Position.z'];
     debugPrint('[LiveDataService] snapshot Position.z '
         'present=${posZ is String && posZ.isNotEmpty}');
@@ -204,6 +209,8 @@ class LiveDataService {
       });
     }
     final carZ = snapshot['CarData.z'];
+    debugPrint('[LiveDataService] snapshot CarData.z '
+        'present=${carZ is String && carZ.isNotEmpty}');
     if (carZ is String && carZ.isNotEmpty) {
       compute(decodeCarDataZ, carZ).then((carData) {
         if (carData != null) _updateCarData(carData);
@@ -484,6 +491,7 @@ class LiveDataService {
     if (data is! Map<String, dynamic> || data.isEmpty || _current.isEmpty) {
       return;
     }
+    debugPrint('[LiveDataService] TrackStatus: ${data['Status']} ${data['Message']}');
     final cur = _current[0];
     cur.trackStatus = TrackStatus(
       status: data.containsKey('Status')
@@ -981,6 +989,7 @@ class LiveDataService {
     if (data is! Map<String, dynamic> || data.isEmpty || _current.isEmpty) {
       return;
     }
+    debugPrint('[LiveDataService] LapCount: ${data}');
     final cur = _current[0];
     cur.lapCount = LapCount(
       currentLap: data.containsKey('CurrentLap')
@@ -1006,6 +1015,8 @@ class LiveDataService {
       }
     });
     cur.carData = updated;
+    debugPrint('[LiveDataService] _updateCarData: '
+        '${cars.length} cars in delta, carData now ${updated.length}');
     _scheduleEmit();
   }
 

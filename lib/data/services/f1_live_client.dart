@@ -10,15 +10,20 @@ import 'f1_clock_extrapolator.dart';
 
 /// On-device F1 live-timing client.
 ///
-/// Connects directly to F1's SignalR Core endpoint from the phone, removing the
-/// dependence on the backend relay. Because the phone uses a residential IP,
-/// this also sidesteps F1's datacenter-IP blocking that breaks the server path.
+/// Connects directly to F1's **SignalR Core** endpoint (`/signalrcore`, hub
+/// "Streaming") from the phone, removing the dependence on the backend relay.
+/// Because the phone uses a residential IP, this also sidesteps F1's
+/// datacenter-IP blocking that breaks the server path.
 ///
-/// This is a Dart port of the backend's `f1ApiService.js` + the CarData.z /
-/// Position.z decompression (`dataProcessingService.js`) + the clock countdown
-/// (`clockService.js`). It emits exactly the message shapes the dashboard's
-/// existing pipeline already consumes:
-///   * [onSnapshot] receives the initial `R` topic snapshot (feed into
+/// Mirrors the f1-dash `signalr` crate (negotiate → handshake → Subscribe →
+/// listen) exactly, including the 17-topic set that yields the compressed
+/// `CarData.z` / `Position.z` telemetry streams. Notably it sends **no**
+/// keep-alive ping (the server pushes data continuously during a session) — an
+/// earlier `{"type":6}` ping was the one deviation from the reference.
+///
+/// It emits exactly the message shapes the dashboard's existing pipeline already
+/// consumes:
+///   * [onSnapshot] receives the Subscribe completion result (feed into
 ///     `fetchLiveData`).
 ///   * [onFeed] receives `{ M: [ { H, M, A:[...] } ] }` delta messages (feed
 ///     into `_processTelemetryData`).
@@ -43,12 +48,14 @@ class F1LiveClient {
 
   // SignalR Core JSON protocol delimits messages with the ASCII record
   // separator (0x1e).
-  static const String _recordSeparator = '\u001e';
+  static const String _recordSeparator = '';
 
   static const String _baseHttp = 'https://livetiming.formula1.com';
   static const String _baseWs = 'wss://livetiming.formula1.com';
 
-  // Topics proven to be served by F1's SignalR Core endpoint (the f1-dash set).
+  // The exact topic set f1-dash subscribes to on /signalrcore. CarData.z /
+  // Position.z are the compressed telemetry streams the speedometer + track map
+  // need; they arrive as streaming deltas (not in the Subscribe snapshot).
   static const List<String> _topics = [
     'Heartbeat',
     'CarData.z',
@@ -71,11 +78,14 @@ class F1LiveClient {
 
   WebSocket? _socket;
   StreamSubscription? _sub;
-  Timer? _keepAlive;
   Timer? _reconnectTimer;
   bool _handshakeComplete = false;
   bool _closing = false;
   late final F1ClockExtrapolator _clock = F1ClockExtrapolator(_emitClock);
+
+  // Tracks which feed topics F1 actually streams on this connection so we log
+  // each distinct one exactly once (discovery aid for missing telemetry).
+  final Set<String> _seenTopics = {};
 
   bool get isConnected => _socket != null;
 
@@ -86,8 +96,8 @@ class F1LiveClient {
     onStatus?.call('Negotiating...');
     debugPrint('[F1LiveClient] start: negotiating...');
     final result = await _negotiate();
-    debugPrint(
-        '[F1LiveClient] negotiated: tokenLen=${result.token.length} cookie=${result.cookie.isNotEmpty}');
+    debugPrint('[F1LiveClient] negotiated: tokenLen=${result.token.length} '
+        'cookie=${result.cookie.isNotEmpty}');
     await _connect(result.token, result.cookie);
     debugPrint('[F1LiveClient] start: websocket open, awaiting snapshot');
   }
@@ -97,7 +107,6 @@ class F1LiveClient {
     _closing = true;
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
-    _stopKeepAlive();
     _clock.dispose();
     await _sub?.cancel();
     _sub = null;
@@ -120,36 +129,50 @@ class F1LiveClient {
       receiveTimeout: const Duration(seconds: 5),
       validateStatus: (_) => true,
     ));
-    final url = '$_baseHttp/signalrcore/negotiate?negotiateVersion=1';
+    final negotiateUrl = '$_baseHttp/signalrcore/negotiate';
     String cookie = '';
 
-    // Browser-like CORS preflight captures the initial AWSALBCORS cookie.
+    // CORS preflight captures the AWSALBCORS sticky-session cookie the hub
+    // connection requires (mirrors f1-dash).
     try {
-      final optionsResp =
-          await dio.request(url, options: Options(method: 'OPTIONS'));
+      final optionsResp = await dio.request(negotiateUrl,
+          options: Options(method: 'OPTIONS'));
       debugPrint('[F1LiveClient] negotiate OPTIONS -> ${optionsResp.statusCode}');
-      cookie = _extractAlbCookie(optionsResp.headers.map['set-cookie']) ?? cookie;
+      cookie =
+          _extractAlbCookie(optionsResp.headers.map['set-cookie']) ?? cookie;
     } catch (e) {
       // OPTIONS is best-effort; the POST below still works without it.
       debugPrint('[F1LiveClient] negotiate OPTIONS failed: $e');
     }
 
     final postResp = await dio.post(
-      url,
+      '$negotiateUrl?negotiateVersion=1',
       options: Options(headers: cookie.isNotEmpty ? {'Cookie': cookie} : null),
     );
-    debugPrint(
-        '[F1LiveClient] negotiate POST -> ${postResp.statusCode} bodyType=${postResp.data.runtimeType}');
+    debugPrint('[F1LiveClient] negotiate POST -> ${postResp.statusCode} '
+        'bodyType=${postResp.data.runtimeType}');
     cookie = _extractAlbCookie(postResp.headers.map['set-cookie']) ?? cookie;
 
     final body = postResp.data;
-    final token = body is Map
-        ? (body['connectionToken'] ?? body['ConnectionToken'])
+    final Map<String, dynamic>? json = body is Map<String, dynamic>
+        ? body
+        : (body is String ? _tryJson(body) : null);
+    final token = json != null
+        ? (json['connectionToken'] ?? json['ConnectionToken'])
         : null;
     if (token is! String || token.isEmpty) {
       throw Exception('negotiate() did not return a connectionToken');
     }
     return (token: token, cookie: cookie);
+  }
+
+  Map<String, dynamic>? _tryJson(String s) {
+    try {
+      final decoded = jsonDecode(s);
+      return decoded is Map<String, dynamic> ? decoded : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Pull the AWS load-balancer cookies (AWSALB / AWSALBCORS) out of a
@@ -178,7 +201,16 @@ class F1LiveClient {
     if (cookie.isNotEmpty) headers['Cookie'] = cookie;
 
     debugPrint('[F1LiveClient] connecting ws: $url');
-    _socket = await WebSocket.connect(url, headers: headers);
+    // Disable WebSocket per-message-deflate. dart:io advertises it by default,
+    // but f1-dash's tungstenite does not — and F1's CDN appears to drop the
+    // large CarData.z / Position.z frames when permessage-deflate is negotiated
+    // (small topics like TimingData still get through). Matching tungstenite
+    // here is what makes the compressed telemetry topics actually arrive.
+    _socket = await WebSocket.connect(
+      url,
+      headers: headers,
+      compression: CompressionOptions.compressionOff,
+    );
     debugPrint('[F1LiveClient] ws connected, sending handshake');
     onStatus?.call('Connected');
 
@@ -196,7 +228,6 @@ class F1LiveClient {
   }
 
   void _onDone() {
-    _stopKeepAlive();
     _socket = null;
     if (_closing) return;
     onStatus?.call('Disconnected, reconnecting...');
@@ -220,6 +251,12 @@ class F1LiveClient {
   // A single WS frame may pack several record-separator-delimited JSON objects.
   void _handleRaw(dynamic raw) {
     final text = raw is String ? raw : utf8.decode(raw as List<int>);
+    // Match only the real compressed topics, not the "Position" substring inside
+    // TimingData's "IntervalToPositionAhead" (which produced false positives).
+    if (text.contains('"CarData.z"') || text.contains('"Position.z"')) {
+      debugPrint('[F1LiveClient] RAW frame with CarData.z/Position.z: '
+          '${text.substring(0, text.length.clamp(0, 120))}');
+    }
     for (final part in text.split(_recordSeparator)) {
       if (part.isEmpty) continue;
       Map<String, dynamic> msg;
@@ -227,7 +264,9 @@ class F1LiveClient {
         final decoded = jsonDecode(part);
         if (decoded is! Map<String, dynamic>) continue;
         msg = decoded;
-      } catch (_) {
+      } catch (e) {
+        debugPrint('[F1LiveClient] JSON parse failed: $e on: '
+            '${part.substring(0, part.length.clamp(0, 100))}');
         continue;
       }
       _handleParsed(msg);
@@ -247,14 +286,14 @@ class F1LiveClient {
       }
       debugPrint('[F1LiveClient] handshake ack, subscribing');
       _subscribe();
-      _startKeepAlive();
       return;
     }
 
     switch (msg['type']) {
       case 1: // Invocation (streaming feed update)
         final args = msg['arguments'];
-        if (msg['target'] == 'feed' && args is List && args.isNotEmpty) {
+        final target = msg['target'];
+        if (target == 'feed' && args is List && args.isNotEmpty) {
           final topic = args[0];
           final data = args.length > 1 ? args[1] : null;
           final ts = args.length > 2 ? args[2] : null;
@@ -273,8 +312,8 @@ class F1LiveClient {
   }
 
   void _handleSnapshot(Map<String, dynamic> result) {
-    debugPrint(
-        '[F1LiveClient] snapshot received: ${result.keys.length} topics ${result.keys.take(20).toList()}');
+    debugPrint('[F1LiveClient] snapshot received: ${result.keys.length} topics '
+        '${result.keys.take(20).toList()}');
     // Kick off the clock countdown from the snapshot if present.
     final clock = result['ExtrapolatedClock'];
     if (clock is Map<String, dynamic>) {
@@ -284,6 +323,13 @@ class F1LiveClient {
   }
 
   void _handleFeed(dynamic topic, dynamic data, dynamic ts) {
+    if (topic is String && _seenTopics.add(topic)) {
+      debugPrint('[F1LiveClient] new feed topic: $topic');
+    }
+    if (topic == 'CarData.z' || topic == 'Position.z') {
+      debugPrint('[F1LiveClient] FEED topic=$topic '
+          'len=${data is String ? data.length : data.runtimeType}');
+    }
     if (topic == 'CarData.z' && data is String) {
       compute(decodeCarDataZ, data).then((formatted) {
         if (formatted != null) {
@@ -333,23 +379,11 @@ class F1LiveClient {
   void _subscribe() {
     final frame = jsonEncode({
       'type': 1,
-      'invocationId': '1',
+      'invocationId': DateTime.now().microsecondsSinceEpoch.toString(),
       'target': 'Subscribe',
       'arguments': [_topics],
     });
     _socket?.add('$frame$_recordSeparator');
     onStatus?.call('Subscribed');
-  }
-
-  void _startKeepAlive() {
-    _stopKeepAlive();
-    _keepAlive = Timer.periodic(const Duration(seconds: 15), (_) {
-      _socket?.add('{"type":6}$_recordSeparator');
-    });
-  }
-
-  void _stopKeepAlive() {
-    _keepAlive?.cancel();
-    _keepAlive = null;
   }
 }

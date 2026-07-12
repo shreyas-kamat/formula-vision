@@ -1,16 +1,16 @@
-# Graph Report - formulavision  (2026-06-19)
+# Graph Report - formulavision  (2026-06-28)
 
 ## Corpus Check
-- 161 files · ~183,487 words
+- 201 files · ~314,082 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2634 nodes · 2542 edges · 242 communities (177 shown, 65 thin omitted)
+- 2647 nodes · 2555 edges · 242 communities (177 shown, 65 thin omitted)
 - Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 59 edges (avg confidence: 0.89)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a8f1d34c`
+- Built from commit: `207bcc22`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -451,7 +451,7 @@ Nodes (41): _applyImageFromData, build, Center, Column, Container, dispose, fetc
 
 ### Community 42 - "Community 42"
 Cohesion: 0.11
-Nodes (17): build, initState, NavPage, _NavPageState, Scaffold, package:flutter/material.dart, package:formulavision/auth/email_verification.dart, package:formulavision/auth/forgotpw_page.dart (+9 more)
+Nodes (18): build, initState, NavPage, _NavPageState, Scaffold, package:flutter/material.dart, package:formulavision/auth/email_verification.dart, package:formulavision/auth/forgotpw_page.dart (+10 more)
 
 ### Community 43 - "Community 43"
 Cohesion: 0.11
@@ -475,7 +475,7 @@ Nodes (16): build, Center, Container, DriversStandingsPage, _DriversStandingsPag
 
 ### Community 48 - "Community 48"
 Cohesion: 0.07
-Nodes (26): build, _buildStintChip, _buildStintHistory, _buildStintSheet, Container, didUpdateWidget, dispose, Divider (+18 more)
+Nodes (28): build, _buildStintChip, _buildStintHistory, _buildStintSheet, Container, didUpdateWidget, dispose, Divider (+20 more)
 
 ### Community 49 - "Community 49"
 Cohesion: 0.13
@@ -494,8 +494,8 @@ Cohesion: 0.15
 Nodes (12): build, CircuitPainter, CircuitViewer, _CircuitViewerState, Container, initState, paint, shouldRepaint (+4 more)
 
 ### Community 53 - "Community 53"
-Cohesion: 0.15
-Nodes (12): build, dispose, initState, SafeArea, SizedBox, SpeedometerDemo, _SpeedometerDemoState, _startSpeedometer (+4 more)
+Cohesion: 0.14
+Nodes (13): build, dispose, initState, SafeArea, SizedBox, SpeedometerDemo, _SpeedometerDemoState, _startSpeedometer (+5 more)
 
 ### Community 54 - "Community 54"
 Cohesion: 0.17
@@ -734,8 +734,8 @@ Cohesion: 0.29
 Nodes (6): build, _buildFeatureItem, Container, InfoPage, Row, package:flutter/material.dart
 
 ### Community 113 - "Community 113"
-Cohesion: 0.29
-Nodes (6): build, LiveDetailsPage, _LiveDetailsPageState, Scaffold, package:flutter/material.dart, package:formulavision/pages/speedometer_page.dart
+Cohesion: 0.13
+Nodes (14): build, Column, dispose, initState, LiveDetailsPage, _LiveDetailsPageState, SafeArea, Scaffold (+6 more)
 
 ### Community 114 - "Community 114"
 Cohesion: 0.29
@@ -926,7 +926,7 @@ Cohesion: 0.04
 Nodes (48): applySector, applySegment, applyStint, buildSpeed, _connectSSE, _DelayedMessage, Duration, _emitNow (+40 more)
 
 ## Knowledge Gaps
-- **2124 isolated node(s):** `main`, `testCleanName`, `getCleanName`, `dart:convert`, `dart:io` (+2119 more)
+- **2135 isolated node(s):** `main`, `testCleanName`, `getCleanName`, `dart:convert`, `dart:io` (+2130 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **65 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -942,7 +942,7 @@ _Questions this graph is uniquely positioned to answer:_
 - **Are the 20 inferred relationships involving `Track Corners Schema (x/y coordinates, angle, length, number)` (e.g. with `Austin (Circuit of the Americas)` and `Baku City Circuit`) actually correct?**
   _`Track Corners Schema (x/y coordinates, angle, length, number)` has 20 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `main`, `testCleanName`, `getCleanName` to the rest of the system?**
-  _2129 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _2140 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.017241379310344827 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**

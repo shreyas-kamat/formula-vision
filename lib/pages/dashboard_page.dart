@@ -96,7 +96,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
     // snapshot and resolves to the in-place-mutated list.
     _liveSub = service.stream.listen((data) {
       if (!mounted) return;
-      setState(() => _liveDataFuture ??= Future.value(data));
+      setState(() { _liveDataFuture ??= Future.value(data); });
     });
     service.attach();
     _loadRaceControlSoundSetting();
@@ -780,12 +780,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
   // The live track map is built from car-position telemetry, which only exists
   // while a session is running. Hide it entirely when there are no positions
   // (rather than showing a "Waiting for car positions…" placeholder).
-  bool _hasLivePositions(LiveData data) =>
-      data.positionData?.cars.isNotEmpty ?? false;
-
   Widget _buildDashboardMainContent(List<LiveData> liveData) {
     final data = liveData[0];
-    final showTrackMap = _trackMapEnabled && _hasLivePositions(data);
+    const showTrackMap = false; // temporarily disabled
 
     if (showTrackMap &&
         _trackMapDisplayMode == AppSettings.trackMapModeFullView) {
@@ -1234,13 +1231,6 @@ class _TelemetryPageState extends State<TelemetryPage> {
       ..sort((a, b) => (_currentPositions[a.key] ?? a.value.line)
           .compareTo(_currentPositions[b.key] ?? b.value.line));
 
-    // Debug log to verify sorting
-    print("Sorted drivers by position:");
-    for (var driver in sortedDrivers) {
-      print(
-          "Position ${driver.value.line}: ${driver.value.tla} (${driver.key})");
-    }
-
     return ListView.builder(
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
@@ -1352,6 +1342,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
             stints: stints,
             sectors: timing.sectors,
             telemetry: carData[racingNumber],
+            racingNumber: racingNumber,
           ),
         );
       },
