@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:formulavision/data/functions/standings.function.dart';
 import 'package:formulavision/data/models/jolpica/drivers.model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -212,7 +213,10 @@ class _DriversStandingsPageState extends State<DriversStandingsPage> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
-                                      '${driver.givenName}\n${driver.familyName}',
+                                      defaultTargetPlatform ==
+                                              TargetPlatform.iOS
+                                          ? driver.code
+                                          : '${driver.givenName}\n${driver.familyName}',
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 16,
