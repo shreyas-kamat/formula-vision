@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#8c1818" />
+  <title>FormulaVision — Support</title>
+  <meta
+    name="description"
+    content="Get help with FormulaVision, troubleshoot live timing and schedule issues, or contact the developer."
+  />
+  <style>
+    :root {
+      --brand: #b32020;
+      --brand-dark: #781313;
+      --brand-soft: #fbeded;
+      --ink: #191919;
+      --muted: #606064;
+      --line: #e3e3e7;
+      --bg: #f5f5f7;
+      --card: #ffffff;
+      --success: #257246;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 17px;
+      line-height: 1.65;
+    }
+
+    a {
+      color: var(--brand);
+      font-weight: 650;
+      text-underline-offset: 0.18em;
+    }
+
+    a:hover { color: var(--brand-dark); }
+
+    a:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid rgba(179, 32, 32, 0.3);
+      outline-offset: 4px;
+      border-radius: 4px;
+    }
+
+    .masthead {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(145deg, var(--brand) 0%, var(--brand-dark) 100%);
+      color: #fff;
+      padding: 52px 20px 76px;
+    }
+
+    .masthead::after {
+      position: absolute;
+      right: -64px;
+      bottom: -92px;
+      width: 260px;
+      height: 260px;
+      border: 28px solid rgba(255, 255, 255, 0.08);
+      border-radius: 50%;
+      content: "";
+    }
+
+    .masthead-inner,
+    .page {
+      width: min(100%, 780px);
+      margin: 0 auto;
+    }
+
+    .app-name {
+      margin: 0 0 8px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    h1 {
+      max-width: 620px;
+      margin: 0;
+      font-size: clamp(2rem, 6vw, 3.35rem);
+      line-height: 1.08;
+      letter-spacing: -0.035em;
+    }
+
+    .hero-copy {
+      max-width: 590px;
+      margin: 16px 0 0;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 1.06rem;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      margin-top: -36px;
+      padding: 0 20px 64px;
+    }
+
+    main {
+      overflow: hidden;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 14px 40px rgba(38, 18, 18, 0.08);
+    }
+
+    section {
+      padding: 28px 30px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    section:last-child { border-bottom: 0; }
+
+    h2 {
+      margin: 0 0 10px;
+      color: var(--brand-dark);
+      font-size: 1.3rem;
+      line-height: 1.3;
+      letter-spacing: -0.01em;
+    }
+
+    p { margin: 0.65em 0; }
+
+    .contact {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: center;
+      background: var(--brand-soft);
+    }
+
+    .contact p { color: #4c2b2b; }
+
+    .contact-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 11px 18px;
+      background: var(--brand);
+      color: #fff;
+      border-radius: 9px;
+      text-decoration: none;
+      white-space: nowrap;
+      box-shadow: 0 5px 14px rgba(140, 24, 24, 0.2);
+    }
+
+    .contact-button:hover {
+      background: var(--brand-dark);
+      color: #fff;
+    }
+
+    .status-note {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 14px 16px;
+      background: #f3f8f5;
+      border: 1px solid #d6e8dc;
+      border-radius: 10px;
+      color: #22583a;
+    }
+
+    .status-dot {
+      flex: 0 0 auto;
+      width: 10px;
+      height: 10px;
+      margin-top: 0.52em;
+      background: var(--success);
+      border-radius: 50%;
+    }
+
+    .faq {
+      border-top: 1px solid var(--line);
+    }
+
+    details {
+      border-bottom: 1px solid var(--line);
+    }
+
+    details:last-child { border-bottom: 0; }
+
+    summary {
+      position: relative;
+      padding: 18px 34px 18px 0;
+      font-weight: 700;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+
+    summary::after {
+      position: absolute;
+      top: 17px;
+      right: 2px;
+      color: var(--brand);
+      content: "+";
+      font-size: 1.35rem;
+      line-height: 1;
+    }
+
+    details[open] summary::after { content: "−"; }
+
+    details p,
+    details ul {
+      margin-top: 0;
+      color: var(--muted);
+    }
+
+    ul {
+      margin: 0.7em 0;
+      padding-left: 1.35em;
+    }
+
+    li { margin: 0.35em 0; }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    footer {
+      padding: 26px 14px 0;
+      color: var(--muted);
+      text-align: center;
+      font-size: 0.86rem;
+    }
+
+    footer p { margin: 0.35em 0; }
+
+    footer a { color: inherit; }
+
+    @media (max-width: 620px) {
+      body { font-size: 16px; }
+
+      .masthead { padding: 42px 20px 68px; }
+
+      .page { padding-inline: 14px; }
+
+      section { padding: 24px 20px; }
+
+      .contact { grid-template-columns: 1fr; }
+
+      .contact-button { width: 100%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <p class="app-name">FormulaVision</p>
+      <h1>Help when the timing gets tricky.</h1>
+      <p class="hero-copy">
+        Find quick fixes for common problems or contact the developer directly.
+      </p>
+    </div>
+  </header>
+
+  <div class="page">
+    <main>
+      <section class="contact" aria-labelledby="contact-heading">
+        <div>
+          <h2 id="contact-heading">Contact support</h2>
+          <p>
+            Tell us what happened, which device you use, and the app version
+            shown on the Information screen.
+          </p>
+          <p class="small">Support is provided in English.</p>
+        </div>
+        <a
+          class="contact-button"
+          href="mailto:shreyaskamat13@gmail.com?subject=FormulaVision%20Support"
+        >Email support</a>
+      </section>
+
+      <section aria-labelledby="before-heading">
+        <h2 id="before-heading">Before you contact us</h2>
+        <div class="status-note">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span>
+            Live timing is available only while a supported session is active.
+            Between sessions, the app may correctly show no live data.
+          </span>
+        </div>
+        <p>These quick steps resolve most connection and display problems:</p>
+        <ul>
+          <li>Check that your device has a working internet connection.</li>
+          <li>Close and reopen FormulaVision.</li>
+          <li>Open Settings and try the alternative live-data source.</li>
+          <li>Install the latest available version of the app.</li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="faq-heading">
+        <h2 id="faq-heading">Common questions</h2>
+        <div class="faq">
+          <details>
+            <summary>Why is live timing not showing?</summary>
+            <p>
+              Live information appears only during supported race-weekend
+              sessions. If a session is active, confirm your internet connection,
+              restart the app, and try the alternative data source in Settings.
+            </p>
+          </details>
+
+          <details>
+            <summary>Why do the schedule or standings look outdated?</summary>
+            <p>
+              The schedule and standings depend on public data services and can
+              occasionally update later than the live event. Reopen the screen to
+              request fresh data and check again after a few minutes.
+            </p>
+          </details>
+
+          <details>
+            <summary>Why is a circuit map or detail missing?</summary>
+            <p>
+              Some venues and newly announced events may not have complete map or
+              session data yet. Include the event name in your support email so we
+              can investigate the specific entry.
+            </p>
+          </details>
+
+          <details>
+            <summary>Does the app require an account?</summary>
+            <p>
+              No. FormulaVision does not require an account. Your settings are
+              stored locally on your device. You can read the full details in our
+              <a href="/privacy-policy/">Privacy Policy</a>.
+            </p>
+          </details>
+
+          <details>
+            <summary>What should I include in a bug report?</summary>
+            <p>Please include:</p>
+            <ul>
+              <li>Your device model and operating-system version</li>
+              <li>The FormulaVision app version</li>
+              <li>The screen or event where the issue occurred</li>
+              <li>A short description of what you expected and what happened</li>
+              <li>A screenshot, if it helps explain the problem</li>
+            </ul>
+          </details>
+        </div>
+      </section>
+
+      <section aria-labelledby="independent-heading">
+        <h2 id="independent-heading">Independent application</h2>
+        <p class="small">
+          FormulaVision is an independent motorsport companion and is not
+          affiliated with, endorsed by, or sponsored by any racing championship,
+          governing body, team, or driver. Please contact us only for support with
+          FormulaVision itself.
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <p><a href="/privacy-policy/">Privacy Policy</a></p>
+      <p>&copy; 2026 Shreyas Kamat · FormulaVision</p>
+    </footer>
+  </div>
+</body>
+</html>
