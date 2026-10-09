@@ -1,8 +1,7 @@
-import 'dart:convert';
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/scheduler.dart' show Ticker;
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:formulavision/data/services/app_settings_service.dart';
@@ -15,6 +14,8 @@ import 'package:formulavision/components/weather_info_card.dart';
 import 'package:formulavision/components/track_status_card.dart';
 import 'package:formulavision/data/models/live_data.model.dart';
 import 'package:formulavision/data/services/live_data_service.dart';
+import 'package:formulavision/data/services/position_playback.dart';
+import 'package:formulavision/data/services/track_map_service.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -454,7 +455,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
     );
   }
 
-  // Helper method to get track status display
+  // Helper method to get track status display. F1 TrackStatus codes:
+  // 1 AllClear, 2 Yellow, 4 SCDeployed, 5 Red, 6 VSCDeployed, 7 VSCEnding.
   String _getTrackStatusDisplay(String? status) {
     switch (status?.toLowerCase()) {
       case '1':
@@ -463,16 +465,18 @@ class _TelemetryPageState extends State<TelemetryPage> {
       case '2':
       case 'yellow flag':
         return 'Yellow Flag';
-      case '3':
+      case '4':
       case 'safety car':
         return 'Safety Car';
-      case '4':
+      case '5':
       case 'red flag':
         return 'Red Flag';
-      case '5':
+      case '6':
       case 'vsc':
       case 'virtual safety car':
         return 'VSC';
+      case '7':
+        return 'VSC Ending';
       default:
         return status ?? 'Track Clear';
     }
@@ -487,13 +491,14 @@ class _TelemetryPageState extends State<TelemetryPage> {
       case '2':
       case 'yellow flag':
         return Colors.yellow;
-      case '3':
+      case '4':
       case 'safety car':
         return Colors.orange;
-      case '4':
+      case '5':
       case 'red flag':
         return Colors.red;
-      case '5':
+      case '6':
+      case '7':
       case 'vsc':
       case 'virtual safety car':
         return Colors.yellow[700] ?? Colors.yellow;
@@ -503,10 +508,21 @@ class _TelemetryPageState extends State<TelemetryPage> {
   }
 
   // Header widget to avoid repetition
-  Widget _buildHeaderWidget(
-      SessionInfo? sessionInfo, TrackStatus? trackStatus) {
+  Widget _buildHeaderWidget(SessionInfo? sessionInfo, TrackStatus? trackStatus,
+      int? qualifyingPart) {
     final meetingName = sessionInfo?.meeting.name ?? 'Grand Prix';
-    final sessionType = sessionInfo?.type ?? 'Session';
+    // Prefer the session name ("Sprint Qualifying") over the generic type
+    // ("Qualifying"), and append the live segment (SQ1 / Q2 ...).
+    String sessionType = (sessionInfo?.name.isNotEmpty ?? false)
+        ? sessionInfo!.name
+        : sessionInfo?.type ?? 'Session';
+    if (qualifyingPart != null &&
+        qualifyingPart > 0 &&
+        sessionInfo?.type.toLowerCase() == 'qualifying') {
+      final prefix =
+          sessionInfo!.name.toLowerCase().contains('sprint') ? 'SQ' : 'Q';
+      sessionType = '$sessionType · $prefix$qualifyingPart';
+    }
     final trackStatusDisplay = _getTrackStatusDisplay(trackStatus?.status);
     final trackStatusColor = _getTrackStatusColor(trackStatus?.status);
 
@@ -550,11 +566,15 @@ class _TelemetryPageState extends State<TelemetryPage> {
                 // Session Type with Live Badge
                 Row(
                   children: [
-                    Text(
-                      sessionType,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 18,
+                    Flexible(
+                      child: Text(
+                        sessionType,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 18,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -629,10 +649,13 @@ class _TelemetryPageState extends State<TelemetryPage> {
             ),
           );
         }
+        final session = data.sessionInfo;
         return LiveTrackMapWidget(
           positionData: positionData,
           drivers: data.driverList?.drivers ?? {},
-          circuitShortName: data.sessionInfo?.meeting.circuit.shortName ?? '',
+          circuitKey: session?.meeting.circuit.key ?? 0,
+          circuitShortName: session?.meeting.circuit.shortName ?? '',
+          year: int.tryParse((session?.startDate ?? '').split('-').first),
           trackColor: _trackLineColor(data.trackStatus?.status),
         );
       },
@@ -870,7 +893,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
                               children: [
                                 _buildHeaderWidget(
                                     snapshot.data![0].sessionInfo,
-                                    snapshot.data![0].trackStatus),
+                                    snapshot.data![0].trackStatus,
+                                    snapshot.data![0].qualifyingPart),
                                 const SizedBox(height: 16),
                               ],
                             );
@@ -975,7 +999,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
                                                         snapshot.data![0]
                                                             .sessionInfo,
                                                         snapshot.data![0]
-                                                            .trackStatus),
+                                                            .trackStatus,
+                                                        snapshot.data![0]
+                                                            .qualifyingPart),
                                                     const SizedBox(height: 16),
                                                   ],
                                                 );
@@ -1445,24 +1471,31 @@ class _TelemetryPageState extends State<TelemetryPage> {
   }
 }
 
-// Live Track Map Widget that shows driver positions in real-time.
-//
-// Cars are interpolated between successive Position.z updates so they glide
-// rather than jump, the track is drawn aspect-correct with the Y axis flipped
-// to a conventional orientation, the outline is tinted by track status, and
-// off-track / pitting cars are dimmed.
+// Live track map. Every Position.z frame is replayed slightly behind real time
+// (see PositionPlayback) so cars move continuously, the outline is looked up
+// by circuit key (see TrackMapService) and drawn aspect-correct with the Y axis
+// flipped to a conventional orientation, the outline is tinted by track
+// status, and off-track / pitting cars are dimmed.
 class LiveTrackMapWidget extends StatefulWidget {
   final PositionData positionData;
   final Map<String, Driver> drivers;
+  final int circuitKey;
   final String circuitShortName;
+  final int? year;
   final Color trackColor;
+
+  /// Override for tests; defaults to [TrackMapService.instance].
+  final TrackMapService? trackMapService;
 
   const LiveTrackMapWidget({
     super.key,
     required this.positionData,
     required this.drivers,
-    required this.circuitShortName,
+    this.circuitKey = 0,
+    this.circuitShortName = '',
+    this.year,
     this.trackColor = const Color(0xFF9E9E9E),
+    this.trackMapService,
   });
 
   @override
@@ -1477,8 +1510,13 @@ class _LiveTrackMapWidgetState extends State<LiveTrackMapWidget>
   // the circuit is shown in a conventional orientation.
   double _rotationRad = 0;
   Offset _rotCenter = Offset.zero;
+  bool _loadingTrack = true;
+  int _loadGeneration = 0;
 
-  late final AnimationController _controller;
+  final PositionPlayback _playback = PositionPlayback();
+  // Bumped every frame by the ticker to repaint the cars.
+  final ValueNotifier<int> _frame = ValueNotifier<int>(0);
+  late final Ticker _ticker;
 
   // Rotates [p] around [center] by [rad] radians.
   static Offset rotateAround(Offset p, Offset center, double rad) {
@@ -1493,196 +1531,84 @@ class _LiveTrackMapWidgetState extends State<LiveTrackMapWidget>
     );
   }
 
-  // Interpolation endpoints keyed by racing number.
-  Map<String, Offset> _fromPositions = {};
-  Map<String, Offset> _toPositions = {};
-
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 400),
-    );
-    _toPositions = _extractPositions(widget.positionData);
-    _fromPositions = Map.of(_toPositions);
-    _controller.value = 1.0;
+    _playback.ingest(widget.positionData, DateTime.now());
+    _ticker = createTicker((_) => _frame.value++)..start();
     _loadTrack();
   }
 
   @override
   void didUpdateWidget(LiveTrackMapWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Reload track if circuit changes
-    if (oldWidget.circuitShortName != widget.circuitShortName) {
+    if (oldWidget.circuitKey != widget.circuitKey ||
+        oldWidget.circuitShortName != widget.circuitShortName) {
+      _playback.clear();
       _loadTrack();
     }
-
-    final newPositions = _extractPositions(widget.positionData);
-    if (!_positionsEqual(newPositions, _toPositions)) {
-      // Whatever is currently on screen becomes the start of the next tween.
-      _fromPositions = _currentPositions();
-      _toPositions = newPositions;
-      _controller.forward(from: 0.0);
+    // The parent rebuilds on every topic update; only ingest new position
+    // objects.
+    if (!identical(oldWidget.positionData, widget.positionData)) {
+      _playback.ingest(widget.positionData, DateTime.now());
     }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _ticker.dispose();
+    _frame.dispose();
     super.dispose();
   }
 
-  Map<String, Offset> _extractPositions(PositionData data) {
-    final Map<String, Offset> result = {};
-    data.cars.forEach((number, car) {
-      result[number] = Offset(car.x, car.y);
-    });
-    return result;
-  }
-
-  bool _positionsEqual(Map<String, Offset> a, Map<String, Offset> b) {
-    if (a.length != b.length) return false;
-    for (final entry in a.entries) {
-      final other = b[entry.key];
-      if (other == null) return false;
-      if ((other.dx - entry.value.dx).abs() > 0.5 ||
-          (other.dy - entry.value.dy).abs() > 0.5) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  // Positions as currently rendered (lerp at the controller's current value).
-  Map<String, Offset> _currentPositions() {
-    final t = _controller.value;
-    final Map<String, Offset> result = {};
-    final keys = {..._fromPositions.keys, ..._toPositions.keys};
-    for (final key in keys) {
-      final from = _fromPositions[key];
-      final to = _toPositions[key];
-      if (from != null && to != null) {
-        result[key] = Offset.lerp(from, to, t)!;
-      } else {
-        result[key] = (to ?? from)!;
-      }
-    }
-    return result;
-  }
-
   Future<void> _loadTrack() async {
-    try {
-      // Map circuit names to track files
-      final trackFile = _getTrackFile(widget.circuitShortName);
-      if (trackFile == null) {
-        print('Track file not found for circuit: ${widget.circuitShortName}');
-        return;
-      }
-
-      final jsonStr =
-          await rootBundle.loadString('assets/TrackMaps/$trackFile');
-      final jsonData = jsonDecode(jsonStr);
-
-      // Parse x and y arrays plus the circuit's rotation (degrees).
-      final List xList = jsonData['x'];
-      final List yList = jsonData['y'];
-      final double rotationDeg =
-          (jsonData['rotation'] as num?)?.toDouble() ?? 0.0;
-
-      List<Offset> rawPoints = [];
-      for (int i = 0; i < xList.length && i < yList.length; i++) {
-        rawPoints.add(
-            Offset((xList[i] as num).toDouble(), (yList[i] as num).toDouble()));
-      }
-
-      if (rawPoints.isNotEmpty) {
-        final double rotationRad = rotationDeg * math.pi / 180.0;
-        // Rotate around the raw centre; the cars are later rotated about the
-        // same point so they stay aligned with the outline.
-        final rMinX =
-            rawPoints.map((e) => e.dx).reduce((a, b) => math.min(a, b));
-        final rMaxX =
-            rawPoints.map((e) => e.dx).reduce((a, b) => math.max(a, b));
-        final rMinY =
-            rawPoints.map((e) => e.dy).reduce((a, b) => math.min(a, b));
-        final rMaxY =
-            rawPoints.map((e) => e.dy).reduce((a, b) => math.max(a, b));
-        final center = Offset((rMinX + rMaxX) / 2, (rMinY + rMaxY) / 2);
-
-        final rotated =
-            rawPoints.map((p) => rotateAround(p, center, rotationRad)).toList();
-
-        double minX = rotated.map((e) => e.dx).reduce((a, b) => math.min(a, b));
-        double maxX = rotated.map((e) => e.dx).reduce((a, b) => math.max(a, b));
-        double minY = rotated.map((e) => e.dy).reduce((a, b) => math.min(a, b));
-        double maxY = rotated.map((e) => e.dy).reduce((a, b) => math.max(a, b));
-
-        if (mounted) {
-          setState(() {
-            _trackPoints = rotated;
-            _rotationRad = rotationRad;
-            _rotCenter = center;
-            this.minX = minX;
-            this.maxX = maxX;
-            this.minY = minY;
-            this.maxY = maxY;
-          });
-        }
-      }
-    } catch (e) {
-      print('Error loading track: $e');
-    }
-  }
-
-  String? _getTrackFile(String circuitShortName) {
-    // Map circuit short names to track JSON files
-    final Map<String, String> trackFiles = {
-      'Spielberg': 'Spielberg.json',
-      'Silverstone': 'Silverstone.json',
-      'Monaco': 'Monte-Carlo.json',
-      'Hungaroring': 'Hungaroring.json',
-      'Spa': 'Spa-Francorchamps.json',
-      'Zandvoort': 'Zandvoort.json',
-      'Monza': 'Monza.json',
-      'Marina Bay': 'Singapore.json',
-      'Suzuka': 'Suzuka.json',
-      'COTA': 'Austin.json',
-      'Mexico City': 'Mexico.json',
-      'Interlagos': 'Interlagos.json',
-      'Las Vegas': 'Las-Vegas.json',
-      'Qatar': 'Losail.json',
-      'Yas Marina': 'Yas-Marina.json',
-      'Bahrain': 'Sakhir.json',
-      'Jeddah': 'Jeddah.json',
-      'Melbourne': 'Melbourne.json',
-      'Imola': 'Imola.json',
-      'Miami': 'Miami.json',
-      'Barcelona': 'Catalunya.json',
-      'Montreal': 'Montreal.json',
-      'Baku': 'Baku.json',
-      'Azerbaijan': 'Baku.json', // Add Azerbaijan mapping
-      'Red Bull Ring': 'Spielberg.json',
-      'Circuit de Spa-Francorchamps': 'Spa-Francorchamps.json',
-      'Autodromo Nazionale di Monza': 'Monza.json',
-      // Add more mappings as needed
-    };
-
-    print('Looking for track file for circuit: "$circuitShortName"');
-    final trackFile = trackFiles[circuitShortName];
-    if (trackFile != null) {
-      print('Found track file: $trackFile');
-    } else {
-      print('No track file found for: "$circuitShortName"');
-      print('Available circuits: ${trackFiles.keys.toList()}');
+    final generation = ++_loadGeneration;
+    // Called from initState/didUpdateWidget, which are always followed by a
+    // build, so no setState is needed here.
+    _loadingTrack = true;
+    final service = widget.trackMapService ?? TrackMapService.instance;
+    final track = await service.load(
+      circuitKey: widget.circuitKey,
+      shortName: widget.circuitShortName,
+      year: widget.year,
+    );
+    if (!mounted || generation != _loadGeneration) return;
+    if (track == null) {
+      setState(() {
+        _trackPoints = [];
+        _loadingTrack = false;
+      });
+      return;
     }
 
-    return trackFile;
+    final rawPoints = track.points;
+    final rotationRad = track.rotationDeg * math.pi / 180.0;
+    // Rotate around the raw centre; the cars are later rotated about the same
+    // point so they stay aligned with the outline.
+    final rMinX = rawPoints.map((e) => e.dx).reduce(math.min);
+    final rMaxX = rawPoints.map((e) => e.dx).reduce(math.max);
+    final rMinY = rawPoints.map((e) => e.dy).reduce(math.min);
+    final rMaxY = rawPoints.map((e) => e.dy).reduce(math.max);
+    final center = Offset((rMinX + rMaxX) / 2, (rMinY + rMaxY) / 2);
+
+    final rotated =
+        rawPoints.map((p) => rotateAround(p, center, rotationRad)).toList();
+
+    setState(() {
+      _trackPoints = rotated;
+      _rotationRad = rotationRad;
+      _rotCenter = center;
+      minX = rotated.map((e) => e.dx).reduce(math.min);
+      maxX = rotated.map((e) => e.dx).reduce(math.max);
+      minY = rotated.map((e) => e.dy).reduce(math.min);
+      maxY = rotated.map((e) => e.dy).reduce(math.max);
+      _loadingTrack = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_trackPoints.isEmpty) {
+    if (_loadingTrack) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1691,6 +1617,15 @@ class _LiveTrackMapWidgetState extends State<LiveTrackMapWidget>
             SizedBox(height: 16),
             Text('Loading track map...', style: TextStyle(color: Colors.white)),
           ],
+        ),
+      );
+    }
+    if (_trackPoints.isEmpty) {
+      return const Center(
+        child: Text(
+          'Track map unavailable for this circuit',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.white70),
         ),
       );
     }
@@ -1705,14 +1640,9 @@ class _LiveTrackMapWidgetState extends State<LiveTrackMapWidget>
             rotationRad: _rotationRad,
             rotCenter: _rotCenter,
             drivers: widget.drivers,
-            statuses: {
-              for (final e in widget.positionData.cars.entries)
-                e.key: e.value.status,
-            },
-            fromPositions: _fromPositions,
-            toPositions: _toPositions,
             trackColor: widget.trackColor,
-            animation: _controller,
+            playback: _playback,
+            repaint: _frame,
           ),
         );
       },
@@ -1726,11 +1656,8 @@ class _LiveTrackPainter extends CustomPainter {
   final double rotationRad;
   final Offset rotCenter;
   final Map<String, Driver> drivers;
-  final Map<String, String> statuses;
-  final Map<String, Offset> fromPositions;
-  final Map<String, Offset> toPositions;
   final Color trackColor;
-  final Animation<double> animation;
+  final PositionPlayback playback;
 
   _LiveTrackPainter({
     required this.trackPoints,
@@ -1738,12 +1665,10 @@ class _LiveTrackPainter extends CustomPainter {
     required this.rotationRad,
     required this.rotCenter,
     required this.drivers,
-    required this.statuses,
-    required this.fromPositions,
-    required this.toPositions,
     required this.trackColor,
-    required this.animation,
-  }) : super(repaint: animation);
+    required this.playback,
+    required Listenable repaint,
+  }) : super(repaint: repaint);
 
   static const double _pad = 18.0;
 
@@ -1799,20 +1724,15 @@ class _LiveTrackPainter extends CustomPainter {
       );
     }
 
-    // Cars, interpolated between the previous and latest positions.
-    final t = animation.value;
-    final keys = {...fromPositions.keys, ...toPositions.keys};
-    for (final number in keys) {
-      final from = fromPositions[number];
-      final to = toPositions[number];
-      final Offset? raw = (from != null && to != null)
-          ? Offset.lerp(from, to, t)
-          : (to ?? from);
-      if (raw == null) continue;
-
+    // Cars at the current playback instant.
+    final cars = playback.positionsAt(DateTime.now());
+    for (final entry in cars.entries) {
+      final number = entry.key;
+      final car = entry.value;
       final driver = drivers[number];
       final pos = _project(
-        _LiveTrackMapWidgetState.rotateAround(raw, rotCenter, rotationRad),
+        _LiveTrackMapWidgetState.rotateAround(
+            car.position, rotCenter, rotationRad),
         size,
       );
 
@@ -1827,8 +1747,7 @@ class _LiveTrackPainter extends CustomPainter {
       }
 
       // Dim cars that are not actively on track (pits, retired, off track).
-      final onTrack = (statuses[number] ?? 'OnTrack') == 'OnTrack';
-      final opacity = onTrack ? 1.0 : 0.3;
+      final opacity = car.onTrack ? 1.0 : 0.3;
 
       canvas.drawCircle(
         pos,
@@ -1865,8 +1784,9 @@ class _LiveTrackPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _LiveTrackPainter oldDelegate) {
     return oldDelegate.trackPoints != trackPoints ||
-        oldDelegate.toPositions != toPositions ||
         oldDelegate.trackColor != trackColor ||
-        oldDelegate.bounds != bounds;
+        oldDelegate.bounds != bounds ||
+        oldDelegate.drivers != drivers ||
+        oldDelegate.playback != playback;
   }
 }

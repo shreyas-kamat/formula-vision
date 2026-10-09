@@ -202,9 +202,9 @@ class LiveDataService {
         'present=${posZ is String && posZ.isNotEmpty}');
     if (posZ is String && posZ.isNotEmpty) {
       compute(decodePositionZ, posZ).then((position) {
-        final entries = position?['Entries'];
-        debugPrint('[LiveDataService] seeded positions, entries='
-            '${entries is List ? entries.length : 'none'}');
+        final frames = position?['Position'];
+        debugPrint('[LiveDataService] seeded positions, frames='
+            '${frames is List ? frames.length : 'none'}');
         if (position != null) _updatePositionData(position);
       });
     }
@@ -423,6 +423,9 @@ class LiveDataService {
             break;
           case 'LapCount':
             _updateLapCount(updated);
+            break;
+          case 'SessionData':
+            _updateSessionData(updated);
             break;
           case 'PositionData':
           case 'Position.z':
@@ -999,6 +1002,15 @@ class LiveDataService {
           ? data['TotalLaps']
           : cur.lapCount?.totalLaps ?? 0,
     );
+    _scheduleEmit();
+  }
+
+  void _updateSessionData(dynamic data) {
+    if (_current.isEmpty) return;
+    final part = latestQualifyingPart(data);
+    if (part == null || part == _current[0].qualifyingPart) return;
+    debugPrint('[LiveDataService] QualifyingPart: $part');
+    _current[0].qualifyingPart = part;
     _scheduleEmit();
   }
 

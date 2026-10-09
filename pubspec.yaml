@@ -121,6 +121,7 @@ flutter:
     - assets/TrackMaps/Suzuka.json
     - assets/TrackMaps/Yas-Marina.json
     - assets/TrackMaps/Zandvoort.json
+    - assets/TrackMaps/Madring.json
 
     # Recorded position sample for offline track-map verification
     - assets/test/position_replay.json

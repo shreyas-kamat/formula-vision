@@ -120,10 +120,14 @@ class LiveData {
   TeamRadio? teamRadio;
   ChampionshipPrediction? championshipPrediction;
   PositionData? positionData;
+  // Current qualifying segment (1/2/3) from SessionData.Series; null outside
+  // qualifying sessions.
+  int? qualifyingPart;
   // Per-driver live telemetry, keyed by racing number.
   Map<String, CarTelemetry> carData;
 
   LiveData({
+    this.qualifyingPart,
     this.heartbeat,
     this.extrapolatedClock,
     this.topThree,
@@ -928,7 +932,7 @@ class Meeting {
 
   factory Meeting.fromJson(Map<String, dynamic> json) {
     return Meeting(
-      key: json['key'] ?? 0,
+      key: json['key'] ?? json['Key'] ?? 0,
       name: json['Name'] ?? '',
       officialName: json['officialName'] ?? json['OfficialName'] ?? '',
       location: json['location'] ?? json['Location'] ?? '',
@@ -939,7 +943,9 @@ class Meeting {
               : Country(key: 0, code: '', name: ''),
       circuit: json['circuit'] != null
           ? Circuit.fromJson(json['circuit'])
-          : Circuit(key: 0, shortName: ''),
+          : json['Circuit'] != null
+              ? Circuit.fromJson(json['Circuit'])
+              : Circuit(key: 0, shortName: ''),
     );
   }
 
@@ -964,8 +970,8 @@ class Circuit {
 
   factory Circuit.fromJson(Map<String, dynamic> json) {
     return Circuit(
-      key: json['key'] ?? 0,
-      shortName: json['shortName'] ?? '',
+      key: json['key'] ?? json['Key'] ?? 0,
+      shortName: json['shortName'] ?? json['ShortName'] ?? '',
     );
   }
 
@@ -1891,47 +1897,95 @@ class CarDataChannels {
       };
 }
 
-class PositionData {
+/// One timestamped frame of car positions from a Position.z update.
+class PositionSample {
   final String timestamp;
+
+  /// [timestamp] parsed as UTC, or null when it is not a date (tests, legacy
+  /// relay payloads).
+  final DateTime? time;
   final Map<String, PositionDataCar> cars;
+
+  PositionSample({required this.timestamp, required this.cars})
+      : time = DateTime.tryParse(timestamp)?.toUtc();
+}
+
+class PositionData {
+  /// Timestamp of the newest frame.
+  final String timestamp;
+
+  /// Cars in the newest frame.
+  final Map<String, PositionDataCar> cars;
+
+  /// Every frame in this update, oldest first. F1 batches ~4 frames (~250 ms
+  /// apart) into each Position.z message.
+  final List<PositionSample> samples;
 
   PositionData({
     required this.timestamp,
     required this.cars,
-  });
+    List<PositionSample>? samples,
+  }) : samples =
+            samples ?? [PositionSample(timestamp: timestamp, cars: cars)];
 
   factory PositionData.fromJson(Map<String, dynamic> json) {
-    // The live Position.z payload is shaped as
-    //   { Entries: [ { Utc, Cars: { "44": {X,Y,Z,Status} } }, ... ] }
-    // so use the most recent entry. Fall back to a flat
-    //   { Timestamp, Cars: {...} } shape for snapshots/tests.
-    Map<String, dynamic>? carsSource;
-    String timestamp = json['Timestamp'] ?? '';
-
+    // Accepted shapes:
+    //   live Position.z: { Position: [ { Timestamp, Entries: { "44": {X,Y,Z,Status} } } ] }
+    //   legacy relay:    { Entries: [ { Utc, Cars: { "44": {...} } } ] }
+    //   flat snapshot:   { Timestamp, Cars: { "44": {...} } }
+    final samples = <PositionSample>[];
+    final position = json['Position'];
     final entries = json['Entries'];
-    if (entries is List && entries.isNotEmpty) {
-      final last = entries.last;
-      if (last is Map) {
-        carsSource = (last['Cars'] as Map?)?.cast<String, dynamic>();
-        timestamp = last['Utc'] ?? last['Timestamp'] ?? timestamp;
+    if (position is List) {
+      for (final item in position) {
+        if (item is Map) {
+          samples.add(PositionSample(
+            timestamp: item['Timestamp']?.toString() ?? '',
+            cars: _parseCars(item['Entries']),
+          ));
+        }
+      }
+    } else if (entries is List) {
+      for (final item in entries) {
+        if (item is Map) {
+          samples.add(PositionSample(
+            timestamp: (item['Utc'] ?? item['Timestamp'])?.toString() ?? '',
+            cars: _parseCars(item['Cars']),
+          ));
+        }
       }
     } else if (json['Cars'] != null) {
-      carsSource = (json['Cars'] as Map).cast<String, dynamic>();
+      samples.add(PositionSample(
+        timestamp: json['Timestamp']?.toString() ?? '',
+        cars: _parseCars(json['Cars']),
+      ));
     }
 
-    Map<String, PositionDataCar> carsMap = {};
-    if (carsSource != null) {
-      carsSource.forEach((key, value) {
+    if (samples.isEmpty) {
+      return PositionData(
+        timestamp: json['Timestamp']?.toString() ?? '',
+        cars: const {},
+        samples: const [],
+      );
+    }
+    return PositionData(
+      timestamp: samples.last.timestamp,
+      cars: samples.last.cars,
+      samples: samples,
+    );
+  }
+
+  static Map<String, PositionDataCar> _parseCars(dynamic source) {
+    final cars = <String, PositionDataCar>{};
+    if (source is Map) {
+      source.forEach((key, value) {
         if (value is Map) {
-          carsMap[key] = PositionDataCar.fromJson(value.cast<String, dynamic>());
+          cars[key.toString()] =
+              PositionDataCar.fromJson(value.cast<String, dynamic>());
         }
       });
     }
-
-    return PositionData(
-      timestamp: timestamp,
-      cars: carsMap,
-    );
+    return cars;
   }
 
   Map<String, dynamic> toJson() => {
@@ -1956,6 +2010,10 @@ class PositionDataCar {
   });
 
   bool get isOnTrack => status == 'OnTrack';
+
+  /// F1 reports (0,0) for cars it has no position for (e.g. before the
+  /// session starts); those should not be drawn.
+  bool get hasFix => x != 0 || y != 0;
 
   factory PositionDataCar.fromJson(Map<String, dynamic> json) {
     return PositionDataCar(

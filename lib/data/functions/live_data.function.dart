@@ -7,6 +7,7 @@ Future<List<LiveData>> fetchLiveData(dynamic response) async {
 
   if (response is Map<String, dynamic>) {
     final data = LiveData(
+      qualifyingPart: latestQualifyingPart(response['SessionData']),
       sessionInfo: response['SessionInfo'] is Map
           ? SessionInfo(
               meeting: response['SessionInfo']['Meeting'] is Map
@@ -134,6 +135,26 @@ Future<List<LiveData>> fetchLiveData(dynamic response) async {
   }
 
   return fetchedData;
+}
+
+/// Latest `QualifyingPart` in a SessionData payload. `Series` is a List in the
+/// snapshot and an index-keyed Map in deltas; returns null if none present.
+int? latestQualifyingPart(dynamic sessionData) {
+  if (sessionData is! Map) return null;
+  final series = sessionData['Series'];
+  final Iterable entries = series is List
+      ? series
+      : series is Map
+          ? (series.entries.toList()
+                ..sort((a, b) => (int.tryParse(a.key.toString()) ?? 0)
+                    .compareTo(int.tryParse(b.key.toString()) ?? 0)))
+              .map((e) => e.value)
+          : const [];
+  int? part;
+  for (final e in entries) {
+    if (e is Map && e['QualifyingPart'] is int) part = e['QualifyingPart'];
+  }
+  return part;
 }
 
 // Sort drivers by racing number (numerical order)
