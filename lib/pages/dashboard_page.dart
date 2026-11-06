@@ -6,12 +6,16 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:formulavision/data/services/app_settings_service.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:formulavision/components/conditions_line.dart';
 import 'package:formulavision/components/connecting_indicator.dart';
 import 'package:formulavision/components/driver_row_card.dart';
+import 'package:formulavision/components/driver_row_card_expanded.dart';
 import 'package:formulavision/components/race_control_toast.dart';
 import 'package:formulavision/components/race_timer_bar.dart';
-import 'package:formulavision/components/weather_info_card.dart';
+import 'package:formulavision/components/speed_trap_card.dart';
+import 'package:formulavision/components/team_radio_card.dart';
 import 'package:formulavision/components/track_status_card.dart';
+import 'package:formulavision/components/weather_info_card.dart';
 import 'package:formulavision/data/models/live_data.model.dart';
 import 'package:formulavision/data/services/live_data_service.dart';
 import 'package:formulavision/data/services/position_playback.dart';
@@ -50,8 +54,11 @@ class _TelemetryPageState extends State<TelemetryPage> {
   bool _isConnected = false;
   String _connectionStatus = "Disconnected";
 
-  // Set once the first snapshot arrives; drives the header/timer FutureBuilders.
+  // Resolves to the service's current live-data list; drives the header/timer
+  // FutureBuilders. Replaced whenever the service swaps in a new list (each
+  // snapshot, including after a reconnect) so the UI never pins a stale one.
   Future<List<LiveData>>? _liveDataFuture;
+  List<LiveData>? _liveDataList;
   StreamSubscription<List<LiveData>>? _liveSub;
   StreamSubscription<List<Message>>? _rcSub;
 
@@ -79,12 +86,19 @@ class _TelemetryPageState extends State<TelemetryPage> {
   String _trackMapDisplayMode = AppSettings.trackMapModeCard;
   bool _trackMapExpanded = true; // Card-mode expand/collapse state
 
+  // Dashboard layout: compact timing tower (default) or expanded card view.
+  String _dashboardLayout = AppSettings.dashboardLayoutCompact;
+  bool get _isCompact => _dashboardLayout != AppSettings.dashboardLayoutExpanded;
+
   @override
   void initState() {
     super.initState();
     final service = LiveDataService.instance;
     final cur = service.current;
-    if (cur != null) _liveDataFuture = Future.value(cur);
+    if (cur != null) {
+      _liveDataList = cur;
+      _liveDataFuture = Future.value(cur);
+    }
     _isConnected = service.isConnected.value;
     _connectionStatus = service.connectionStatus.value;
     _delayEnabled = service.delayEnabled;
@@ -93,15 +107,22 @@ class _TelemetryPageState extends State<TelemetryPage> {
     service.isConnected.addListener(_onServiceStatus);
     _rcSub = service.raceControlAlerts.listen(_alertRaceControl);
     // Rebuild on each emit so the pinned header/timer FutureBuilders refresh
-    // alongside the streaming content; the future is set once from the first
-    // snapshot and resolves to the in-place-mutated list.
+    // alongside the streaming content. Deltas mutate the list in place; a new
+    // snapshot (e.g. after a reconnect) emits a new list, so re-point the
+    // future at it.
     _liveSub = service.stream.listen((data) {
       if (!mounted) return;
-      setState(() { _liveDataFuture ??= Future.value(data); });
+      setState(() {
+        if (!identical(data, _liveDataList)) {
+          _liveDataList = data;
+          _liveDataFuture = Future.value(data);
+        }
+      });
     });
     service.attach();
     _loadRaceControlSoundSetting();
     _loadTrackMapSettings();
+    _loadDashboardLayout();
   }
 
   void _onServiceStatus() {
@@ -147,6 +168,13 @@ class _TelemetryPageState extends State<TelemetryPage> {
     }
   }
 
+  Future<void> _loadDashboardLayout() async {
+    final layout = await AppSettings.getDashboardLayout();
+    if (mounted) {
+      setState(() => _dashboardLayout = layout);
+    }
+  }
+
   /// Maps the internal connection status to friendly copy shown under the
   /// start-light gantry while waiting for the first telemetry.
   String _connectingDetail() {
@@ -189,21 +217,51 @@ class _TelemetryPageState extends State<TelemetryPage> {
   }
 
   Widget _buildExpandableTimerButton() {
+    if (!_isCompact) {
+      // Expanded layout: original filled button.
+      return Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: _delayEnabled ? Colors.orange : Colors.amber,
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: IconButton(
+            onPressed: () {
+              _showDelayModal(context);
+            },
+            icon: const Icon(Icons.timer),
+            color: Colors.black,
+            iconSize: 24,
+            constraints: const BoxConstraints(),
+            padding: EdgeInsets.zero,
+            tooltip: 'Broadcast delay',
+          ),
+        ),
+      );
+    }
     return Container(
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-        color: _delayEnabled ? Colors.orange : Colors.amber,
+        color: Colors.transparent,
         shape: BoxShape.circle,
+        border: Border.all(
+          color: _delayEnabled ? Colors.orange : Colors.white24,
+        ),
       ),
       child: Center(
         child: IconButton(
+          tooltip: 'Broadcast delay',
           onPressed: () {
             _showDelayModal(context);
           },
-          icon: const Icon(Icons.timer),
-          color: Colors.black,
-          iconSize: 24,
+          icon: Icon(
+            Icons.timer_outlined,
+            size: 20,
+            color: _delayEnabled ? Colors.orange : Colors.white70,
+          ),
           constraints: const BoxConstraints(),
           padding: EdgeInsets.zero,
         ),
@@ -509,7 +567,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
   // Header widget to avoid repetition
   Widget _buildHeaderWidget(SessionInfo? sessionInfo, TrackStatus? trackStatus,
-      int? qualifyingPart) {
+      int? qualifyingPart,
+      {SessionStatus? sessionStatus}) {
     final meetingName = sessionInfo?.meeting.name ?? 'Grand Prix';
     // Prefer the session name ("Sprint Qualifying") over the generic type
     // ("Qualifying"), and append the live segment (SQ1 / Q2 ...).
@@ -525,6 +584,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
     }
     final trackStatusDisplay = _getTrackStatusDisplay(trackStatus?.status);
     final trackStatusColor = _getTrackStatusColor(trackStatus?.status);
+    final sessionChip = _buildSessionStatusChip(sessionStatus?.status);
 
     return Slidable(
       endActionPane: ActionPane(
@@ -582,7 +642,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: trackStatusColor.withOpacity(0.4),
+                        color: trackStatusColor.withValues(alpha: 0.25),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -607,6 +667,10 @@ class _TelemetryPageState extends State<TelemetryPage> {
                         ],
                       ),
                     ),
+                    if (sessionChip != null) ...[
+                      const SizedBox(width: 10),
+                      sessionChip,
+                    ],
                   ],
                 ),
               ],
@@ -615,6 +679,49 @@ class _TelemetryPageState extends State<TelemetryPage> {
           const SizedBox(width: 16),
           _buildExpandableTimerButton(),
         ],
+      ),
+    );
+  }
+
+  // Session state chip (SessionStatus feed). Started returns null because the
+  // track status chip already covers a running session.
+  Widget? _buildSessionStatusChip(String? status) {
+    final String label;
+    final Color color;
+    switch (status?.toLowerCase()) {
+      case 'inactive':
+        label = 'NOT STARTED';
+        color = Colors.grey;
+        break;
+      case 'aborted':
+        label = 'SUSPENDED';
+        color = Colors.red;
+        break;
+      case 'finished':
+      case 'finalised':
+      case 'ends':
+        label = 'FINISHED';
+        color = Colors.black;
+        break;
+      default:
+        return null;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: color == Colors.black ? 1.0 : 0.4),
+        borderRadius: BorderRadius.circular(20),
+        border: color == Colors.black
+            ? Border.all(color: Colors.white24)
+            : null,
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
@@ -779,22 +886,86 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
   // Builds the weather + drivers list section reused by both display modes.
   Widget _buildDriversSection(List<LiveData> liveData) {
+    if (!_isCompact) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (liveData[0].weatherData != null) ...[
+            _buildWeatherCard(liveData[0].weatherData!),
+            const SizedBox(height: 10),
+          ],
+          const Text(
+            'Drivers',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 5),
+          _buildDriverList(
+            liveData[0].driverList!.drivers,
+            liveData[0].timingData!.lines,
+            liveData[0].timingAppData?.lines ?? {},
+            liveData[0].sessionInfo!,
+            liveData[0].carData,
+            sessionPart: liveData[0].timingData!.sessionPart ??
+                liveData[0].qualifyingPart,
+            noEntries: liveData[0].timingData!.noEntries,
+          ),
+          const SizedBox(height: 24),
+          SpeedTrapCard(
+            stats: liveData[0].timingStats,
+            drivers: liveData[0].driverList?.drivers ?? {},
+          ),
+          const SizedBox(height: 24),
+          TeamRadioCard(
+            teamRadio: liveData[0].teamRadio,
+            drivers: liveData[0].driverList?.drivers ?? {},
+            sessionPath: liveData[0].sessionInfo?.path ?? '',
+          ),
+          const SizedBox(height: 24),
+        ],
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildWeatherCard(liveData[0].weatherData!),
-        const SizedBox(height: 10),
-        const Text('Drivers',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 5),
+        ConditionsLine(weather: liveData[0].weatherData),
+        const SizedBox(height: 12),
         _buildDriverList(
           liveData[0].driverList!.drivers,
           liveData[0].timingData!.lines,
           liveData[0].timingAppData?.lines ?? {},
           liveData[0].sessionInfo!,
           liveData[0].carData,
+          sessionPart: liveData[0].timingData!.sessionPart ??
+              liveData[0].qualifyingPart,
+          noEntries: liveData[0].timingData!.noEntries,
         ),
+        const SizedBox(height: 28),
+        SpeedTrapCard(
+          stats: liveData[0].timingStats,
+          drivers: liveData[0].driverList?.drivers ?? {},
+        ),
+        const SizedBox(height: 24),
+        TeamRadioCard(
+          teamRadio: liveData[0].teamRadio,
+          drivers: liveData[0].driverList?.drivers ?? {},
+          sessionPath: liveData[0].sessionInfo?.path ?? '',
+        ),
+        const SizedBox(height: 24),
       ],
+    );
+  }
+
+  // Expanded-layout weather card (original dashboard). Only used when
+  // [_isCompact] is false; the compact layout shows ConditionsLine instead.
+  Widget _buildWeatherCard(WeatherData weather) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: WeatherInfoCard(
+          airTemp: weather.airTemp,
+          trackTemp: weather.trackTemp,
+          windSpeed: weather.windSpeed,
+          humidity: weather.humidity,
+          weatherCondition: weather.rainfall == '0' ? 'Clear' : 'Rain'),
     );
   }
 
@@ -834,27 +1005,83 @@ class _TelemetryPageState extends State<TelemetryPage> {
       );
     }
 
+    // Expanded layout: weather card, the labelled "Drivers" list, then speed
+    // trap and team radio below it.
+    if (!_isCompact) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          if (data.weatherData != null) ...[
+            _buildWeatherCard(data.weatherData!),
+            const SizedBox(height: 10),
+          ],
+          if (showTrackMap) ...[
+            _buildTrackMapCard(data),
+            const SizedBox(height: 10),
+          ],
+          const Text(
+            'Drivers',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 5),
+          _buildDriverList(
+            data.driverList!.drivers,
+            data.timingData!.lines,
+            data.timingAppData?.lines ?? {},
+            data.sessionInfo!,
+            data.carData,
+            sessionPart: data.timingData!.sessionPart ?? data.qualifyingPart,
+            noEntries: data.timingData!.noEntries,
+          ),
+          const SizedBox(height: 24),
+          SpeedTrapCard(
+            stats: data.timingStats,
+            drivers: data.driverList?.drivers ?? {},
+          ),
+          const SizedBox(height: 24),
+          TeamRadioCard(
+            teamRadio: data.teamRadio,
+            drivers: data.driverList?.drivers ?? {},
+            sessionPath: data.sessionInfo?.path ?? '',
+          ),
+          const SizedBox(height: 24),
+        ],
+      );
+    }
+
     // Card mode (or map disabled).
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        _buildWeatherCard(data.weatherData!),
-        const SizedBox(height: 10),
+        ConditionsLine(weather: data.weatherData),
+        const SizedBox(height: 12),
         if (showTrackMap) ...[
           _buildTrackMapCard(data),
           const SizedBox(height: 10),
         ],
-        const Text('Drivers',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 5),
         _buildDriverList(
           data.driverList!.drivers,
           data.timingData!.lines,
           data.timingAppData?.lines ?? {},
           data.sessionInfo!,
           data.carData,
+          sessionPart: data.timingData!.sessionPart ?? data.qualifyingPart,
+          noEntries: data.timingData!.noEntries,
         ),
+        const SizedBox(height: 28),
+        SpeedTrapCard(
+          stats: data.timingStats,
+          drivers: data.driverList?.drivers ?? {},
+        ),
+        const SizedBox(height: 24),
+        TeamRadioCard(
+          teamRadio: data.teamRadio,
+          drivers: data.driverList?.drivers ?? {},
+          sessionPath: data.sessionInfo?.path ?? '',
+        ),
+        const SizedBox(height: 24),
       ],
     );
   }
@@ -867,7 +1094,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
           // Connection indicator bar
           Container(
             width: double.infinity,
-            height: 8,
+            height: _isCompact ? 3 : 8,
             color: _isConnected
                 ? (_useSimulation ? Colors.amber : Colors.green)
                 : Colors.red,
@@ -894,7 +1121,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
                                 _buildHeaderWidget(
                                     snapshot.data![0].sessionInfo,
                                     snapshot.data![0].trackStatus,
-                                    snapshot.data![0].qualifyingPart),
+                                    snapshot.data![0].qualifyingPart,
+                                    sessionStatus:
+                                        snapshot.data![0].sessionStatus),
                                 const SizedBox(height: 16),
                               ],
                             );
@@ -1001,7 +1230,10 @@ class _TelemetryPageState extends State<TelemetryPage> {
                                                         snapshot.data![0]
                                                             .trackStatus,
                                                         snapshot.data![0]
-                                                            .qualifyingPart),
+                                                            .qualifyingPart,
+                                                        sessionStatus:
+                                                            snapshot.data![0]
+                                                                .sessionStatus),
                                                     const SizedBox(height: 16),
                                                   ],
                                                 );
@@ -1129,41 +1361,6 @@ class _TelemetryPageState extends State<TelemetryPage> {
     );
   }
 
-  Widget _buildWeatherCard(WeatherData weather) {
-    // return Card(
-    //   margin: const EdgeInsets.only(bottom: 16),
-    //   child: Padding(
-    //     padding: const EdgeInsets.all(16.0),
-    //     child: Column(
-    //       crossAxisAlignment: CrossAxisAlignment.start,
-    //       children: [
-    //         const Text(
-    //           'Weather Conditions',
-    //           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-    //         ),
-    //         const SizedBox(height: 8),
-    //         _buildInfoRow('Air Temperature:', '${weather.airTemp}°C'),
-    //         _buildInfoRow('Track Temperature:', '${weather.trackTemp}°C'),
-    //         _buildInfoRow('Wind Speed:', '${(weather.windSpeed)} m/s'),
-    //         _buildInfoRow(
-    //             'Weather:', weather.rainfall == '0' ? 'Clear' : 'Rain'),
-    //         _buildInfoRow('Humidity:', '${weather.humidity}%'),
-    //         _buildInfoRow('Pressure:', '${weather.pressure} hPa'),
-    //       ],
-    //     ),
-    //   ),
-    // );
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: WeatherInfoCard(
-          airTemp: weather.airTemp,
-          trackTemp: weather.trackTemp,
-          windSpeed: weather.windSpeed,
-          humidity: weather.humidity,
-          weatherCondition: weather.rainfall == '0' ? 'Clear' : 'Rain'),
-    );
-  }
-
   Widget _buildDriverDataTable(LiveData driverData) {
     // return Placeholder(
     //   fallbackHeight: 200,
@@ -1246,132 +1443,228 @@ class _TelemetryPageState extends State<TelemetryPage> {
     );
   }
 
+  /// F1's official qualifying gap to the car ahead, from `Stats[part - 1]`.
+  /// Eliminated drivers keep the gap from the last segment they set one in.
+  /// Returns null when F1 sent no stats so the caller can fall back.
+  String? _qualifyingGap(TimingDataDriver timing, int? sessionPart) {
+    final stats = timing.stats;
+    if (stats == null || stats.isEmpty) return null;
+    if (timing.knockedOut ?? false) {
+      return stats.reversed
+          .map((s) => s.timeDifftoPositionAhead)
+          .firstWhere((g) => g.isNotEmpty, orElse: () => '');
+    }
+    if (sessionPart == null || sessionPart < 1) return null;
+    final index = sessionPart - 1;
+    return index < stats.length ? stats[index].timeDifftoPositionAhead : '';
+  }
+
+  /// Short on-track state label for the driver row, most significant first.
+  String? _driverTrackState(TimingDataDriver timing) {
+    if (timing.retired) return 'RET';
+    if (timing.stopped) return 'STOP';
+    if (timing.knockedOut ?? false) return 'ELIM';
+    if (timing.inPit) return 'PIT';
+    if (timing.pitOut) return 'OUT LAP';
+    return null;
+  }
+
   Widget _buildDriverList(
       Map<String, Driver> drivers,
       Map<String, TimingDataDriver> timingData,
       Map<String, TimingAppDataDriver> timingAppData,
       SessionInfo sessionInfo,
-      Map<String, CarTelemetry> carData) {
+      Map<String, CarTelemetry> carData,
+      {int? sessionPart,
+      List<int>? noEntries}) {
+    final bool isQualifying = sessionInfo.type.toLowerCase() == 'qualifying';
+    // Cars that progress from the current segment (e.g. 15 of 20 in Q1).
+    // Q3 / non-qualifying sessions have no elimination line.
+    final int? advancing = isQualifying &&
+            sessionPart != null &&
+            sessionPart >= 1 &&
+            noEntries != null &&
+            noEntries.length > sessionPart &&
+            noEntries[sessionPart] > 0
+        ? noEntries[sessionPart]
+        : null;
+
     // Sort drivers by line number (current race position)
     List<MapEntry<String, Driver>> sortedDrivers = drivers.entries.toList()
       ..sort((a, b) => (_currentPositions[a.key] ?? a.value.line)
           .compareTo(_currentPositions[b.key] ?? b.value.line));
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
-      itemCount: sortedDrivers.length,
-      itemBuilder: (context, index) {
-        final entry = sortedDrivers[index];
-        final String racingNumber = entry.key;
-        final Driver driver = entry.value;
+    // Same session rule as DriverRowCard: interval column for race/sprint/quali.
+    final bool showInterval = sessionInfo.type.toLowerCase() == 'race' ||
+        sessionInfo.type.toLowerCase() == 'sprint' ||
+        isQualifying;
 
-        final TimingDataDriver timing = timingData[racingNumber]!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_isCompact)
+          LeaderboardHeader(
+            showInterval: showInterval,
+            isQualifying: isQualifying,
+          ),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          itemCount: sortedDrivers.length,
+          itemBuilder: (context, index) {
+            final entry = sortedDrivers[index];
+            final String racingNumber = entry.key;
+            final Driver driver = entry.value;
 
-        // Live position is the single source of truth for ordering/labels.
-        final int livePos = _currentPositions[racingNumber] ?? driver.line;
+            final TimingDataDriver timing = timingData[racingNumber]!;
 
-        // Get interval value with proper handling based on position, not index
-        String intervalText = "";
-        if (livePos == 1) {
-          // Leader (show LEADER instead of interval)
-          intervalText = "Leader";
-        } else if (sessionInfo.type.toLowerCase() == 'qualifying') {
-          // For qualifying: Calculate time difference from driver above
-          final driverAbovePosition = livePos - 1;
-          MapEntry<String, Driver>? driverAbove;
+            // Live position is the single source of truth for ordering/labels.
+            final int livePos = _currentPositions[racingNumber] ?? driver.line;
 
-          for (var entry in sortedDrivers) {
-            final entryPos = _currentPositions[entry.key] ?? entry.value.line;
-            if (entryPos == driverAbovePosition) {
-              driverAbove = entry;
-              break;
-            }
-          }
+            // Get interval value with proper handling based on position, not index
+            String intervalText = "";
+            final bool knockedOut = timing.knockedOut ?? false;
+            final String? officialGap =
+                isQualifying ? _qualifyingGap(timing, sessionPart) : null;
 
-          if (driverAbove != null) {
-            final driverAboveRacingNumber = driverAbove.key;
-            final driverAboveTiming = timingData[driverAboveRacingNumber];
+            if (livePos == 1) {
+              // Leader (show LEADER instead of interval)
+              intervalText = "Leader";
+            } else if (officialGap != null) {
+              // F1's own per-segment gap to the car ahead (handles deleted laps
+              // and segment resets, unlike subtracting best laps ourselves).
+              intervalText = officialGap;
+            } else if (isQualifying) {
+              // For qualifying: Calculate time difference from driver above
+              final driverAbovePosition = livePos - 1;
+              MapEntry<String, Driver>? driverAbove;
 
-            // Parse best lap times
-            String currentBestTime = timing.bestLapTime.value;
-            String aboveBestTime = driverAboveTiming?.bestLapTime.value ?? '';
+              for (var entry in sortedDrivers) {
+                final entryPos = _currentPositions[entry.key] ?? entry.value.line;
+                if (entryPos == driverAbovePosition) {
+                  driverAbove = entry;
+                  break;
+                }
+              }
 
-            // Calculate time difference if both times are available
-            if (currentBestTime.isNotEmpty &&
-                aboveBestTime.isNotEmpty &&
-                currentBestTime != '--:--.---' &&
-                aboveBestTime != '--:--.---') {
-              // Parse lap times to milliseconds
-              final currentMs = _parseTimeToMilliseconds(currentBestTime);
-              final aboveMs = _parseTimeToMilliseconds(aboveBestTime);
+              if (driverAbove != null) {
+                final driverAboveRacingNumber = driverAbove.key;
+                final driverAboveTiming = timingData[driverAboveRacingNumber];
 
-              if (currentMs > 0 && aboveMs > 0) {
-                final diffMs = currentMs - aboveMs;
-                intervalText = _formatMillisecondsToTime(diffMs);
-              } else {
-                intervalText = '';
+                // Parse best lap times
+                String currentBestTime = timing.bestLapTime.value;
+                String aboveBestTime = driverAboveTiming?.bestLapTime.value ?? '';
+
+                // Calculate time difference if both times are available
+                if (currentBestTime.isNotEmpty &&
+                    aboveBestTime.isNotEmpty &&
+                    currentBestTime != '--:--.---' &&
+                    aboveBestTime != '--:--.---') {
+                  // Parse lap times to milliseconds
+                  final currentMs = _parseTimeToMilliseconds(currentBestTime);
+                  final aboveMs = _parseTimeToMilliseconds(aboveBestTime);
+
+                  if (currentMs > 0 && aboveMs > 0) {
+                    final diffMs = currentMs - aboveMs;
+                    intervalText = _formatMillisecondsToTime(diffMs);
+                  } else {
+                    intervalText = '';
+                  }
+                } else {
+                  intervalText = '';
+                }
               }
             } else {
-              intervalText = '';
+              // Get interval to position ahead
+              intervalText =
+                  timing.intervalToPositionAhead?.value ?? timing.gapToLeader;
             }
-          }
-        } else {
-          // Get interval to position ahead
-          intervalText =
-              timing.intervalToPositionAhead?.value ?? timing.gapToLeader;
-        }
 
-        // Parse team color
-        Color teamColor;
-        try {
-          if (driver.teamColour.isNotEmpty && driver.teamColour.length == 6) {
-            teamColor = Color(int.parse('0xFF${driver.teamColour}'));
-          } else {
-            teamColor = Colors.grey;
-          }
-        } catch (e) {
-          print('Error parsing color: ${driver.teamColour} - $e');
-          teamColor = Colors.grey;
-        }
+            // Parse team color
+            Color teamColor;
+            try {
+              if (driver.teamColour.isNotEmpty && driver.teamColour.length == 6) {
+                teamColor = Color(int.parse('0xFF${driver.teamColour}'));
+              } else {
+                teamColor = Colors.grey;
+              }
+            } catch (e) {
+              print('Error parsing color: ${driver.teamColour} - $e');
+              teamColor = Colors.grey;
+            }
 
-        // Get tyre/stint info from timing app data if available
-        String tireCompound = '';
-        int stintLaps = 0;
-        bool isNewTyre = true;
-        List<Stint> stints = const [];
-        if (timingAppData.containsKey(racingNumber) &&
-            timingAppData[racingNumber]!.stints.isNotEmpty) {
-          stints = timingAppData[racingNumber]!.stints;
-          final currentStint = stints.last;
-          tireCompound = currentStint.compound ?? '';
-          stintLaps = currentStint.totalLaps ?? 0;
-          isNewTyre = (currentStint.isNew ?? 'true').toLowerCase() == 'true';
-        }
+            // Get tyre/stint info from timing app data if available
+            String tireCompound = '';
+            int stintLaps = 0;
+            bool isNewTyre = true;
+            List<Stint> stints = const [];
+            if (timingAppData.containsKey(racingNumber) &&
+                timingAppData[racingNumber]!.stints.isNotEmpty) {
+              stints = timingAppData[racingNumber]!.stints;
+              final currentStint = stints.last;
+              tireCompound = currentStint.compound ?? '';
+              stintLaps = currentStint.totalLaps ?? 0;
+              isNewTyre = (currentStint.isNew ?? 'true').toLowerCase() == 'true';
+            }
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5),
-          child: DriverRowCard(
-            key: ValueKey(racingNumber),
-            position: _currentPositions[racingNumber] ?? driver.line,
-            name: driver.tla.isNotEmpty ? driver.tla : '???',
-            currentLapTime: timing.lastLapTime.value,
-            bestLapTime: timing.bestLapTime.value,
-            interval: intervalText,
-            teamColor: teamColor,
-            tireCompound: tireCompound,
-            pitStops: timing.numberOfPitStops,
-            positionChange: _positionChanges[racingNumber] ?? 'same',
-            sessionType: sessionInfo.type,
-            stintLaps: stintLaps,
-            isNewTyre: isNewTyre,
-            stints: stints,
-            sectors: timing.sectors,
-            telemetry: carData[racingNumber],
-            racingNumber: racingNumber,
-          ),
-        );
-      },
+            if (!_isCompact) {
+              // Expanded layout: original labelled card row.
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 5),
+                child: DriverRowCardExpanded(
+                  key: ValueKey(racingNumber),
+                  position: _currentPositions[racingNumber] ?? driver.line,
+                  name: driver.tla.isNotEmpty ? driver.tla : '???',
+                  currentLapTime: timing.lastLapTime.value,
+                  bestLapTime: timing.bestLapTime.value,
+                  interval: intervalText,
+                  teamColor: teamColor,
+                  tireCompound: tireCompound,
+                  pitStops: timing.numberOfPitStops,
+                  positionChange: _positionChanges[racingNumber] ?? 'same',
+                  sessionType: sessionInfo.type,
+                  stintLaps: stintLaps,
+                  isNewTyre: isNewTyre,
+                  stints: stints,
+                  sectors: timing.sectors,
+                  telemetry: carData[racingNumber],
+                  racingNumber: racingNumber,
+                  knockedOut: knockedOut,
+                  inDropZone:
+                      advancing != null && !knockedOut && livePos > advancing,
+                  trackState: _driverTrackState(timing),
+                ),
+              );
+            }
+
+            return Padding(
+              padding: EdgeInsets.zero,
+              child: DriverRowCard(
+                key: ValueKey(racingNumber),
+                position: _currentPositions[racingNumber] ?? driver.line,
+                name: driver.tla.isNotEmpty ? driver.tla : '???',
+                currentLapTime: timing.lastLapTime.value,
+                bestLapTime: timing.bestLapTime.value,
+                interval: intervalText,
+                teamColor: teamColor,
+                tireCompound: tireCompound,
+                pitStops: timing.numberOfPitStops,
+                positionChange: _positionChanges[racingNumber] ?? 'same',
+                sessionType: sessionInfo.type,
+                stintLaps: stintLaps,
+                isNewTyre: isNewTyre,
+                stints: stints,
+                sectors: timing.sectors,
+                telemetry: carData[racingNumber],
+                racingNumber: racingNumber,
+                knockedOut: knockedOut,
+                inDropZone: advancing != null && !knockedOut && livePos > advancing,
+                trackState: _driverTrackState(timing),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 

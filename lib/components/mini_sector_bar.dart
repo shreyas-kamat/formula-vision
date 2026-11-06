@@ -26,12 +26,20 @@ class MiniSectorBar extends StatelessWidget {
   /// Height of each mini-segment cell.
   final double segmentHeight;
 
+  /// Thinner bar with tighter gaps, used as the collapsed row strip.
+  final bool compact;
+
   const MiniSectorBar({
     super.key,
     required this.sectors,
     this.showTimes = false,
     this.segmentHeight = 6,
+    this.compact = false,
   });
+
+  double get _cellHeight => compact ? 3 : segmentHeight;
+  double get _sectorGap => compact ? 4 : 6;
+  double get _segmentGap => compact ? 1 : 2;
 
   static Color segmentColor(int status) {
     switch (status) {
@@ -76,7 +84,7 @@ class MiniSectorBar extends StatelessWidget {
         Row(
           children: [
             for (int i = 0; i < sectors.length; i++) ...[
-              if (i > 0) const SizedBox(width: 6),
+              if (i > 0) SizedBox(width: _sectorGap),
               Expanded(
                 flex: _flexFor(sectors[i]),
                 child: _segmentRow(sectors[i]),
@@ -89,7 +97,7 @@ class MiniSectorBar extends StatelessWidget {
           Row(
             children: [
               for (int i = 0; i < sectors.length; i++) ...[
-                if (i > 0) const SizedBox(width: 6),
+                if (i > 0) SizedBox(width: _sectorGap),
                 Expanded(
                   flex: _flexFor(sectors[i]),
                   child: _timeLabel(i, sectors[i]),
@@ -111,7 +119,7 @@ class MiniSectorBar extends StatelessWidget {
     return Row(
       children: [
         for (int s = 0; s < segments.length; s++) ...[
-          if (s > 0) const SizedBox(width: 2),
+          if (s > 0) SizedBox(width: _segmentGap),
           Expanded(child: _cell(MiniSectorBar.segmentColor(segments[s].status))),
         ],
       ],
@@ -120,7 +128,7 @@ class MiniSectorBar extends StatelessWidget {
 
   Widget _cell(Color color) {
     return Container(
-      height: segmentHeight,
+      height: _cellHeight,
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(3),

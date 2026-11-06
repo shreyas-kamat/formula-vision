@@ -112,7 +112,7 @@ void main() {
       await tester.pumpWidget(_harness());
       await tester.pump();
 
-      await tester.tap(find.text('TYRE'));
+      await tester.tap(find.text('25')); // tyre column: stint laps
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
@@ -135,6 +135,51 @@ void main() {
       expect(find.text('24.038'), findsOneWidget); // sector times show
       expect(find.text('NO TELEMETRY'), findsNothing); // HUD only when present
       expect(find.text('280'), findsNothing);
+    });
+  });
+
+  group('DriverRowCard compact row', () {
+    Widget compactRow({
+      String interval = '+2.130',
+      String sessionType = 'Race',
+    }) =>
+        MaterialApp(
+          home: Scaffold(
+            body: DriverRowCard(
+              position: 2,
+              name: 'LEC',
+              currentLapTime: '1:37.986',
+              bestLapTime: '1:37.493',
+              interval: interval,
+              teamColor: Colors.red,
+              tireCompound: 'SOFT',
+              pitStops: 0,
+              sessionType: sessionType,
+              stintLaps: 16,
+              isNewTyre: false,
+            ),
+          ),
+        );
+
+    testWidgets('one-line row: name, gap and used-tyre laps; no column labels',
+        (tester) async {
+      await tester.pumpWidget(compactRow());
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('LEC'), findsOneWidget);
+      expect(find.text('+2.130'), findsOneWidget);
+      expect(find.text('16u'), findsOneWidget);
+      expect(find.text('LAP TIME'), findsNothing);
+      expect(find.text('INTERVAL'), findsNothing);
+    });
+
+    testWidgets('leader gap renders as an uppercase word', (tester) async {
+      await tester.pumpWidget(compactRow(interval: 'Leader'));
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('LEADER'), findsOneWidget);
     });
   });
 }

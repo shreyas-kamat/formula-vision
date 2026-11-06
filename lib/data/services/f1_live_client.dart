@@ -98,6 +98,9 @@ class F1LiveClient {
     final result = await _negotiate();
     debugPrint('[F1LiveClient] negotiated: tokenLen=${result.token.length} '
         'cookie=${result.cookie.isNotEmpty}');
+    // stop() may have run while negotiating (e.g. the caller's start timeout
+    // fired and it fell back to the backend); don't open a zombie socket.
+    if (_closing) throw StateError('F1LiveClient stopped during start()');
     await _connect(result.token, result.cookie);
     debugPrint('[F1LiveClient] start: websocket open, awaiting snapshot');
   }
@@ -206,11 +209,17 @@ class F1LiveClient {
     // large CarData.z / Position.z frames when permessage-deflate is negotiated
     // (small topics like TimingData still get through). Matching tungstenite
     // here is what makes the compressed telemetry topics actually arrive.
-    _socket = await WebSocket.connect(
+    final socket = await WebSocket.connect(
       url,
       headers: headers,
       compression: CompressionOptions.compressionOff,
     );
+    if (_closing) {
+      // stop() ran while the socket was opening.
+      await socket.close();
+      throw StateError('F1LiveClient stopped while connecting');
+    }
+    _socket = socket;
     debugPrint('[F1LiveClient] ws connected, sending handshake');
     onStatus?.call('Connected');
 
@@ -236,10 +245,13 @@ class F1LiveClient {
   }
 
   Future<void> _reconnect() async {
+    if (_closing) return;
     try {
       final result = await _negotiate();
+      if (_closing) return;
       await _connect(result.token, result.cookie);
     } catch (e) {
+      if (_closing) return;
       onError?.call(e);
       _reconnectTimer?.cancel();
       _reconnectTimer = Timer(const Duration(seconds: 30), _reconnect);

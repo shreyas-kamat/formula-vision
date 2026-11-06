@@ -10,6 +10,7 @@ class AppSettings {
   static const String _trackMapDisplayModeKey = 'track_map_display_mode';
   static const String _speedUnitKey = 'speed_unit';
   static const String _feedSourceKey = 'feed_source';
+  static const String _dashboardLayoutKey = 'dashboard_layout';
 
   /// Live-timing feed sources.
   /// [feedSourceOnDevice] connects directly to F1 from the phone (residential
@@ -25,6 +26,11 @@ class AppSettings {
   /// Display modes for the live track map on the realtime dashboard.
   static const String trackMapModeCard = 'card';
   static const String trackMapModeFullView = 'fullView';
+
+  /// Layouts for the realtime dashboard: [dashboardLayoutCompact] (timing
+  /// tower, default) or [dashboardLayoutExpanded] (original card-style view).
+  static const String dashboardLayoutCompact = 'compact';
+  static const String dashboardLayoutExpanded = 'expanded';
 
   /// Returns the API URL to use.
   /// If the user has enabled a custom URL and provided one, that is returned.
@@ -122,6 +128,22 @@ class AppSettings {
   static Future<void> setTrackMapDisplayMode(String mode) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_trackMapDisplayModeKey, mode);
+  }
+
+  /// Dashboard layout: [dashboardLayoutCompact] (default) or
+  /// [dashboardLayoutExpanded].
+  static Future<String> getDashboardLayout() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_dashboardLayoutKey) ?? dashboardLayoutCompact;
+  }
+
+  static String getDashboardLayoutSync(SharedPreferences prefs) {
+    return prefs.getString(_dashboardLayoutKey) ?? dashboardLayoutCompact;
+  }
+
+  static Future<void> setDashboardLayout(String layout) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_dashboardLayoutKey, layout);
   }
 
   /// Primary speed unit for the telemetry HUD: [speedUnitKmh] or

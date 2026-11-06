@@ -14,6 +14,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _isRaceControlSoundEnabled = true;
   bool _isTrackMapEnabled = true;
   String _trackMapDisplayMode = AppSettings.trackMapModeCard;
+  String _dashboardLayout = AppSettings.dashboardLayoutCompact;
   String _feedSource = AppSettings.feedSourceOnDevice;
 
   @override
@@ -26,12 +27,14 @@ class _SettingsPageState extends State<SettingsPage> {
     final soundEnabled = await AppSettings.isRaceControlSoundEnabled();
     final trackMapEnabled = await AppSettings.isTrackMapEnabled();
     final trackMapMode = await AppSettings.getTrackMapDisplayMode();
+    final dashboardLayout = await AppSettings.getDashboardLayout();
     final feedSource = await AppSettings.getFeedSource();
 
     setState(() {
       _isRaceControlSoundEnabled = soundEnabled;
       _isTrackMapEnabled = trackMapEnabled;
       _trackMapDisplayMode = trackMapMode;
+      _dashboardLayout = dashboardLayout;
       _feedSource = feedSource;
       _isLoading = false;
     });
@@ -144,6 +147,66 @@ class _SettingsPageState extends State<SettingsPage> {
                 await AppSettings.setTrackMapDisplayMode(mode);
               }
             : null,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? Colors.redAccent.withValues(alpha: 0.25)
+                : Colors.black.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                  ? Colors.redAccent
+                  : Colors.white.withValues(alpha: 0.12),
+              width: isSelected ? 1.5 : 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                icon,
+                color: isSelected
+                    ? Colors.redAccent
+                    : Colors.white.withValues(alpha: 0.6),
+                size: 22,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: isSelected
+                      ? Colors.white
+                      : Colors.white.withValues(alpha: 0.6),
+                  fontSize: 12,
+                  fontFamily: 'formula',
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Dashboard layout option: always enabled. Mirrors [_buildTrackMapModeOption]
+  /// visuals, but selects a dashboard layout instead of a track-map mode.
+  Widget _buildDashboardLayoutOption({
+    required String label,
+    required IconData icon,
+    required String value,
+  }) {
+    final bool isSelected = _dashboardLayout == value;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () async {
+          setState(() {
+            _dashboardLayout = value;
+          });
+          await AppSettings.setDashboardLayout(value);
+        },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
@@ -375,6 +438,82 @@ class _SettingsPageState extends State<SettingsPage> {
                                       Colors.white.withValues(alpha: 0.6),
                                   inactiveTrackColor:
                                       Colors.white.withValues(alpha: 0.1),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        // ── Dashboard ────────────────────────────────────────
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4, bottom: 12),
+                          child: Text(
+                            'DASHBOARD',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.6),
+                              fontSize: 11,
+                              fontFamily: 'formula',
+                              letterSpacing: 1.4,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.white.withValues(alpha: 0.08),
+                                Colors.black.withValues(alpha: 0.35),
+                              ],
+                            ),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              width: 1,
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Layout',
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.5),
+                                    fontSize: 11,
+                                    fontFamily: 'formula',
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    _buildDashboardLayoutOption(
+                                      label: 'Compact',
+                                      icon: Icons.view_headline_rounded,
+                                      value: AppSettings.dashboardLayoutCompact,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    _buildDashboardLayoutOption(
+                                      label: 'Expanded',
+                                      icon: Icons.view_agenda_outlined,
+                                      value: AppSettings.dashboardLayoutExpanded,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  'Compact fits more drivers on screen. Expanded shows labelled driver cards.',
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.5),
+                                    fontSize: 12,
+                                    fontFamily: 'formula',
+                                  ),
                                 ),
                               ],
                             ),

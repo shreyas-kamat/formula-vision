@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:formulavision/components/dashboard_style.dart';
 import 'package:formulavision/components/mini_sector_bar.dart';
 import 'package:formulavision/components/telemetry_hud.dart';
 import 'package:formulavision/data/models/live_data.model.dart';
@@ -22,7 +23,11 @@ class DriverRowCard extends StatefulWidget {
   final List<Stint> stints; // Full stint history (shown in the tyre-tap modal)
   final List<Sector> sectors; // Current lap sectors for the mini-sector bar
   final CarTelemetry? telemetry; // Live car telemetry for the HUD
-  final String? racingNumber; // Driver number, used to open the live speedometer
+  final String?
+      racingNumber; // Driver number, used to open the live speedometer
+  final bool knockedOut; // Eliminated in an earlier qualifying segment
+  final bool inDropZone; // Currently below the qualifying elimination line
+  final String? trackState; // 'PIT', 'OUT LAP', 'RET', 'STOP', 'ELIM' or null
 
   const DriverRowCard({
     super.key,
@@ -42,6 +47,9 @@ class DriverRowCard extends StatefulWidget {
     this.sectors = const [],
     this.telemetry,
     this.racingNumber,
+    this.knockedOut = false,
+    this.inDropZone = false,
+    this.trackState,
   });
 
   @override
@@ -137,15 +145,6 @@ class _DriverRowCardState extends State<DriverRowCard>
     return widget.interval;
   }
 
-  Color? _getIntervalBadgeColor() {
-    if (widget.sessionType.toLowerCase() == 'qualifying') {
-      // For qualifying: Yellow for pole, green for others
-      return widget.position == 1 ? Colors.amber[700] : Colors.green[700];
-    }
-    // For race and sprint sessions
-    return widget.interval == "Leader" ? Colors.red[700] : Colors.green[700];
-  }
-
   @override
   Widget build(BuildContext context) {
     // The row expands to reveal sector times and the telemetry HUD. Stint
@@ -156,274 +155,320 @@ class _DriverRowCardState extends State<DriverRowCard>
         widget.sessionType.toLowerCase() == 'sprint' ||
         widget.sessionType.toLowerCase() == 'qualifying';
 
+    final bool dimmed = widget.knockedOut || widget.trackState == 'RET';
+
+    final String intervalText = _getIntervalText();
+    // Leader / pole read as a plain uppercase word, not a number.
+    final bool isLeaderLabel =
+        const {'LEADER', 'POLE'}.contains(intervalText.toUpperCase());
+    final bool isPb = widget.currentLapTime.isNotEmpty &&
+        widget.currentLapTime == widget.bestLapTime;
+
     return SlideTransition(
       position: _positionAnimation,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.black26.withValues(alpha: 0.75),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black, width: 1),
-        ),
-        child: InkWell(
-          onTap: canExpand
-              ? () => setState(() => _expanded = !_expanded)
-              : null,
-          borderRadius: BorderRadius.circular(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Header row (responsive, no horizontal scroll) ─────────────
-              Padding(
-                padding:
-                    const EdgeInsets.fromLTRB(14, 14, 14, 0),
-                child: Row(
-                  children: [
-                    // Position
-                    Container(
-                      width: 54,
-                      height: 54,
-                      decoration: BoxDecoration(
-                        color: widget.teamColor,
-                        borderRadius: BorderRadius.circular(10),
+      child: Opacity(
+        opacity: dimmed ? 0.45 : 1,
+        child: Container(
+          decoration: BoxDecoration(
+            color: widget.inDropZone
+                ? Colors.red.shade900.withValues(alpha: 0.18)
+                : Colors.transparent,
+            border: Border(bottom: BorderSide(color: DashStyle.divider)),
+          ),
+          child: InkWell(
+            onTap:
+                canExpand ? () => setState(() => _expanded = !_expanded) : null,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Main row: one line per driver ─────────────────────────────
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                      4, 10, 4, widget.sectors.isNotEmpty ? 6 : 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Team stripe
+                      Container(
+                        width: DashStyle.stripeW,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: widget.teamColor,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
-                      child: Center(
+                      const SizedBox(width: 10),
+
+                      // Position
+                      SizedBox(
+                        width: DashStyle.posW,
                         child: Text(
-                          widget.position.toString(),
+                          '${widget.position}',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            fontFeatures: [FontFeature.tabularFigures()],
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 14),
 
-                    // Name (yields width on very narrow screens before the
-                    // lap time does; stays intact at normal phone widths)
-                    Flexible(
-                      child: Text(
-                        widget.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-
-                    // Lap time (absorbs slack; scales down before clipping)
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'LAP TIME',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
+                      // Name (+ track-state chip), ellipsised before the
+                      // numeric columns are squeezed
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Flexible(
                               child: Text(
-                                widget.currentLapTime.isNotEmpty
-                                    ? widget.currentLapTime
-                                    : '--:--.---',
+                                widget.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w900,
-                                  fontFamily: 'Roboto Mono',
-                                  letterSpacing: 0.5,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.2,
                                 ),
                               ),
                             ),
-                          ),
-                          Align(
-                            alignment: Alignment.centerLeft,
+                            if (widget.trackState != null) ...[
+                              const SizedBox(width: 6),
+                              _buildTrackStateChip(widget.trackState!),
+                            ],
+                          ],
+                        ),
+                      ),
+
+                      // Gap / interval (no badge; leader and pole read as text)
+                      if (showInterval)
+                        SizedBox(
+                          width: DashStyle.gapW,
+                          child: Align(
+                            alignment: Alignment.centerRight,
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Text(
-                                widget.bestLapTime.isNotEmpty
-                                    ? widget.bestLapTime
-                                    : '--:--.---',
-                                style: const TextStyle(
-                                  color: Colors.green,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Roboto Mono',
-                                  letterSpacing: 0.3,
+                                isLeaderLabel
+                                    ? intervalText.toUpperCase()
+                                    : intervalText,
+                                style: isLeaderLabel
+                                    ? DashStyle.label
+                                        .copyWith(color: DashStyle.textSecondary)
+                                    : DashStyle.data
+                                        .copyWith(color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                      // Last lap (green when it is the driver's personal best)
+                      SizedBox(
+                        width: DashStyle.lastW,
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              widget.currentLapTime.isNotEmpty
+                                  ? widget.currentLapTime
+                                  : '--:--.---',
+                              style: DashStyle.data.copyWith(
+                                color: isPb
+                                    ? DashStyle.personalBest
+                                    : Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Tyre — tap to open stint history modal
+                      SizedBox(
+                        width: DashStyle.tyreW,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: widget.stints.isEmpty
+                              ? null
+                              : () => _showStintHistory(context),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: SvgPicture.asset(
+                                  _getTirePath(widget.tireCompound),
+                                  placeholderBuilder: (context) =>
+                                      const SizedBox(width: 22, height: 22),
                                 ),
                               ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-
-                    // Interval / diff badge
-                    if (showInterval) ...[
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            widget.sessionType.toLowerCase() == 'qualifying'
-                                ? 'DIFF'
-                                : 'INTERVAL',
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: _getIntervalBadgeColor(),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              _getIntervalText(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 12),
-                    ],
-
-                    // Tyre — tap to open stint history modal
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: widget.stints.isEmpty
-                          ? null
-                          : () => _showStintHistory(context),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            'TYRE',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          SizedBox(
-                            width: 34,
-                            height: 34,
-                            child: SvgPicture.asset(
-                              _getTirePath(widget.tireCompound),
-                              placeholderBuilder: (context) =>
-                                  const SizedBox(width: 34, height: 34),
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'L${widget.stintLaps}${widget.isNewTyre ? '' : '*'}',
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'Roboto Mono',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Expand affordance
-                    if (canExpand) ...[
-                      const SizedBox(width: 4),
-                      Icon(
-                        _expanded
-                            ? Icons.expand_less_rounded
-                            : Icons.expand_more_rounded,
-                        color: Colors.white54,
-                        size: 22,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-
-              // ── Lap-coverage strip + expandable detail ────────────────────
-              AnimatedSize(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeInOut,
-                alignment: Alignment.topCenter,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (widget.sectors.isNotEmpty)
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(
-                            16, 12, 16, _expanded ? 4 : 14),
-                        child: MiniSectorBar(
-                          sectors: widget.sectors,
-                          showTimes: _expanded,
-                        ),
-                      )
-                    else
-                      const SizedBox(height: 14, width: double.infinity),
-                    // Telemetry HUD revealed on expand
-                    if (_expanded && widget.telemetry != null)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const Divider(color: Colors.white24, height: 16),
-                            TelemetryHud(telemetry: widget.telemetry),
-                            if (widget.racingNumber != null) ...[
-                              const SizedBox(height: 8),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: TextButton.icon(
-                                  onPressed: () => _openSpeedometer(context),
-                                  icon: const Icon(
-                                    Icons.speed_rounded,
-                                    size: 18,
-                                    color: Colors.white70,
-                                  ),
-                                  label: const Text(
-                                    'LIVE SPEEDOMETER',
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 1,
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    '${widget.stintLaps}${widget.isNewTyre ? '' : 'u'}',
+                                    style: DashStyle.data.copyWith(
+                                      fontSize: 12,
+                                      color: DashStyle.textSecondary,
                                     ),
                                   ),
                                 ),
                               ),
                             ],
-                          ],
+                          ),
                         ),
                       ),
-                  ],
+
+                      // Expand affordance
+                      SizedBox(
+                        width: DashStyle.chevronW,
+                        child: canExpand
+                            ? Icon(
+                                _expanded
+                                    ? Icons.expand_less_rounded
+                                    : Icons.expand_more_rounded,
+                                color: Colors.white38,
+                                size: 18,
+                              )
+                            : null,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+
+                // ── Lap-coverage strip + expandable detail ────────────────────
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeInOut,
+                  alignment: Alignment.topCenter,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (widget.sectors.isNotEmpty && !_expanded)
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(
+                              DashStyle.stripeW + 14, 0, 4, 8),
+                          child: MiniSectorBar(
+                            sectors: widget.sectors,
+                            showTimes: false,
+                            compact: true,
+                          ),
+                        ),
+                      if (_expanded)
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(
+                              DashStyle.stripeW + 14, 4, 4, 14),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    'BEST',
+                                    style: DashStyle.label
+                                        .copyWith(color: DashStyle.textLabel),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    widget.bestLapTime.isNotEmpty
+                                        ? widget.bestLapTime
+                                        : '--:--.---',
+                                    style: DashStyle.data.copyWith(
+                                        color: DashStyle.personalBest),
+                                  ),
+                                  const Spacer(),
+                                  if (widget.pitStops > 0)
+                                    Text(
+                                      '${widget.pitStops} ${widget.pitStops == 1 ? 'STOP' : 'STOPS'}',
+                                      style: DashStyle.label.copyWith(
+                                          color: DashStyle.textSecondary),
+                                    ),
+                                ],
+                              ),
+                              if (widget.sectors.isNotEmpty) ...[
+                                const SizedBox(height: 10),
+                                MiniSectorBar(
+                                  sectors: widget.sectors,
+                                  showTimes: true,
+                                ),
+                              ],
+                              // Telemetry HUD revealed on expand
+                              if (widget.telemetry != null) ...[
+                                const Divider(
+                                    color: Colors.white24,
+                                    height: 1,
+                                    thickness: 1),
+                                const SizedBox(height: 8),
+                                TelemetryHud(telemetry: widget.telemetry),
+                                if (widget.racingNumber != null) ...[
+                                  const SizedBox(height: 8),
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: TextButton.icon(
+                                      onPressed: () =>
+                                          _openSpeedometer(context),
+                                      icon: const Icon(
+                                        Icons.speed_rounded,
+                                        size: 18,
+                                        color: Colors.white70,
+                                      ),
+                                      label: const Text(
+                                        'LIVE SPEEDOMETER',
+                                        style: TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          letterSpacing: 1,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Color _trackStateColor(String state) {
+    switch (state) {
+      case 'PIT':
+        return Colors.blue.shade700;
+      case 'OUT LAP':
+        return Colors.amber.shade800;
+      case 'STOP':
+        return Colors.red.shade700;
+      default: // RET, ELIM
+        return Colors.grey.shade700;
+    }
+  }
+
+  Widget _buildTrackStateChip(String state) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: _trackStateColor(state),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        state,
+        maxLines: 1,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 9,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.8,
         ),
       ),
     );
@@ -559,7 +604,7 @@ class _DriverRowCardState extends State<DriverRowCard>
                 ),
               ),
               Text(
-                'L${stint.totalLaps ?? 0} · ${isNew ? 'New' : 'Used'}',
+                '${stint.totalLaps ?? 0} laps · ${isNew ? 'new' : 'used'}',
                 style: const TextStyle(
                   color: Colors.white60,
                   fontSize: 10,
@@ -570,6 +615,68 @@ class _DriverRowCardState extends State<DriverRowCard>
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Column header for the timing tower. Its columns line up with DriverRowCard.
+class LeaderboardHeader extends StatelessWidget {
+  final bool showInterval;
+  final bool isQualifying;
+
+  const LeaderboardHeader({
+    super.key,
+    required this.showInterval,
+    required this.isQualifying,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final labelStyle = DashStyle.label.copyWith(color: DashStyle.textLabel);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 0, 4, 6),
+          child: Row(
+            children: [
+              const SizedBox(width: DashStyle.stripeW + 10),
+              SizedBox(
+                width: DashStyle.posW,
+                child: Text('POS', style: labelStyle),
+              ),
+              Expanded(child: Text('DRIVER', style: labelStyle)),
+              if (showInterval)
+                SizedBox(
+                  width: DashStyle.gapW,
+                  child: Text(
+                    isQualifying ? 'GAP' : 'INT',
+                    textAlign: TextAlign.right,
+                    style: labelStyle,
+                  ),
+                ),
+              SizedBox(
+                width: DashStyle.lastW,
+                child: Text(
+                  'LAST',
+                  textAlign: TextAlign.right,
+                  style: labelStyle,
+                ),
+              ),
+              SizedBox(
+                width: DashStyle.tyreW,
+                child: Text(
+                  'TYRE',
+                  textAlign: TextAlign.center,
+                  style: labelStyle,
+                ),
+              ),
+              const SizedBox(width: DashStyle.chevronW),
+            ],
+          ),
+        ),
+        Divider(height: 1, thickness: 1, color: DashStyle.divider),
+      ],
     );
   }
 }

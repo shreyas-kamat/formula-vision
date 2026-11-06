@@ -93,7 +93,14 @@ Future<List<LiveData>> fetchLiveData(dynamic response) async {
                           ),
                     )
                   : {},
-              withheld: response['TimingData']['Withheld'])
+              noEntries: TimingData.mergeNoEntries(
+                  null, response['TimingData']['NoEntries']),
+              sessionPart: response['TimingData']['SessionPart'],
+              withheld: response['TimingData']['Withheld'] ?? false)
+          : null,
+      timingStats: response['TimingStats'] is Map
+          ? TimingStats.fromJson(
+              Map<String, dynamic>.from(response['TimingStats']))
           : null,
       timingAppData: response['TimingAppData'] is Map
           ? TimingAppData(
@@ -129,6 +136,13 @@ Future<List<LiveData>> fetchLiveData(dynamic response) async {
       raceControlMessages: response['RaceControlMessages'] is Map
           ? RaceControlMessages.fromJson(
               Map<String, dynamic>.from(response['RaceControlMessages']))
+          : null,
+      teamRadio: response['TeamRadio'] is Map
+          ? TeamRadio.fromJson(Map<String, dynamic>.from(response['TeamRadio']))
+          : null,
+      sessionStatus: response['SessionStatus'] is Map
+          ? SessionStatus.fromJson(
+              Map<String, dynamic>.from(response['SessionStatus']))
           : null,
     );
     fetchedData.add(data);

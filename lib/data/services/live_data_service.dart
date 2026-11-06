@@ -162,9 +162,10 @@ class LiveDataService {
     );
 
     try {
-      // Fail fast so we fall back to the backend quickly instead of blocking if
-      // F1's endpoint is unreachable on this network.
-      await client.start().timeout(const Duration(seconds: 8));
+      // Fall back to the backend instead of blocking if F1's endpoint is
+      // unreachable. Budget covers the 5s OPTIONS preflight timeout plus the
+      // POST + websocket open on slow mobile networks.
+      await client.start().timeout(const Duration(seconds: 15));
       _f1Client = client;
       debugPrint('[LiveDataService] on-device feed connected');
       return true;
@@ -421,6 +422,15 @@ class LiveDataService {
           case 'TrackStatus':
             _updateTrackStatus(updated);
             break;
+          case 'SessionStatus':
+            _updateSessionStatus(updated);
+            break;
+          case 'TimingStats':
+            _updateTimingStats(updated);
+            break;
+          case 'TeamRadio':
+            _updateTeamRadio(updated);
+            break;
           case 'LapCount':
             _updateLapCount(updated);
             break;
@@ -504,6 +514,57 @@ class LiveDataService {
           ? data['Message']
           : cur.trackStatus?.message ?? '',
     );
+    _scheduleEmit();
+  }
+
+  void _updateSessionStatus(dynamic data) {
+    if (data is! Map<String, dynamic> || data.isEmpty || _current.isEmpty) {
+      return;
+    }
+    if (!data.containsKey('Status')) return;
+    debugPrint('[LiveDataService] SessionStatus: ${data['Status']}');
+    final cur = _current[0];
+    cur.sessionStatus = SessionStatus(
+      status: data['Status']?.toString() ?? cur.sessionStatus?.status ?? '',
+    );
+    _scheduleEmit();
+  }
+
+  void _updateTimingStats(dynamic data) {
+    if (data is! Map || data.isEmpty || _current.isEmpty) return;
+    final cur = _current[0];
+    final prev = cur.timingStats;
+    final lines = Map<String, TimingStatsDriver>.from(prev?.lines ?? {});
+    final rawLines = data['Lines'] ?? data['lines'];
+    if (rawLines is Map) {
+      rawLines.forEach((key, value) {
+        if (value is Map) {
+          final racingLine = key.toString();
+          lines[racingLine] =
+              TimingStatsDriver.merge(lines[racingLine], value);
+        }
+      });
+    }
+    cur.timingStats = TimingStats(
+      withheld: data['Withheld'] ?? data['withheld'] ?? prev?.withheld ?? false,
+      lines: lines,
+      sessionType:
+          data['SessionType'] ?? data['sessionType'] ?? prev?.sessionType ?? '',
+      kf: prev?.kf ?? false,
+    );
+    _scheduleEmit();
+  }
+
+  void _updateTeamRadio(dynamic data) {
+    if (data is! Map || data.isEmpty || _current.isEmpty) return;
+    final rawCaptures = data['Captures'] ?? data['captures'];
+    if (rawCaptures == null) return;
+    final cur = _current[0];
+    final prev = cur.teamRadio?.captures ?? <RadioCapture>[];
+    final captures = TeamRadio.mergeCaptures(prev, rawCaptures);
+    if (captures.length == prev.length) return;
+    debugPrint('[LiveDataService] TeamRadio: ${captures.length} captures');
+    cur.teamRadio = TeamRadio(captures: captures);
     _scheduleEmit();
   }
 
@@ -757,18 +818,22 @@ class LiveDataService {
       return;
     }
     final cur = _current[0];
-    if (!data.containsKey('Lines') || data['Lines'] is! Map<String, dynamic>) {
-      return;
-    }
 
     final Map<String, TimingDataDriver> currentLines =
         cur.timingData?.lines ?? {};
 
+    // Top-level-only deltas (SessionPart / NoEntries / CutOffTime) carry no
+    // Lines; still apply them below.
+    final linesData = data['Lines'] is Map<String, dynamic>
+        ? data['Lines'] as Map<String, dynamic>
+        : const <String, dynamic>{};
+
     // Snapshot positions from the previous cycle so _updatePositionChanges()
     // compares this cycle against the last (single source of truth = position).
-    _previousPositions = Map.from(_currentPositions);
+    if (linesData.isNotEmpty) {
+      _previousPositions = Map.from(_currentPositions);
+    }
 
-    final linesData = data['Lines'] as Map<String, dynamic>;
     linesData.forEach((racingNumber, driverData) {
       if (driverData is! Map<String, dynamic>) return;
       final currentDriverData = currentLines[racingNumber];
@@ -885,6 +950,11 @@ class LiveDataService {
             driverData['NumberOfLaps'] ?? (currentDriverData?.numberOfLaps ?? 0),
         numberOfPitStops: driverData['NumberOfPitStops'] ??
             (currentDriverData?.numberOfPitStops ?? 0),
+        stats: driverData.containsKey('Stats')
+            ? TimeDiff.mergeAll(currentDriverData?.stats, driverData['Stats'])
+            : currentDriverData?.stats,
+        knockedOut: driverData['KnockedOut'] ?? currentDriverData?.knockedOut,
+        cutoff: driverData['Cutoff'] ?? currentDriverData?.cutoff,
       );
 
       _currentPositions[racingNumber] =
@@ -892,9 +962,18 @@ class LiveDataService {
       currentLines[racingNumber] = updatedDriver;
     });
 
-    _updatePositionChanges();
-    cur.timingData =
-        TimingData(lines: currentLines, withheld: data['Withheld'] ?? false);
+    if (linesData.isNotEmpty) _updatePositionChanges();
+    final prevTiming = cur.timingData;
+    cur.timingData = TimingData(
+      lines: currentLines,
+      withheld: data['Withheld'] ?? prevTiming?.withheld ?? false,
+      noEntries:
+          TimingData.mergeNoEntries(prevTiming?.noEntries, data['NoEntries']),
+      sessionPart: data['SessionPart'] ?? prevTiming?.sessionPart,
+      cutOffTime: data['CutOffTime'] ?? prevTiming?.cutOffTime,
+      cutOffPercentage:
+          data['CutOffPercentage'] ?? prevTiming?.cutOffPercentage,
+    );
     _scheduleEmit();
   }
 

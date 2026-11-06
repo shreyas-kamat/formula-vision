@@ -346,16 +346,17 @@ class TimingStats {
 
   factory TimingStats.fromJson(Map<String, dynamic> json) {
     Map<String, TimingStatsDriver> linesMap = {};
-    if (json['lines'] != null) {
-      json['lines'].forEach((key, value) {
-        linesMap[key] = TimingStatsDriver.fromJson(value);
-      });
+    for (final entry in _indexedEntries(json['Lines'] ?? json['lines'])) {
+      if (entry.value is Map) {
+        linesMap[entry.key] = TimingStatsDriver.fromJson(
+            Map<String, dynamic>.from(entry.value as Map));
+      }
     }
 
     return TimingStats(
-      withheld: json['withheld'] ?? false,
+      withheld: json['Withheld'] ?? json['withheld'] ?? false,
       lines: linesMap,
-      sessionType: json['sessionType'] ?? '',
+      sessionType: json['SessionType'] ?? json['sessionType'] ?? '',
       kf: json['_kf'] ?? false,
     );
   }
@@ -392,32 +393,97 @@ class TimingStatsDriver {
 
   factory TimingStatsDriver.fromJson(Map<String, dynamic> json) {
     List<PersonalBestLapTime> sectors = [];
-    if (json['bestSectors'] != null) {
-      sectors = List<PersonalBestLapTime>.from(
-        json['bestSectors'].map((x) => PersonalBestLapTime.fromJson(x)),
-      );
+    for (final entry in _indexedEntries(json['BestSectors'] ?? json['bestSectors'])) {
+      final index = int.tryParse(entry.key) ?? sectors.length;
+      if (entry.value is! Map) continue;
+      final lap = PersonalBestLapTime.fromJson(
+          Map<String, dynamic>.from(entry.value as Map));
+      while (sectors.length <= index) {
+        sectors.add(PersonalBestLapTime(value: '', lap: 0));
+      }
+      sectors[index] = lap;
     }
 
     Map<String, PersonalBestLapTime> speeds = {};
-    if (json['bestSpeeds'] != null) {
-      if (json['bestSpeeds']['i1'] != null)
-        speeds['i1'] = PersonalBestLapTime.fromJson(json['bestSpeeds']['i1']);
-      if (json['bestSpeeds']['i2'] != null)
-        speeds['i2'] = PersonalBestLapTime.fromJson(json['bestSpeeds']['i2']);
-      if (json['bestSpeeds']['fl'] != null)
-        speeds['fl'] = PersonalBestLapTime.fromJson(json['bestSpeeds']['fl']);
-      if (json['bestSpeeds']['st'] != null)
-        speeds['st'] = PersonalBestLapTime.fromJson(json['bestSpeeds']['st']);
+    final rawSpeeds = json['BestSpeeds'] ?? json['bestSpeeds'];
+    if (rawSpeeds is Map) {
+      rawSpeeds.forEach((key, value) {
+        if (value is Map) {
+          speeds[key.toString().toUpperCase()] = PersonalBestLapTime.fromJson(
+              Map<String, dynamic>.from(value));
+        }
+      });
     }
 
+    final rawPb = json['PersonalBestLapTime'] ?? json['personalBestLapTime'];
     return TimingStatsDriver(
-      line: json['line'] ?? 0,
-      racingNumber: json['racingNumber'] ?? '',
-      personalBestLapTime: json['personalBestLapTime'] != null
-          ? PersonalBestLapTime.fromJson(json['personalBestLapTime'])
+      line: json['Line'] ?? json['line'] ?? 0,
+      racingNumber: json['RacingNumber'] ?? json['racingNumber'] ?? '',
+      personalBestLapTime: rawPb is Map
+          ? PersonalBestLapTime.fromJson(Map<String, dynamic>.from(rawPb))
           : PersonalBestLapTime(value: '', lap: 0),
       bestSectors: sectors,
       bestSpeeds: speeds,
+    );
+  }
+
+  /// Applies a TimingStats delta for one driver on top of [prev]. Anything
+  /// absent from [delta] keeps its previous value; speed keys are merged
+  /// individually and sectors are merged by index.
+  static TimingStatsDriver merge(TimingStatsDriver? prev, Map delta) {
+    final sectors = List<PersonalBestLapTime>.from(prev?.bestSectors ?? []);
+    final rawSectors = delta['BestSectors'] ?? delta['bestSectors'];
+    if (rawSectors is List) {
+      for (int i = 0; i < rawSectors.length; i++) {
+        if (rawSectors[i] is Map) _setLapAt(sectors, i, rawSectors[i] as Map);
+      }
+    } else if (rawSectors is Map) {
+      for (final entry in _indexedEntries(rawSectors)) {
+        final index = int.tryParse(entry.key);
+        if (index == null || entry.value is! Map) continue;
+        _setLapAt(sectors, index, entry.value as Map);
+      }
+    }
+
+    final speeds = Map<String, PersonalBestLapTime>.from(prev?.bestSpeeds ?? {});
+    final rawSpeeds = delta['BestSpeeds'] ?? delta['bestSpeeds'];
+    if (rawSpeeds is Map) {
+      rawSpeeds.forEach((key, value) {
+        if (value is! Map) return;
+        final speedKey = key.toString().toUpperCase();
+        speeds[speedKey] = _mergeLap(speeds[speedKey], value);
+      });
+    }
+
+    final rawPb = delta['PersonalBestLapTime'] ?? delta['personalBestLapTime'];
+    final line = delta['Line'] ?? delta['line'];
+    final racingNumber = delta['RacingNumber'] ?? delta['racingNumber'];
+    return TimingStatsDriver(
+      line: line is int ? line : (prev?.line ?? 0),
+      racingNumber: racingNumber?.toString() ?? prev?.racingNumber ?? '',
+      personalBestLapTime: rawPb is Map
+          ? _mergeLap(prev?.personalBestLapTime, rawPb)
+          : (prev?.personalBestLapTime ?? PersonalBestLapTime(value: '', lap: 0)),
+      bestSectors: sectors,
+      bestSpeeds: speeds,
+    );
+  }
+
+  static void _setLapAt(List<PersonalBestLapTime> list, int index, Map raw) {
+    while (list.length <= index) {
+      list.add(PersonalBestLapTime(value: '', lap: 0));
+    }
+    list[index] = _mergeLap(list[index], raw);
+  }
+
+  static PersonalBestLapTime _mergeLap(PersonalBestLapTime? prev, Map raw) {
+    final value = raw['Value'] ?? raw['value'];
+    final lap = raw['Lap'] ?? raw['lap'];
+    final position = raw['Position'] ?? raw['position'];
+    return PersonalBestLapTime(
+      value: value != null ? value.toString() : (prev?.value ?? ''),
+      lap: lap is int ? lap : (prev?.lap ?? 0),
+      position: position is int ? position : prev?.position,
     );
   }
 
@@ -437,25 +503,52 @@ class TimingStatsDriver {
   }
 }
 
+/// Index-keyed list entries from a feed value that is either a List (snapshot)
+/// or an index-keyed Map (delta). Map entries are sorted by their int key.
+Iterable<MapEntry<String, dynamic>> _indexedEntries(dynamic raw) {
+  if (raw is List) {
+    return [
+      for (int i = 0; i < raw.length; i++) MapEntry(i.toString(), raw[i]),
+    ];
+  }
+  if (raw is Map) {
+    final entries = raw.entries
+        .map((e) => MapEntry(e.key.toString(), e.value))
+        .toList()
+      ..sort((a, b) => (int.tryParse(a.key) ?? 0)
+          .compareTo(int.tryParse(b.key) ?? 0));
+    return entries;
+  }
+  return const [];
+}
+
 class PersonalBestLapTime {
   final String value;
   final int lap;
+  // Overall speed/time rank reported by the feed (1 = fastest).
+  final int? position;
 
   PersonalBestLapTime({
     required this.value,
     required this.lap,
+    this.position,
   });
 
   factory PersonalBestLapTime.fromJson(Map<String, dynamic> json) {
+    final value = json['Value'] ?? json['value'];
+    final lap = json['Lap'] ?? json['lap'];
+    final position = json['Position'] ?? json['position'];
     return PersonalBestLapTime(
-      value: json['Value'] ?? '',
-      lap: json['Lap'] ?? 0,
+      value: value?.toString() ?? '',
+      lap: lap is int ? lap : 0,
+      position: position is int ? position : null,
     );
   }
 
   Map<String, dynamic> toJson() => {
         'value': value,
         'lap': lap,
+        'position': position,
       };
 }
 
@@ -637,7 +730,7 @@ class SessionStatus {
 
   factory SessionStatus.fromJson(Map<String, dynamic> json) {
     return SessionStatus(
-      status: json['status'] ?? '',
+      status: json['Status'] ?? json['status'] ?? '',
     );
   }
 
@@ -1134,6 +1227,25 @@ class TimingData {
     required this.withheld,
   });
 
+  /// Merges F1's `NoEntries` (List in snapshots, index-keyed Map in deltas):
+  /// how many cars take part in each qualifying segment, e.g. [20, 15, 10].
+  static List<int>? mergeNoEntries(List<int>? base, dynamic raw) {
+    if (raw is List) return raw.whereType<int>().toList();
+    if (raw is Map) {
+      final result = List<int>.from(base ?? const []);
+      raw.forEach((k, v) {
+        final i = int.tryParse(k.toString());
+        if (i == null || v is! int) return;
+        while (result.length <= i) {
+          result.add(0);
+        }
+        result[i] = v;
+      });
+      return result;
+    }
+    return base;
+  }
+
   factory TimingData.fromJson(Map<String, dynamic> json) {
     Map<String, TimingDataDriver> linesMap = {};
     if (json['lines'] != null) {
@@ -1217,12 +1329,9 @@ class TimingDataDriver {
   });
 
   factory TimingDataDriver.fromJson(Map<String, dynamic> json) {
-    List<TimeDiff>? statsList;
-    if (json['stats'] != null) {
-      statsList = List<TimeDiff>.from(
-        json['stats'].map((x) => TimeDiff.fromJson(x)),
-      );
-    }
+    final rawStats = json['Stats'] ?? json['stats'];
+    final List<TimeDiff>? statsList =
+        rawStats != null ? TimeDiff.mergeAll(null, rawStats) : null;
 
     // The F1 SignalR feed (and the initial 'R' snapshot) sends this key as
     // 'Sectors' (capitalised); our own toJson() persists it as 'sectors'.
@@ -1300,8 +1409,8 @@ class TimingDataDriver {
               personalFastest: false),
       numberOfLaps: json['NumberOfLaps'] ?? json['numberOfLaps'] ?? 0,
       numberOfPitStops: json['NumberOfPitStops'] ?? json['numberOfPitStops'] ?? 0,
-      knockedOut: json['knockedOut'],
-      cutoff: json['cutoff'],
+      knockedOut: json['KnockedOut'] ?? json['knockedOut'],
+      cutoff: json['Cutoff'] ?? json['cutoff'],
     );
   }
 
@@ -1346,11 +1455,46 @@ class TimeDiff {
     required this.timeDifftoPositionAhead,
   });
 
-  factory TimeDiff.fromJson(Map<String, dynamic> json) {
+  factory TimeDiff.fromJson(Map<String, dynamic> json) =>
+      TimeDiff.merge(null, json);
+
+  /// Applies a (possibly partial) F1 `Stats` entry on top of [prev]. F1 sends
+  /// `TimeDiffToFastest` / `TimeDifftoPositionAhead` (note the lowercase "to").
+  factory TimeDiff.merge(TimeDiff? prev, Map json) {
     return TimeDiff(
-      timeDiffToFastest: json['timeDiffToFastest'] ?? '',
-      timeDifftoPositionAhead: json['timeDifftoPositionAhead'] ?? '',
+      timeDiffToFastest: json['TimeDiffToFastest'] ??
+          json['timeDiffToFastest'] ??
+          prev?.timeDiffToFastest ??
+          '',
+      timeDifftoPositionAhead: json['TimeDifftoPositionAhead'] ??
+          json['timeDifftoPositionAhead'] ??
+          prev?.timeDifftoPositionAhead ??
+          '',
     );
+  }
+
+  /// Merges a `Stats` payload (List in snapshots, index-keyed Map in deltas)
+  /// into [base], one entry per qualifying part.
+  static List<TimeDiff> mergeAll(List<TimeDiff>? base, dynamic raw) {
+    final result = List<TimeDiff>.from(base ?? const []);
+    void apply(int i, Map json) {
+      while (result.length <= i) {
+        result.add(TimeDiff(timeDiffToFastest: '', timeDifftoPositionAhead: ''));
+      }
+      result[i] = TimeDiff.merge(result[i], json);
+    }
+
+    if (raw is List) {
+      for (int i = 0; i < raw.length; i++) {
+        if (raw[i] is Map) apply(i, raw[i]);
+      }
+    } else if (raw is Map) {
+      raw.forEach((k, v) {
+        final i = int.tryParse(k.toString());
+        if (i != null && v is Map) apply(i, v);
+      });
+    }
+    return result;
   }
 
   Map<String, dynamic> toJson() => {
@@ -1543,16 +1687,34 @@ class TeamRadio {
   });
 
   factory TeamRadio.fromJson(Map<String, dynamic> json) {
-    List<RadioCapture> capturesList = [];
-    if (json['captures'] != null) {
-      capturesList = List<RadioCapture>.from(
-        json['captures'].map((x) => RadioCapture.fromJson(x)),
-      );
-    }
-
     return TeamRadio(
-      captures: capturesList,
+      captures: _parseCaptures(json['Captures'] ?? json['captures']),
     );
+  }
+
+  /// Appends captures from a TeamRadio delta (List or index-keyed Map) to
+  /// [prev], skipping any whose path is already present.
+  static List<RadioCapture> mergeCaptures(
+      List<RadioCapture> prev, dynamic delta) {
+    final merged = List<RadioCapture>.from(prev);
+    final seen = merged.map((c) => c.path).toSet();
+    for (final capture in _parseCaptures(delta)) {
+      if (capture.path.isEmpty || seen.contains(capture.path)) continue;
+      seen.add(capture.path);
+      merged.add(capture);
+    }
+    return merged;
+  }
+
+  static List<RadioCapture> _parseCaptures(dynamic raw) {
+    final captures = <RadioCapture>[];
+    for (final entry in _indexedEntries(raw)) {
+      if (entry.value is Map) {
+        captures.add(RadioCapture.fromJson(
+            Map<String, dynamic>.from(entry.value as Map)));
+      }
+    }
+    return captures;
   }
 
   Map<String, dynamic> toJson() => {
@@ -1573,9 +1735,10 @@ class RadioCapture {
 
   factory RadioCapture.fromJson(Map<String, dynamic> json) {
     return RadioCapture(
-      utc: json['utc'] ?? '',
-      racingNumber: json['racingNumber'] ?? '',
-      path: json['path'] ?? '',
+      utc: (json['Utc'] ?? json['utc'])?.toString() ?? '',
+      racingNumber:
+          (json['RacingNumber'] ?? json['racingNumber'])?.toString() ?? '',
+      path: (json['Path'] ?? json['path'])?.toString() ?? '',
     );
   }
 

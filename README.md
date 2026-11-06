@@ -23,6 +23,9 @@
 
 <div align="center">
   
+  <a href="https://play.google.com/store/apps/details?id=com.iflotech.formulavision"><img src="https://img.shields.io/badge/Available_on-Google_Play-B32020?style=for-the-badge&logo=googleplay&logoColor=white" alt="Available on Google Play"></a>
+  <a href="https://apps.apple.com/in/app/formulavision-race-companion/id6760141198"><img src="https://img.shields.io/badge/Available_on-App_Store-B32020?style=for-the-badge&logo=appstore&logoColor=white" alt="Available on the App Store"></a>
+
   [![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/skat9234/formula-vision/total)](https://github.com/skat9234/formula-vision/releases/latest)
   [![GitHub Release](https://img.shields.io/github/v/release/skat9234/formula-vision?display_name=tag)](https://github.com/skat9234/formula-vision/releases/latest)
   
@@ -34,7 +37,7 @@
 # FormulaVision
 An Unofficial, Free & Open-Source app for Realtime Stats, Schedules & Track Data in Motorsports
 
-**NOTE: Currently, this project is Android-only, iOS Release will be out soon** 
+Available on [Google Play](https://play.google.com/store/apps/details?id=com.iflotech.formulavision) and the [App Store](https://apps.apple.com/in/app/formulavision-race-companion/id6760141198).
 
 ## Features
 - Drivers Championship Standings
@@ -50,7 +53,9 @@ An Unofficial, Free & Open-Source app for Realtime Stats, Schedules & Track Data
 
 
 ## Downloads
-[Releases](https://github.com/skat9234/formula-vision/releases)
+- [Google Play](https://play.google.com/store/apps/details?id=com.iflotech.formulavision)
+- [App Store](https://apps.apple.com/in/app/formulavision-race-companion/id6760141198)
+- [GitHub Releases](https://github.com/skat9234/formula-vision/releases)
 
 ## Contributing Guidelines
 [Refer to CONTRIBUTING.md](https://github.com/shreyas-kamat/formula-vision/blob/main/CONTRIBUTING.md)
