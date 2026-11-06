@@ -1,17 +1,17 @@
-# Graph Report - formulavision  (2026-10-09)
+# Graph Report - formulavision  (2026-10-11)
 
 ## Corpus Check
-- 167 files · ~310,088 words
+- 176 files · ~317,281 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 66 file(s) not represented in the graph (top: .xml 13, (none) 8, .xcconfig 8)
 
 ## Summary
-- 2290 nodes · 2773 edges · 137 communities (97 shown, 40 thin omitted)
+- 2451 nodes · 2988 edges · 143 communities (103 shown, 40 thin omitted)
 - Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 58 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `c020ed2e`
+- Built from commit: `65c6c2ba`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -29,15 +29,15 @@
 - Review Focus
 - utils.cpp
 - track_from_archive.py
-- position.model.dart
+- DateTime
 - FlutterWindow
 - interval.model.dart
-- DateTime
+- pit.model.dart
 - MessageHandler
-- race_timer_bar.dart
+- team_radio_card.dart
 - FormulaVision
 - windows/flutter/generated_plugin_registrant.cc
-- package:shared_preferences/shared_preferences.dart
+- dart:convert
 - flutter_window.cpp
 - fetchDriverDetails
 - Point
@@ -49,25 +49,27 @@
 - test_page_alt.dart
 - Maps Registry (maps.json)
 - MaterialPageRoute
+- user.function.dart
 - speedometer.dart
 - racedriver.model.dart
 - schedule_page.dart
 - live_homepage.dart
 - nav_page.dart
-- LiveData Model
+- LiveData
 - standings.function.dart
 - circuit_list.dart
 - contructors_standings_page.dart
 - drivers_standings_page.dart
 - driver_row_card.dart
+- speedometer_page.dart
 - login_page.dart
 - register_page.dart
 - circuit_viewer.dart
-- speedometer_page.dart
+- connecting_indicator.dart
 - animated_driver_tile.dart
 - auth_service.dart
 - email_verification.dart
-- track_status_card.dart
+- dashboard_style.dart
 - auth.function.dart
 - racedriver.function.dart
 - test_page.dart
@@ -80,11 +82,19 @@
 - dash_auth_page.dart
 - race_info_card.dart
 - car_data.model.dart
-- session_info_card.dart
-- weather_info_card.dart
+- speed_trap_card.dart
+- test_schedule.dart
 - constructors.model.dart
 - home_page.dart
 - main.dart
+- LiveHomePage
+- 2026-10-11T12-27-14Z__lib-pages-dashboard-page-dart.md
+- conditions_line.dart
+- TelemetryPage
+- driver_row_card_expanded.dart
+- position_playback.dart
+- weather_info_card.dart
+- track_status_card.dart
 - dash_auth.dart
 - driver_tile.dart
 - lap_count_card.dart
@@ -92,7 +102,6 @@
 - live_details_page.dart
 - package:flutter/material.dart
 - driver.model.dart
-- user.function.dart
 - StandingsWithYear Model
 - cardata.function.dart
 - live_data.function.dart
@@ -107,7 +116,6 @@
 - Sakhir (Bahrain International Circuit)
 - State
 - DriverInfoCardTest
-- LiveHomePage
 - TrackMap Widget
 - decompressCarData Function
 - F1ScheduleResponse Model
@@ -128,16 +136,14 @@
 - manifest.json
 - race_control_toast.dart
 - app_settings_service.dart
-- test_schedule.dart
 - live_track_map_widget_test.dart
 - package:formulavision/data/models/live_data.model.dart
 - driver_row_card_test.dart
 - telemetry_hud.dart
 - f1_live_client.dart
 - f1_clock_extrapolator.dart
-- dart:convert
+- f1_decompress_test.dart
 - f1_decompress.function.dart
-- connecting_indicator.dart
 - live_data_service.dart
 
 ## God Nodes (most connected - your core abstractions)
@@ -179,15 +185,15 @@
 - **F1 Circuit Track Maps (Chunk 4)** — assets_trackmaps_algarve, assets_trackmaps_austin, assets_trackmaps_baku, assets_trackmaps_catalunya, assets_trackmaps_hockenheim, assets_trackmaps_hungaroring, assets_trackmaps_imola, assets_trackmaps_interlagos, assets_trackmaps_istanbul, assets_trackmaps_jeddah, trackmaps_lasvegas, assets_trackmaps_losail, assets_trackmaps_melbourne, assets_trackmaps_mexico, assets_trackmaps_miami, trackmaps_montecarlo, assets_trackmaps_montreal, assets_trackmaps_monza, assets_trackmaps_mugello, assets_trackmaps_nurburgring, trackmaps_paulriccard [INFERRED 0.95]
 - **F1 Circuit Track Maps (Chunk 5)** — assets_trackmaps_sakhir_outer, assets_trackmaps_sakhir, assets_trackmaps_shanghai, assets_trackmaps_silverstone, assets_trackmaps_singapore, assets_trackmaps_sochi, trackmaps_spa, assets_trackmaps_spielberg, assets_trackmaps_suzuka, trackmaps_yasmarina, assets_trackmaps_zandvoort [INFERRED 0.95]
 
-## Communities (137 total, 40 thin omitted)
+## Communities (143 total, 40 thin omitted)
 
 ### Community 0 - "dashboard_page.dart"
 Cohesion: 0.01
-Nodes (142): AlertDialog, applySector, applySegment, applyStint, Card, Center, CircularProgressIndicator, Column (+134 more)
+Nodes (149): AlertDialog, applySector, applySegment, applyStint, Card, Center, CircularProgressIndicator, Column (+141 more)
 
 ### Community 1 - "live_data.model.dart"
 Cohesion: 0.01
-Nodes (156): airTemp, ArchiveStatus, _asInt, bestLapTime, bestSectors, bestSpeeds, brake, broadcastName (+148 more)
+Nodes (163): airTemp, ArchiveStatus, _asInt, bestLapTime, bestSectors, bestSpeeds, brake, broadcastName (+155 more)
 
 ### Community 2 - "my_application.cc"
 Cohesion: 0.08
@@ -199,7 +205,7 @@ Nodes (20): apiBase, _bundle, bundledFiles, circuitKey, circuitKeysByName, _clie
 
 ### Community 4 - "settings_page.dart"
 Cohesion: 0.08
-Nodes (23): Container, dispose, Expanded, launchUrl, SizedBox, SnackBar, Spacer, Text (+15 more)
+Nodes (25): Container, dispose, Expanded, launchUrl, SizedBox, SnackBar, Spacer, Text (+17 more)
 
 ### Community 5 - "lap.model.dart"
 Cohesion: 0.09
@@ -233,8 +239,8 @@ Nodes (4): wWinMain(), CreateAndAttachConsole(), GetCommandLineArguments(), Utf8
 Cohesion: 0.21
 Nodes (4): fastest_loop(), load_stream(), main(), resample()
 
-### Community 13 - "position.model.dart"
-Cohesion: 0.18
+### Community 13 - "DateTime"
+Cohesion: 0.17
 Nodes (10): date, driverNumber, fromJson, getFormattedPosition, isInPoints, isOnPodium, meetingKey, Position (+2 more)
 
 ### Community 15 - "FlutterWindow"
@@ -245,23 +251,23 @@ Nodes (4): FlutterWindow, flutter_controller_, MessageHandler, project_
 Cohesion: 0.18
 Nodes (10): date, driverNumber, formatGapToLeader, formatInterval, fromJson, gapToLeader, Interval, meetingKey (+2 more)
 
-### Community 17 - "DateTime"
-Cohesion: 0.17
+### Community 17 - "pit.model.dart"
+Cohesion: 0.18
 Nodes (10): date, driverNumber, formatPitDuration, fromJson, lapNumber, meetingKey, Pit, pitDuration (+2 more)
 
 ### Community 18 - "MessageHandler"
 Cohesion: 0.36
 Nodes (5): EnableFullDpiSupportIfAvailable(), GetHandle, GetThisFromHandle, MessageHandler, WndProc
 
-### Community 19 - "race_timer_bar.dart"
-Cohesion: 0.15
-Nodes (11): Container, SizedBox, build, CompactRaceTimerBar, currentLap, package:flutter/material.dart, _formatTime, _isRaceOrSprintSession (+3 more)
+### Community 19 - "team_radio_card.dart"
+Cohesion: 0.08
+Nodes (22): build, _buildRow, _collapsedRows, _completeSub, createState, dispose, drivers, initState (+14 more)
 
 ### Community 20 - "FormulaVision"
 Cohesion: 0.22
 Nodes (8): Contributing Guidelines, Credits, Downloads, Features, FormulaVision, License, NOTICE, Planned Features
 
-### Community 22 - "package:shared_preferences/shared_preferences.dart"
+### Community 22 - "dart:convert"
 Cohesion: 0.29
 Nodes (3): currentYear, _driverStandingsResponse, main
 
@@ -290,8 +296,12 @@ Cohesion: 0.14
 Nodes (22): Maps Registry (maps.json), Algarve International Circuit, Austin (Circuit of the Americas), Baku City Circuit, Circuit de Barcelona-Catalunya, Hockenheimring, Hungaroring, Autodromo Enzo e Dino Ferrari (Imola) (+14 more)
 
 ### Community 36 - "MaterialPageRoute"
-Cohesion: 0.40
-Nodes (4): build, _openSpeedometer, build, _navigateToCircuitViewer
+Cohesion: 0.33
+Nodes (5): build, _openSpeedometer, _openSpeedometer, build, _navigateToCircuitViewer
+
+### Community 37 - "user.function.dart"
+Cohesion: 0.09
+Nodes (17): apiUrl, bearer, dart:convert, package:flutter_dotenv/flutter_dotenv.dart, package:formulavision/data/services/app_settings_service.dart, package:http/http.dart, package:shared_preferences/shared_preferences.dart, fetchCurrentBalance (+9 more)
 
 ### Community 38 - "speedometer.dart"
 Cohesion: 0.06
@@ -310,12 +320,12 @@ Cohesion: 0.06
 Nodes (30): Center, Column, Container, fetchInitialData, launchUrl, SettingsPage, _applyImageFromData, createState (+22 more)
 
 ### Community 42 - "nav_page.dart"
-Cohesion: 0.10
-Nodes (12): Scaffold, build, createState, package:flutter/material.dart, package:formulavision/auth/email_verification.dart, package:formulavision/auth/forgotpw_page.dart, package:formulavision/auth/login_page.dart, package:formulavision/pages/dashboard_page.dart (+4 more)
+Cohesion: 0.09
+Nodes (14): Scaffold, build, createState, package:flutter/material.dart, package:formulavision/auth/email_verification.dart, package:formulavision/auth/forgotpw_page.dart, package:formulavision/auth/login_page.dart, package:formulavision/pages/dashboard_page.dart (+6 more)
 
-### Community 43 - "LiveData Model"
-Cohesion: 0.11
-Nodes (18): TrackStatusCard, WeatherInfoCard, fetchLiveData, fetchLatestMeetings, ChampionshipPrediction, DriverList, F1DataModel, LapCount (+10 more)
+### Community 43 - "LiveData"
+Cohesion: 0.12
+Nodes (16): TrackStatusCard, fetchLiveData, fetchLatestMeetings, ChampionshipPrediction, DriverList, F1DataModel, LapCount, LiveData (+8 more)
 
 ### Community 44 - "standings.function.dart"
 Cohesion: 0.05
@@ -335,7 +345,11 @@ Nodes (20): Center, Container, Function, Padding, Scaffold, SizedBox, Text, buil
 
 ### Community 48 - "driver_row_card.dart"
 Cohesion: 0.04
-Nodes (43): _buildStintHistory, Container, Divider, Padding, SafeArea, SizedBox, SlideTransition, Spacer (+35 more)
+Nodes (49): _buildStintHistory, Container, Divider, Padding, SafeArea, SizedBox, SlideTransition, Spacer (+41 more)
+
+### Community 49 - "speedometer_page.dart"
+Cohesion: 0.11
+Nodes (17): SafeArea, SizedBox, _accelerating, build, createState, _currentSpeed, dart:async, dart:math (+9 more)
 
 ### Community 50 - "login_page.dart"
 Cohesion: 0.11
@@ -346,12 +360,12 @@ Cohesion: 0.07
 Nodes (28): Scaffold, build, buildPicker, confirmpassController, createState, _currentItemSelected, package:flutter/material.dart, package:formulavision/auth/login_page.dart (+20 more)
 
 ### Community 52 - "circuit_viewer.dart"
-Cohesion: 0.04
-Nodes (40): Container, clear, delay, _Fix, _fixes, ingest, isEmpty, _latest (+32 more)
+Cohesion: 0.08
+Nodes (24): Container, build, _circuitData, circuitName, CircuitPainter, CircuitViewer, _CircuitViewerState, country (+16 more)
 
-### Community 53 - "speedometer_page.dart"
-Cohesion: 0.11
-Nodes (15): SafeArea, SizedBox, _accelerating, build, createState, _currentSpeed, dart:async, dart:math (+7 more)
+### Community 53 - "connecting_indicator.dart"
+Cohesion: 0.10
+Nodes (18): AnimatedContainer, Center, Container, Padding, Row, SizedBox, build, _controller (+10 more)
 
 ### Community 54 - "animated_driver_tile.dart"
 Cohesion: 0.08
@@ -365,9 +379,9 @@ Nodes (21): _context, _copyRequest, createAuthClient, dart:async, dart:convert, 
 Cohesion: 0.14
 Nodes (14): Scaffold, build, createState, currentBalanceController, dailyLimitController, package:flutter/material.dart, package:formulavision/auth/login_page.dart, package:formulavision/data/functions/auth.function.dart (+6 more)
 
-### Community 57 - "track_status_card.dart"
-Cohesion: 0.17
-Nodes (11): Container, SizedBox, Text, build, _buildMessageSection, _buildStatusBadge, package:flutter/material.dart, _getStatusIcon (+3 more)
+### Community 57 - "dashboard_style.dart"
+Cohesion: 0.10
+Nodes (17): brandRed, chevronW, DashStyle, data, divider, gapW, label, lastW (+9 more)
 
 ### Community 58 - "auth.function.dart"
 Cohesion: 0.07
@@ -411,19 +425,19 @@ Nodes (9): Scaffold, SizedBox, Text, build, createState, package:flutter/materia
 
 ### Community 68 - "race_info_card.dart"
 Cohesion: 0.15
-Nodes (11): Container, SizedBox, Text, build, currentLap, package:flutter/material.dart, _getProgressColor, _getSessionIcon (+3 more)
+Nodes (12): Container, SizedBox, Text, build, currentLap, package:flutter/material.dart, _getProgressColor, _getSessionIcon (+4 more)
 
 ### Community 69 - "car_data.model.dart"
+Cohesion: 0.04
+Nodes (45): Container, SizedBox, Container, SizedBox, build, CompactRaceTimerBar, currentLap, package:flutter/material.dart (+37 more)
+
+### Community 70 - "speed_trap_card.dart"
 Cohesion: 0.11
-Nodes (18): brake, CarData, date, driverNumber, drs, fromJson, getBrakePercentage, getDrsStatus (+10 more)
+Nodes (18): build, _buildRow, _collapsedRows, color, createState, drivers, label, _maxRows (+10 more)
 
-### Community 70 - "session_info_card.dart"
-Cohesion: 0.13
-Nodes (14): Container, SizedBox, build, _buildInfoSection, circuit, country, package:flutter/material.dart, _getSessionIcon (+6 more)
-
-### Community 71 - "weather_info_card.dart"
-Cohesion: 0.15
-Nodes (12): Container, SizedBox, Text, airTemp, build, _buildWeatherIcon, _buildWeatherMetric, package:flutter/material.dart (+4 more)
+### Community 71 - "test_schedule.dart"
+Cohesion: 0.20
+Nodes (8): dart:convert, dart:io, getCleanName, main, name, prefixes, testCases, testCleanName
 
 ### Community 72 - "constructors.model.dart"
 Cohesion: 0.06
@@ -437,6 +451,34 @@ Nodes (8): LiveHomePage, build, createState, package:flutter/material.dart, pack
 Cohesion: 0.17
 Nodes (8): MaterialApp, build, package:flutter_dotenv/flutter_dotenv.dart, package:flutter/material.dart, package:formulavision/pages/nav_page.dart, load, main, MyApp
 
+### Community 86 - "2026-10-11T12-27-14Z__lib-pages-dashboard-page-dart.md"
+Cohesion: 0.29
+Nodes (6): Design Health Score, Design Specificity Verdict, Minor Observations, Persona Red Flags, Priority Issues, Questions to Consider
+
+### Community 87 - "conditions_line.dart"
+Cohesion: 0.25
+Nodes (6): build, ConditionsLine, _item, weather, WeatherInfoCard, WeatherData
+
+### Community 88 - "TelemetryPage"
+Cohesion: 0.50
+Nodes (4): DashboardPage, TelemetryPage, _TelemetryPageState, SSE Live Data Streaming
+
+### Community 89 - "driver_row_card_expanded.dart"
+Cohesion: 0.05
+Nodes (36): _animationController, bestLapTime, build, _buildStintChip, _buildStintSheet, _buildTrackStateChip, createState, currentLapTime (+28 more)
+
+### Community 90 - "position_playback.dart"
+Cohesion: 0.09
+Nodes (16): clear, delay, _Fix, _fixes, ingest, isEmpty, _latest, _offset (+8 more)
+
+### Community 91 - "weather_info_card.dart"
+Cohesion: 0.15
+Nodes (12): Container, SizedBox, Text, airTemp, build, _buildWeatherIcon, _buildWeatherMetric, package:flutter/material.dart (+4 more)
+
+### Community 92 - "track_status_card.dart"
+Cohesion: 0.17
+Nodes (11): Container, SizedBox, Text, build, _buildMessageSection, _buildStatusBadge, package:flutter/material.dart, _getStatusIcon (+3 more)
+
 ### Community 108 - "dash_auth.dart"
 Cohesion: 0.25
 Nodes (7): DashboardPage, build, createState, package:flutter/material.dart, package:formulavision/pages/dashboard_page.dart, DashAuth, _DashAuthState
@@ -447,15 +489,15 @@ Nodes (15): Container, SizedBox, Text, bestLapTime, build, currentLapTime, packa
 
 ### Community 110 - "lap_count_card.dart"
 Cohesion: 0.15
-Nodes (12): Container, SizedBox, build, CompactLapCountCard, currentLap, package:flutter/material.dart, extrapolatedClock, isClockExtrapolating (+4 more)
+Nodes (11): Container, SizedBox, build, currentLap, package:flutter/material.dart, extrapolatedClock, isClockExtrapolating, LapCountCard (+3 more)
 
 ### Community 112 - "info_page.dart"
 Cohesion: 0.25
 Nodes (7): Container, Row, build, _buildFeatureItem, package:flutter/material.dart, InfoPage, _launchURL
 
 ### Community 113 - "live_details_page.dart"
-Cohesion: 0.11
-Nodes (17): Column, SafeArea, Scaffold, SizedBox, build, createState, package:flutter/material.dart, package:formulavision/components/speedometer.dart (+9 more)
+Cohesion: 0.10
+Nodes (19): Column, SafeArea, Scaffold, SizedBox, build, createState, package:flutter/material.dart, package:formulavision/components/speedometer.dart (+11 more)
 
 ### Community 115 - "package:flutter/material.dart"
 Cohesion: 0.15
@@ -464,10 +506,6 @@ Nodes (10): Scaffold, EmailVerification Page, build, createState, package:flutte
 ### Community 117 - "driver.model.dart"
 Cohesion: 0.12
 Nodes (16): Color, broadcastName, package:flutter/material.dart, Driver, driverNumber, firstName, fromJson, fullName (+8 more)
-
-### Community 118 - "user.function.dart"
-Cohesion: 0.11
-Nodes (16): apiUrl, bearer, dart:convert, package:flutter_dotenv/flutter_dotenv.dart, package:formulavision/data/services/app_settings_service.dart, package:http/http.dart, package:shared_preferences/shared_preferences.dart, fetchCurrentBalance (+8 more)
 
 ### Community 120 - "StandingsWithYear Model"
 Cohesion: 0.40
@@ -499,15 +537,15 @@ Nodes (8): currentBalance, email, fromJson, id, lastTransactionAmount, name, toJ
 
 ### Community 141 - "StatelessWidget"
 Cohesion: 0.20
-Nodes (10): _Lamp, _LightPod, MiniSectorBar, RaceInfoCard, RaceTimerBar, SessionInfoCard, F1Speedometer, _AeroPill (+2 more)
+Nodes (9): _Lamp, _LightPod, LeaderboardHeader, CompactLapCountCard, MiniSectorBar, F1Speedometer, _AeroPill, _PedalBar (+1 more)
 
 ### Community 153 - "State"
-Cohesion: 0.12
-Nodes (22): ConnectingIndicator, _ConnectingIndicatorState, DriverRowCard, _DriverRowCardState, TelemetryHud, _TelemetryHudState, DashboardPage, LiveTrackMapWidget (+14 more)
+Cohesion: 0.19
+Nodes (12): ConnectingIndicator, _ConnectingIndicatorState, DriverRowCard, _DriverRowCardState, DriverRowCardExpanded, _DriverRowCardExpandedState, LiveTrackMapWidget, _LiveTrackMapWidgetState (+4 more)
 
 ### Community 193 - "mini_sector_bar.dart"
-Cohesion: 0.11
-Nodes (18): _buildSector, Color, Column, Container, Row, SizedBox, build, _cell (+10 more)
+Cohesion: 0.08
+Nodes (22): _buildSector, Color, Column, Container, Row, SizedBox, build, _cell (+14 more)
 
 ### Community 196 - "GeneratedPluginRegistrant.swift"
 Cohesion: 0.06
@@ -522,12 +560,8 @@ Cohesion: 0.15
 Nodes (11): SizedBox, SnackBar, _accentColor, buildSnackBar, package:flutter/material.dart, package:formulavision/data/models/live_data.model.dart, _icon, _importantCategories (+3 more)
 
 ### Community 204 - "app_settings_service.dart"
-Cohesion: 0.05
-Nodes (38): AppSettings, _customApiUrlEnabledKey, _customApiUrlKey, package:flutter_dotenv/flutter_dotenv.dart, package:shared_preferences/shared_preferences.dart, feedSourceBackend, _feedSourceKey, feedSourceOnDevice (+30 more)
-
-### Community 206 - "test_schedule.dart"
-Cohesion: 0.20
-Nodes (8): dart:convert, dart:io, getCleanName, main, name, prefixes, testCases, testCleanName
+Cohesion: 0.04
+Nodes (44): AppSettings, _customApiUrlEnabledKey, _customApiUrlKey, package:flutter_dotenv/flutter_dotenv.dart, package:shared_preferences/shared_preferences.dart, dashboardLayoutCompact, dashboardLayoutExpanded, _dashboardLayoutKey (+36 more)
 
 ### Community 229 - "live_track_map_widget_test.dart"
 Cohesion: 0.10
@@ -535,7 +569,7 @@ Nodes (14): PositionData, build, package:flutter/material.dart, package:flutter_
 
 ### Community 231 - "package:formulavision/data/models/live_data.model.dart"
 Cohesion: 0.10
-Nodes (13): package:flutter_test/flutter_test.dart, package:formulavision/data/models/live_data.model.dart, main, _base, _data, main, _sample, _wall (+5 more)
+Nodes (15): package:flutter_test/flutter_test.dart, package:formulavision/data/models/live_data.model.dart, main, _base, _data, main, _sample, _wall (+7 more)
 
 ### Community 232 - "driver_row_card_test.dart"
 Cohesion: 0.15
@@ -543,7 +577,7 @@ Nodes (11): package:flutter/material.dart, package:flutter_test/flutter_test.dar
 
 ### Community 233 - "telemetry_hud.dart"
 Cohesion: 0.06
-Nodes (27): Color, Column, Container, SizedBox, Text, active, build, color (+19 more)
+Nodes (29): Color, Column, Container, SizedBox, Text, active, build, color (+21 more)
 
 ### Community 235 - "f1_live_client.dart"
 Cohesion: 0.05
@@ -553,7 +587,7 @@ Nodes (35): Exception, Function, _startKeepAlive, _stopKeepAlive, _baseHttp, _ba
 Cohesion: 0.11
 Nodes (16): Function, _baseRemainingSeconds, dart:async, dispose, _extrapolating, F1ClockExtrapolator, _format, _lastF1Update (+8 more)
 
-### Community 237 - "dart:convert"
+### Community 237 - "f1_decompress_test.dart"
 Cohesion: 0.13
 Nodes (12): base64Encode, bytes, dart:convert, dart:io, package:flutter_test/flutter_test.dart, package:formulavision/data/functions/f1_decompress.function.dart, deflated, main (+4 more)
 
@@ -561,33 +595,29 @@ Nodes (12): base64Encode, bytes, dart:convert, dart:io, package:flutter_test/flu
 Cohesion: 0.12
 Nodes (14): 0, cars, _channel, dart:convert, dart:io, decodeCarDataZ, decodePositionZ, entries (+6 more)
 
-### Community 239 - "connecting_indicator.dart"
-Cohesion: 0.09
-Nodes (18): AnimatedContainer, Center, Container, Padding, Row, SizedBox, build, _controller (+10 more)
-
 ### Community 241 - "live_data_service.dart"
 Cohesion: 0.02
-Nodes (78): applySector, applySegment, applyStint, buildSpeed, Duration, empty, Exception, I1 (+70 more)
+Nodes (81): applySector, applySegment, applyStint, buildSpeed, Duration, empty, Exception, I1 (+73 more)
 
 ## Knowledge Gaps
-- **1681 isolated node(s):** `createState`, `build`, `createState`, `build`, `email` (+1676 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1833 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **1816 isolated node(s):** `createState`, `build`, `createState`, `build`, `email` (+1811 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1967 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **40 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Win32Window` connect `Win32Window` to `win32_window.cpp`, `flutter_window.h`, `FlutterWindow`, `MessageHandler`, `flutter_window.cpp`, `Point`, `Size`?**
-  _High betweenness centrality (0.033) - this node is a cross-community bridge._
-- **Why does `OnCreate` connect `Win32Window` to `FlutterWindow`, `windows/flutter/generated_plugin_registrant.cc`, `flutter_window.cpp`?**
-  _High betweenness centrality (0.012) - this node is a cross-community bridge._
-- **Why does `RegisterPlugins()` connect `windows/flutter/generated_plugin_registrant.cc` to `Win32Window`?**
-  _High betweenness centrality (0.012) - this node is a cross-community bridge._
+  _High betweenness centrality (0.025) - this node is a cross-community bridge._
+- **Why does `CarTelemetry` connect `telemetry_hud.dart` to `driver_row_card.dart`, `driver_row_card_expanded.dart`, `live_data.model.dart`?**
+  _High betweenness centrality (0.009) - this node is a cross-community bridge._
+- **Why does `MessageHandler` connect `MessageHandler` to `Win32Window`, `win32_window.cpp`, `FlutterWindow`?**
+  _High betweenness centrality (0.006) - this node is a cross-community bridge._
 - **What connects `createState`, `build`, `createState` to the rest of the system?**
-  _1681 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _1816 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `dashboard_page.dart` be split into smaller, more focused modules?**
-  _Cohesion score 0.012987012987012988 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.012345679012345678 - nodes in this community are weakly interconnected._
 - **Should `live_data.model.dart` be split into smaller, more focused modules?**
-  _Cohesion score 0.012578616352201259 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.012048192771084338 - nodes in this community are weakly interconnected._
 - **Should `my_application.cc` be split into smaller, more focused modules?**
   _Cohesion score 0.08275862068965517 - nodes in this community are weakly interconnected._
